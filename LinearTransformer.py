@@ -73,7 +73,7 @@ class LinearTransformer():
         """
         maps X and compares the result to Y (using Frobenius norm)
         """
-        return np.linalg.norm(self.map(X)-Y)
+        return np.linalg.norm(self.map(X)-Y)/len(X)
 
 if __name__ == "__main__":
     # let's see if it can determine the correct linear transformation
