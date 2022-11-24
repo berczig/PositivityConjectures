@@ -6,6 +6,20 @@ from torch.utils.data import DataLoader, Dataset
 import torch
 import numpy as np
 
+
+def loadxlsx(path, trainpercentage=0.9):
+    """
+    Loads graph and correct data from xlsx and splits intro training|testing
+    """
+    df = pd.read_excel(path)
+    values = df.values
+    print("labels from xlsl:", values[0])
+    UIOdata = values[1:, :9].astype(float)  # data describing the graph
+    Correctnessdata = values[1:, 9:11].astype(float)  # "only l3 correct" and "only l+3 correct"
+    n = len(UIOdata)
+    K = int(trainpercentage * n)
+    return UIOdata[:K], UIOdata[K:], Correctnessdata[:K], Correctnessdata[K:]
+
 def SplitCSV(path,percentage):
     dforiginal = pd.read_csv(path)
     df = shuffle(dforiginal)
@@ -46,6 +60,10 @@ class CustomDataset(Dataset):
         n = len(UIOdata)
         K = int(trainpercentage*n)
         return UIOdata[:K], UIOdata[K:], Correctnessdata[:K], Correctnessdata[K:]
+
+
+
+
 
 if __name__ == "__main__":
     SplitCSV("Chrom63.csv",0.8)

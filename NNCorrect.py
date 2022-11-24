@@ -26,11 +26,11 @@ class NeuralNetwork(nn.Module):
         super().__init__()
         self.flatten = nn.Flatten()
         self.linear_relu_stack = nn.Sequential(
-            nn.Linear(9, 9),
+            nn.Linear(9, 7),
             nn.ReLU(),
-            nn.Linear(9, 9),
+            nn.Linear(7, 5),
             nn.ReLU(),
-            nn.Linear(9, 2)
+            nn.Linear(5, 2)
         )
 
     def forward(self, x):
@@ -42,7 +42,7 @@ model = NeuralNetwork()
 print(model)
 
 loss_fn = nn.MSELoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+optimizer = torch.optim.SGD(model.parameters(), lr=1)
 
 def train(dataloader, model, loss_fn, optimizer):
     size = len(dataloader.dataset)
@@ -73,7 +73,7 @@ def test(dataloader, model, loss_fn):
     test_loss /= num_batches
     print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
 
-epochs = 5
+epochs = 50
 for t in range(epochs):
     print(f"Epoch {t+1}\n-------------------------------")
     train(train_dataloader, model, loss_fn, optimizer)

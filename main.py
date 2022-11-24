@@ -2,7 +2,7 @@ from Datahandler import *
 from LinearTransformer import *
 import matplotlib.pyplot as plt
 
-trainX, testX, trainY, testY = loadxlsx("Chrom63.csv", 0.8)
+trainX, testX, trainY, testY = loadxlsx("Chrom53.xlsx", 0.8)
 
 plt.plot(trainY[:, 0], "g", trainY[:, 1], "r")
 plt.xlabel("Graph ID")
