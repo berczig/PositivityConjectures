@@ -31,13 +31,16 @@ def SplitCSV(path,percentage):
     df_test.to_csv(path[0:-4]+"test.csv",index=False)  # output file
 
 class CustomDataset(Dataset):
-    def __init__(self, csv_path):
+    def __init__(self, csv_path, difference):
         fields = ["i1", "i2", "i3", "i4", "i5", "i6", "i7", "i8", "i9", "only l3 correct", "only l+3 correct",
                   "both correct", "only l+3 correct (1)", "only l+3 correct (2)", "only l+3 correct (3)",
                   "only l+3 correct (4)"];
         df = pd.read_csv(csv_path, sep=";", header=None, names=fields)
         values = df.values
-        self.UIO_labels = torch.from_numpy(values[1: , 9:11].astype(np.float32))/3000
+        if difference == False:
+            self.UIO_labels = torch.from_numpy(values[1: , 9:11].astype(np.float32))/3000
+        else:
+            self.UIO_labels = torch.from_numpy(values[1:, 9:10].astype(np.float32)-values[1:, 10:11].astype(np.float32)) / 3000
         self.UIO_data = torch.from_numpy(values[1: , :9].astype(np.float32))
 
     def __len__(self):

@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 
 #training_data = CustomDatasetTest()
 #test_data = CustomDatasetTest()
-training_data = CustomDataset("Chrom63train.csv")
-test_data = CustomDataset("Chrom63test.csv")
+training_data = CustomDataset("Chrom63train.csv",difference = True)
+test_data = CustomDataset("Chrom63test.csv", difference = True)
 batch_size = 64
 
 # Create data loaders.
@@ -33,11 +33,17 @@ class NeuralNetwork(nn.Module):
             nn.ReLU(),
             nn.Linear(9, 9),
             nn.ReLU(),
-            nn.Linear(9,7),
+            nn.Linear(9,9),
             nn.ReLU(),
-            nn.Linear(7, 5),
+            nn.Linear(9, 9),
             nn.ReLU(),
-            nn.Linear(5, 2)
+            nn.Linear(9, 9),
+            nn.ReLU(),
+            nn.Linear(9, 9),
+            nn.ReLU(),
+            nn.Linear(9,9),
+            nn.ReLU(),
+            nn.Linear(9, 1)
 
         )
 
@@ -50,7 +56,8 @@ model = NeuralNetwork()
 print(model)
 
 loss_fn = nn.MSELoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=0.005)
+optimizer = torch.optim.SGD(model.parameters(), lr=0.5)
+
 
 def train(dataloader, model, loss_fn, optimizer):
     size = len(dataloader.dataset)
@@ -60,7 +67,6 @@ def train(dataloader, model, loss_fn, optimizer):
         # Compute prediction error
         pred = model(X)
         loss = loss_fn(pred, y)
-        #print(pred,loss)
 
         # Backpropagation
         optimizer.zero_grad()
@@ -85,7 +91,7 @@ def test(dataloader, model, loss_fn):
                 first = False
                 print("pred:", pred2[0])
                 print("actual:", 3000*y[0])
-            
+
             test_loss += loss_fn(pred, y).item()
             test_loss2 += loss_fn(pred2, 3000*y).item()
     test_loss /= num_batches
@@ -94,14 +100,18 @@ def test(dataloader, model, loss_fn):
 
 epochs = 500
 
-def plotdata(dataloader, model):
-    A = 
+def plotdata(dataloader, model, difference):
     with torch.no_grad():
         for X, y in dataloader:
             pred = model(X)
-            A = torch.round(3000*pred)
-            B = 3000*y
-            plt.plot(A[:, 0]-A[:, 1], "g", B[:, 0]-B[:, 1], "r")
+            if difference:
+                A = torch.round(3000 * pred)
+                B = 3000 * y
+                plt.plot(A,"g",B,"r")
+            else:
+                A = torch.round(3000 * pred)
+                B = 3000 * y
+                plt.plot(A[:, 0]-A[:, 1], "g", B[:, 0]-B[:, 1], "r")
             plt.xlabel("index")
             plt.legend(["real coeffs", "predicted coeffs(outsample)"])
             plt.show()
@@ -110,4 +120,7 @@ for t in range(epochs):
     print(f"Epoch {t+1}\n-------------------------------")
     train(train_dataloader, model, loss_fn, optimizer)
     test(test_dataloader, model, loss_fn)
+print((model.linear_relu_stack[-1].weight))
+
 print("Done!")
+plotdata(test_dataloader,model,difference = True)
