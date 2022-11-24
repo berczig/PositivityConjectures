@@ -37,7 +37,7 @@ class CustomDataset(Dataset):
                   "only l+3 correct (4)"];
         df = pd.read_csv(csv_path, sep=";", header=None, names=fields)
         values = df.values
-        self.UIO_labels = torch.from_numpy(values[1: , 9:11].astype(np.float32))
+        self.UIO_labels = torch.from_numpy(values[1: , 9:11].astype(np.float32))/3000
         self.UIO_data = torch.from_numpy(values[1: , :9].astype(np.float32))
 
     def __len__(self):
@@ -62,8 +62,42 @@ class CustomDataset(Dataset):
         return UIOdata[:K], UIOdata[K:], Correctnessdata[:K], Correctnessdata[K:]
 
 
+class CustomDatasetTest(Dataset):
+    def __init__(self):
+        self.n = 1000
+        self.W = torch.tensor([
+            [2.0,5.0,7.0,2.0,0.0,0.0,8.0,5.0,-1.0],
+            [1.0,2.0,3.0,7.0,6.0,-4.0,-3.0,0.0,9.0]
+        ]).T
+        print("Weights shape:", self.W.shape)
+        self.X = torch.rand(self.n, 9)
+        self.Y = torch.matmul(self.X, self.W)
+
+    def __len__(self):
+        return self.n
+
+    def __getitem__(self, idx):
+        return self.X[idx], self.Y[idx]
+
+
+    def loadcsv(path, trainpercentage=0.9):
+        """
+        Loads graph and correct data from xlsx and splits intro training|testing
+        """
+        fields = ["i1","i2","i3","i4","i5","i6","i7","i8","i9","only l3 correct","only l+3 correct","both correct","only l+3 correct (1)","only l+3 correct (2)","only l+3 correct (3)","only l+3 correct (4)"];
+        df = pd.read_csv(path, sep=";", header = None, names=fields)
+        values = df.values
+        print("labels from xlsl:", values[0])
+        UIOdata = values[1: , :9].astype(float) # data describing the graph
+        Correctnessdata = values[1: , 9:11].astype(float) # "only l3 correct" and "only l+3 correct"
+        n = len(UIOdata)
+        K = int(trainpercentage*n)
+        return UIOdata[:K], UIOdata[K:], Correctnessdata[:K], Correctnessdata[K:]
+
+
 
 
 
 if __name__ == "__main__":
-    SplitCSV("Chrom63.csv",0.8)
+    X = CustomDatasetTest()
+    #SplitCSV("Chrom63.csv",0.8)
