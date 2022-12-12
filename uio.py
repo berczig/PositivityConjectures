@@ -1,6 +1,8 @@
 # step 1 : generate uio
-# step 2: for any uio check all permutations all get he correct sequences
+# step 2: for any uio check all permutations and get the l,k correct sequences
 # step 3: take last 3 digits + n critical pairs, look at type of that graph
+# step 4: e.g. linear programming
+
 
 from itertools import permutations
 from math import factorial as fac
@@ -58,6 +60,9 @@ def generate_uio_rec(A, uio, n, i):
     for j in range(uio[i-1], i+1):
         generate_uio_rec(A, uio+[j], n, i+1)
 
+def isabcorrect(seq,a,b,C):
+    return iscorrect(seq[:a], C) and iscorrect(seq[a:], C)
+
 def iscorrect(seq, C):
     for i in range(1,len(seq)):
         # not to the left of previos interval
@@ -73,14 +78,71 @@ def iscorrect(seq, C):
             return False
     return True
 
-def getcorrectsequences(uio):
+def getcorrectsequences(uio, verbose=False):
     n = len(uio)
     C = get_comparison_matrix(uio)
-    print("uio:", uio)
-    print("C", C)
-    for seq in permutations(range(n)):
-        print("seq:", [i+1 for i in seq], iscorrect(seq,C))
+    if verbose:
+        print("uio:", uio)
+        print("C", C)
+    return [seq for seq in permutations(range(n)) if iscorrect(seq,C)]
 
-A = generate_uio(4)
-#get_comparison_matrix([0,0,0,1,2])
-getcorrectsequences([0,0,1,2,3])
+def getmaximalinterval(subseq, C):
+    maximals = []
+    for i in subseq:
+        for j in range(n):
+            if C[j, i] == GE:
+                # i is can't be maximal
+                break
+        maximals.append(i)
+    return max(maximals)
+
+def getsequencedata(seq,C, p, l, k): # step 3 for l,k
+    data = []
+    # take last critical pairs (at most p)
+    n = l+k
+    pairs = 0 # count number of registered critical pairs
+    for i in range(l-1, 0, -1):
+        if C[i, i-1] == EQ:
+            pairs += 1
+            data.append(i-1)
+            data.append(i)
+            if pairs >= p:
+                break
+    data.insert(0, pairs)
+
+    # maximal element in first l-1
+    data.append(getmaximalinterval(seq[:l-1], C))
+
+    # last k+1 elements
+    data += seq[-(k+1):]
+    return data
+l = 6
+k = 2
+n = l+k
+A = generate_uio(n)
+uio = [0,0,0,0,1,2,3, 3]
+print("There are", len(A), "uio of length", n)
+C = get_comparison_matrix(uio)
+countcor = 0
+countabcor = 0
+for seq in permutations(range(n)):
+    a = iscorrect(seq,C)
+    b = isabcorrect(seq,l,k,C)
+    if a:
+        countcor += 1
+    if b:
+        countabcor += 1
+    if a or b:
+        print(seq, iscorrect(seq,C), b)
+    print(getsequencedata(seq, C, 1, l, k))
+print("countcor:", countcor)
+print("countabcor:", countabcor)
+"""
+K = 0
+for uio in A:
+    num = len(getcorrectsequences(uio))
+    if num != 0:
+        K += 1
+        print("number of correct sequences in uio:", num)
+print("uio with correct sequences:", K)
+"""
