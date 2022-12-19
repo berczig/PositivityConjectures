@@ -9,6 +9,7 @@ from math import factorial as fac
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt 
+import sys
 
 LE = 1
 EQ = 2
@@ -71,7 +72,7 @@ def iscorrect(seq, C):
         # intersects with some previous interval
         intersects = False
         for j in range(0, i):
-            if C[seq[i], seq[j]] != GE:
+            if C[seq[i], seq[j]] in [LE, EQ]:
                 intersects = True
                 #break
         if not intersects:
@@ -86,14 +87,22 @@ def getcorrectsequences(uio, verbose=False):
         print("C", C)
     return [seq for seq in permutations(range(n)) if iscorrect(seq,C)]
 
+def get_correct_ab_sequences(uio,a,b):
+    n = len(uio)
+    C = get_comparison_matrix(uio)
+    return [seq for seq in permutations(range(n)) if isabcorrect(seq,a,b,C)]
+
 def getmaximalinterval(subseq, C):
     maximals = []
     for i in subseq:
-        for j in range(n):
-            if C[j, i] == GE:
-                # i is can't be maximal
+        ismaximal = True
+        for j in subseq:
+            if C[j, i] == GE: # one very redundant comparison: i==j, but whatever
+                # i can't be maximal
+                ismaximal = False
                 break
-        maximals.append(i)
+        if ismaximal:
+            maximals.append(i)
     return max(maximals)
 
 def getsequencedata(seq,C, p, l, k): # step 3 for l,k
@@ -116,6 +125,44 @@ def getsequencedata(seq,C, p, l, k): # step 3 for l,k
     # last k+1 elements
     data += seq[-(k+1):]
     return data
+
+def getcoeff(uio, l, k):
+    only_lk_correct = 0
+    only_lplusk_correct = 0
+    n = len(uio)
+    C = get_comparison_matrix(uio)
+    for seq in permutations(range(n)):
+        lk = isabcorrect(seq,l,k,C)
+        lpk = iscorrect(seq, C)
+        if lk and not lpk:
+            only_lk_correct += 1
+        elif lpk and not lk:
+            only_lplusk_correct += 1
+    return only_lk_correct - only_lplusk_correct
+
+def getThml_2_coef(uio, l):
+    n = len(uio)
+    C = get_comparison_matrix(uio)
+    A = []
+    B = []
+    for seq in permutations(range(n)):
+        data = getsequencedata(seq,C,p=1,l=l,k=2)
+        if data[0] == 1:
+            a,b,c,d,e,f = data[1:]
+            allreadyinA = False
+            if C[c,e] == LE and C[d,f] == LE:
+                A.append(data)
+                allreadyinA = True
+            if C[e,a] == LE and C[f,b] == LE:
+                if allreadyinA:
+                    print("A and B not disjoint!")
+                    sys.exit()
+                B.append(data)
+        else:
+            print("Only found", data[0], "critical pairs in ",l,2,"!")
+            sys.exit()
+    print("A:", len(A), "B:", len(B))
+    return len(A) + len(B)
 l = 6
 k = 2
 n = l+k
@@ -123,6 +170,12 @@ A = generate_uio(n)
 uio = [0,0,0,0,1,2,3, 3]
 print("There are", len(A), "uio of length", n)
 C = get_comparison_matrix(uio)
+for i,uio in enumerate([uio]):
+    #uio_to_graph(uio)
+    coef = getcoeff(uio,l,k)
+    print(i, uio, coef, getThml_2_coef(uio, l))
+
+"""counting a,b correct sequences and step 3 data
 countcor = 0
 countabcor = 0
 for seq in permutations(range(n)):
@@ -137,6 +190,8 @@ for seq in permutations(range(n)):
     print(getsequencedata(seq, C, 1, l, k))
 print("countcor:", countcor)
 print("countabcor:", countabcor)
+"""
+
 """
 K = 0
 for uio in A:
