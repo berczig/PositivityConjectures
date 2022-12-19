@@ -111,10 +111,10 @@ def getsequencedata(seq,C, p, l, k): # step 3 for l,k
     n = l+k
     pairs = 0 # count number of registered critical pairs
     for i in range(l-1, 0, -1):
-        if C[i, i-1] == EQ:
+        if C[seq[i], seq[i-1]] == EQ:
             pairs += 1
-            data.append(i-1)
-            data.append(i)
+            data.append(seq[i-1])
+            data.append(seq[i])
             if pairs >= p:
                 break
     data.insert(0, pairs)
@@ -138,6 +138,7 @@ def getcoeff(uio, l, k):
             only_lk_correct += 1
         elif lpk and not lk:
             only_lplusk_correct += 1
+    #print("only_lplusk_correct:", only_lplusk_correct)
     return only_lk_correct - only_lplusk_correct
 
 def getThml_2_coef(uio, l):
@@ -146,34 +147,66 @@ def getThml_2_coef(uio, l):
     A = []
     B = []
     for seq in permutations(range(n)):
-        data = getsequencedata(seq,C,p=1,l=l,k=2)
-        if data[0] == 1:
-            a,b,c,d,e,f = data[1:]
-            allreadyinA = False
-            if C[c,e] == LE and C[d,f] == LE:
-                A.append(data)
-                allreadyinA = True
-            if C[e,a] == LE and C[f,b] == LE:
-                if allreadyinA:
-                    print("A and B not disjoint!")
-                    sys.exit()
-                B.append(data)
-        else:
-            print("Only found", data[0], "critical pairs in ",l,2,"!")
-            sys.exit()
-    print("A:", len(A), "B:", len(B))
+        if isabcorrect(seq, l, 2, C):
+            data = getsequencedata(seq,C,p=1,l=l,k=2)
+            #print("datax:", seq, data)
+            if data[0] == 1:
+                a,b,c,d,e,f = data[1:]
+                allreadyinA = False
+                if C[c,e] == LE and C[d,f] == LE:
+                    A.append(data)
+                    #print("A")
+                    allreadyinA = True
+                if C[e,a] == LE and C[f,b] == LE:
+                    if allreadyinA:
+                        print("A and B not disjoint!")
+                        sys.exit()
+                    B.append(data)
+                    #print("B")
+            else:
+                print("Only found", data[0], "critical pairs in ",l,2,"!")
+                sys.exit()
+    #print("A:", len(A), "B:", len(B))
     return len(A) + len(B)
+
+def verifyl2Thm():
+    # verify Theorem for l,2
+    l = 6
+    k = 2
+    n = l+k
+    A = generate_uio(n)
+    for i,uio in enumerate(A):
+        #uio_to_graph(uio)
+        coef = getcoeff(uio,l,k)
+        coef_thm = getThml_2_coef(uio, l)
+        if coef != coef_thm:
+            print(i, "wrong", uio, coef, coef_thm)
+        else:
+            print(i, "right!", coef)    
+
+"""
 l = 6
 k = 2
 n = l+k
 A = generate_uio(n)
-uio = [0,0,0,0,1,2,3, 3]
+uio = [0,0,0, 0,1,2,3,4]
 print("There are", len(A), "uio of length", n)
 C = get_comparison_matrix(uio)
-for i,uio in enumerate([uio]):
+for i,uio in enumerate(A):
     #uio_to_graph(uio)
     coef = getcoeff(uio,l,k)
-    print(i, uio, coef, getThml_2_coef(uio, l))
+    coef_thm = getThml_2_coef(uio, l)
+    if coef != coef_thm:
+        print(i, uio, coef, coef_thm)
+    else:
+        print("right!", coef)
+"""
+
+"""
+for g in getcorrectsequences(uio):
+    print("cor seq:", g)
+for g in get_correct_ab_sequences(uio, l, k):
+    print("l 2 cor", g)"""
 
 """counting a,b correct sequences and step 3 data
 countcor = 0
