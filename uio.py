@@ -126,6 +126,27 @@ def getsequencedata(seq,C, p, l, k): # step 3 for l,k
     data += seq[-(k+1):]
     return data
 
+def getsequencedatatomatrix(data, C):
+    n = len(data)
+    M = np.zeros((n,n))
+    for i in range(n):
+        for j in range(n):
+            relation = C[data[i], data[j]]
+            if relation == 0:
+                relation = 2
+            M[i,j] = relation
+    return M
+
+def comparesequencedata(data1, data2, C):
+    n = len(data1)
+    for i in range(n):
+        for j in range(i+1, n):
+            edge1 = C[data1[i], data1[j]]
+            edge2 = C[data2[i], data2[j]]
+            if edge1 != edge2:
+                return False
+    return True
+
 def getcoeff(uio, l, k):
     only_lk_correct = 0
     only_lplusk_correct = 0
@@ -184,24 +205,25 @@ def verifyl2Thm():
         else:
             print(i, "right!", coef)    
 
-"""
-l = 6
+def getCategories(uio, l, k):
+    # lets say we have 2 datasequences:
+    # (a1,b1,c1,d1,e1,f1)
+    # (a2,b2,c2,d2,e2,f2)
+    # and all edges have the same type but actually b1=c1 (so it has only 5 edges)
+    # Should we put them in the same category? Yes, because w.r.t. the relation it's the same
+    n = len(uio)
+    C = get_comparison_matrix(uio)
+    print("C:", C)
+    for seq in permutations(range(n)):
+        if isabcorrect(seq, l, 2, C):
+            data = getsequencedata(seq,C,p=1,l=l,k=k)
+            M = getsequencedatatomatrix(data, C)
+            print(seq, "M:", M)
+
+l = 4
 k = 2
 n = l+k
-A = generate_uio(n)
-uio = [0,0,0, 0,1,2,3,4]
-print("There are", len(A), "uio of length", n)
-C = get_comparison_matrix(uio)
-for i,uio in enumerate(A):
-    #uio_to_graph(uio)
-    coef = getcoeff(uio,l,k)
-    coef_thm = getThml_2_coef(uio, l)
-    if coef != coef_thm:
-        print(i, uio, coef, coef_thm)
-    else:
-        print("right!", coef)
-"""
-
+getCategories([0,0,1,2,3,3], l, k)
 """
 for g in getcorrectsequences(uio):
     print("cor seq:", g)
