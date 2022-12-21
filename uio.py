@@ -52,6 +52,7 @@ def uio_to_graph(uio):
 def generate_uio(n):
     A = []
     generate_uio_rec(A, [0], n, 1)
+    print("Generated", len(A), "unit order intervals")
     return A
 
 def generate_uio_rec(A, uio, n, i):
@@ -135,8 +136,9 @@ def getsequencedatatomatrix(data, C):
             if relation == 0:
                 relation = 2
             M[i,j] = relation
-    return M
+    return tuple(map(tuple, M))
 
+"""
 def comparesequencedata(data1, data2, C):
     n = len(data1)
     for i in range(n):
@@ -145,7 +147,7 @@ def comparesequencedata(data1, data2, C):
             edge2 = C[data2[i], data2[j]]
             if edge1 != edge2:
                 return False
-    return True
+    return True"""
 
 def getcoeff(uio, l, k):
     only_lk_correct = 0
@@ -205,25 +207,79 @@ def verifyl2Thm():
         else:
             print(i, "right!", coef)    
 
-def getCategories(uio, l, k):
+def getCategories(uio_list, l, k):
+    # uio_list : list of uios of same lengths
+    #
     # lets say we have 2 datasequences:
     # (a1,b1,c1,d1,e1,f1)
     # (a2,b2,c2,d2,e2,f2)
     # and all edges have the same type but actually b1=c1 (so it has only 5 edges)
     # Should we put them in the same category? Yes, because w.r.t. the relation it's the same
-    n = len(uio)
-    C = get_comparison_matrix(uio)
-    print("C:", C)
-    for seq in permutations(range(n)):
-        if isabcorrect(seq, l, 2, C):
-            data = getsequencedata(seq,C,p=1,l=l,k=k)
-            M = getsequencedatatomatrix(data, C)
-            print(seq, "M:", M)
+    categories = {} # category:ID
+    categories_counters = [] # list of dicts(category counters)
+    n = len(uio_list[0])
+    rows = len(uio_list)
+    printval = 0
+    for uio in uio_list:
+        printval += 1
+        if printval%10 == 0:
+            pass
+            #print(printval, "/",rows)
+        counter = {}
+        n = len(uio)
+        C = get_comparison_matrix(uio)
+        #print("C:", C)
+        for seq in permutations(range(n)):
+            if isabcorrect(seq, l, k, C):
+                # get sequence data
+                data = getsequencedata(seq,C,p=1,l=l,k=k)
+                M = getsequencedatatomatrix(data[1:], C)
+
+                # determine category ID
+                if M not in categories:
+                    ID = len(categories)
+                    categories[M] = ID
+                else:
+                    ID = categories[M]
+
+                # count this observed category
+                if ID not in counter:
+                    counter[ID] = 1
+                else:
+                    counter[ID] += 1
+        categories_counters.append(counter)
+
+    # Turn collected category-count data into a matrix
+    columns = len(categories)
+    print("Found",columns, "categories")
+    counts = []
+    for i in range(rows):
+        counter = categories_counters[i]
+        row = [0 if j not in counter else counter[j] for j in range(columns)]
+        counts.append(row)
+    print("Computed count matrix of shape (", rows,",",columns, ")",sep="")
+    return counts
 
 l = 4
 k = 2
 n = l+k
-getCategories([0,0,1,2,3,3], l, k)
+print("l =",l)
+print("k =",k)
+print("n =",n)
+uios = generate_uio(n)
+categories = getCategories(uios, l, k)
+coeffs = np.array([getcoeff(uio,l,k) for uio in uios])
+
+print("First row of categories looks like:")
+print(categories[0])
+print("the first coefficient is:")
+print(coeffs[0])
+
+# Solve Ax = b without linear programming, where A is count matrix and b the coefficients
+categories = np.array(categories)
+x = np.linalg.pinv(categories)@coeffs
+print("x:", [round(val, 3) for val in x])
+
 """
 for g in getcorrectsequences(uio):
     print("cor seq:", g)
