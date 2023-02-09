@@ -3,6 +3,8 @@
 # step 3: take last 3 digits + n critical pairs, look at type of that graph
 # step 4: e.g. linear programming
 
+# improvement: just calculate all permutations of length n once! (currently calculating them again each time I get the correct sequences)
+
 
 from itertools import permutations
 from math import factorial as fac
@@ -197,6 +199,10 @@ def verifyl2Thm():
     l = 6
     k = 2
     n = l+k
+    print("verifyl2Thm")
+    print("l:", l)
+    print("k:", k)
+    print("n:", n)
     A = generate_uio(n)
     for i,uio in enumerate(A):
         #uio_to_graph(uio)
@@ -260,55 +266,63 @@ def getCategories(uio_list, l, k):
     print("Computed count matrix of shape (", rows,",",columns, ")",sep="")
     return counts
 
-l = 4
-k = 2
-n = l+k
-print("l =",l)
-print("k =",k)
-print("n =",n)
-uios = generate_uio(n)
-categories = getCategories(uios, l, k)
-coeffs = np.array([getcoeff(uio,l,k) for uio in uios])
+if __name__ == "__main__":
+    verifyl2Thm()
 
-print("First row of categories looks like:")
-print(categories[0])
-print("the first coefficient is:")
-print(coeffs[0])
 
-# Solve Ax = b without linear programming, where A is count matrix and b the coefficients
-categories = np.array(categories)
-x = np.linalg.pinv(categories)@coeffs
-print("x:", [round(val, 3) for val in x])
+    """ Look at categories
+    l = 4
+    k = 2
+    n = l+k
+    print("l =",l)
+    print("k =",k)
+    print("n =",n)
+    uios = generate_uio(n)
+    categories = getCategories(uios, l, k)
+    coeffs = np.array([getcoeff(uio,l,k) for uio in uios])
 
-"""
-for g in getcorrectsequences(uio):
-    print("cor seq:", g)
-for g in get_correct_ab_sequences(uio, l, k):
-    print("l 2 cor", g)"""
+    print("First row of categories looks like:")
+    print(categories[0])
+    print("the first coefficient is:")
+    print(coeffs[0])
 
-"""counting a,b correct sequences and step 3 data
-countcor = 0
-countabcor = 0
-for seq in permutations(range(n)):
-    a = iscorrect(seq,C)
-    b = isabcorrect(seq,l,k,C)
-    if a:
-        countcor += 1
-    if b:
-        countabcor += 1
-    if a or b:
-        print(seq, iscorrect(seq,C), b)
-    print(getsequencedata(seq, C, 1, l, k))
-print("countcor:", countcor)
-print("countabcor:", countabcor)
-"""
+    # Solve Ax = b without linear programming, where A is count matrix and b the coefficients
+    categories = np.array(categories)
+    x = np.linalg.pinv(categories)@coeffs
+    print("x:", [round(val, 3) for val in x])
+    """
 
-"""
-K = 0
-for uio in A:
-    num = len(getcorrectsequences(uio))
-    if num != 0:
-        K += 1
-        print("number of correct sequences in uio:", num)
-print("uio with correct sequences:", K)
-"""
+
+
+    """
+    for g in getcorrectsequences(uio):
+        print("cor seq:", g)
+    for g in get_correct_ab_sequences(uio, l, k):
+        print("l 2 cor", g)"""
+
+    """counting a,b correct sequences and step 3 data
+    countcor = 0
+    countabcor = 0
+    for seq in permutations(range(n)):
+        a = iscorrect(seq,C)
+        b = isabcorrect(seq,l,k,C)
+        if a:
+            countcor += 1
+        if b:
+            countabcor += 1
+        if a or b:
+            print(seq, iscorrect(seq,C), b)
+        print(getsequencedata(seq, C, 1, l, k))
+    print("countcor:", countcor)
+    print("countabcor:", countabcor)
+    """
+
+    """
+    K = 0
+    for uio in A:
+        num = len(getcorrectsequences(uio))
+        if num != 0:
+            K += 1
+            print("number of correct sequences in uio:", num)
+    print("uio with correct sequences:", K)
+    """
