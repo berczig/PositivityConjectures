@@ -754,8 +754,8 @@ def test_main():
 
 def main():
     # Initialize variables
-    a_val = 5
-    b_val = 3
+    a_val = 6
+    b_val = 2
     num_critical_pairs = 2
     n = a_val + b_val
     catalan_sequences = catalan(n)  # Generate all Catalan sequences of length n
@@ -777,6 +777,7 @@ def main():
         #print("Number of correct (l,k)-sequences: " + str(len(correct_l_k_sequences)))
         #print("Number of correct l+k sequences: " + str(len(correct_sequences)))
         coeff = len(correct_l_k_sequences) - len(correct_sequences)
+        print("coeff:", coeff, sequence)
         coefficient_list.append(coeff)
         #print("The coefficient is: " + str(coeff))
         types_count = defaultdict(int)
@@ -866,5 +867,5 @@ def main():
 
 if __name__ == "__main__":
     tic = time.time()
-    test_main()
+    main()
     print("Execution time: " + str(time.time() - tic))

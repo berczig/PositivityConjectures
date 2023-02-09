@@ -208,6 +208,7 @@ def verifyl2Thm():
         #uio_to_graph(uio)
         coef = getcoeff(uio,l,k)
         coef_thm = getThml_2_coef(uio, l)
+        print(uio)
         if coef != coef_thm:
             print(i, "wrong", uio, coef, coef_thm)
         else:
@@ -267,7 +268,8 @@ def getCategories(uio_list, l, k):
     return counts
 
 if __name__ == "__main__":
-    verifyl2Thm()
+    print("yO", getThml_2_coef([0,0,0,0,0,0,1,2], 6))
+    #verifyl2Thm()
 
 
     """ Look at categories
