@@ -742,8 +742,15 @@ def try_pairs_triples_of_fingerprint_value_vectors(fingerprint_value_vectors, co
                             print(keys)
 
 
-
-
+def test_main():
+    a_val = 5
+    b_val = 3
+    num_critical_pairs = 2
+    n = a_val + b_val
+    catalan_sequences = catalan(n)  # Generate all Catalan sequences of length n
+    print(len(catalan_sequences))
+    for i,x in enumerate(catalan_sequences):
+        print(i, x)
 
 def main():
     # Initialize variables
@@ -857,7 +864,7 @@ def main():
         print()
     """
 
-
-tic = time.time()
-main()
-print("Execution time: " + str(time.time() - tic))
+if __name__ == "__main__":
+    tic = time.time()
+    test_main()
+    print("Execution time: " + str(time.time() - tic))
