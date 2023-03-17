@@ -1,10 +1,15 @@
-# step 1 : generate uio
-# step 2: for any uio check all permutations and get the l,k correct sequences
-# step 3: take last 3 digits + n critical pairs, look at type of that graph
-# step 4: e.g. linear programming
+"""
+step 1 : generate uio
+step 2: for any uio check all permutations and get the l,k correct sequences
+step 3: From each l,k correct sequence extract this data:
+    - last k+1 intervals
+    - maximum interval from first l-1 intervals
+    - p critical pairs from first intervals
+    This data can be viewed as a graph and we classify all these graphs(from all uio) into the emerging categories.
+step 4: e.g. linear programming
 
-# improvement: just calculate all permutations of length n once! (currently calculating them again each time I get the correct sequences)
 
+"""
 
 from itertools import permutations
 from math import factorial as fac
@@ -12,10 +17,20 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt 
 import sys
+import time 
 
+INCOMPARABLE = 0
 LE = 1
 EQ = 2
 GE = 3
+
+permutations_n = {}
+def getPermutationsOfN(n):
+    # calculate all permutations of 1,..,n once - used multiple times
+    global permutations_n
+    if n not in permutations_n:
+        permutations_n[n] = list(permutations(range(n)))
+    return permutations_n[n]
 
 def binomial(x, y):
     try:
@@ -26,9 +41,23 @@ def binomial(x, y):
 def C_n(n):
     return binomial(2*n, n)/(n+1)
 
-def get_comparison_matrix(uio):
+
+def get_comparison_matrix_new(uio): # Relates to poset not incomparibility graph
+    n = len(uio)
+    C = np.diag([EQ for _ in range(n)]) # sets eq correct and all other to incomparable for now
+    # 0: not comparable, 1 : less than, 2: equal 3: greater than
+    for l in range(n):
+        for k in range(l+1, n):
+            if uio[k] > l:
+                C[l, k] = LE
+                C[k,l] = GE
+    print(uio, C)
+    return C
+
+def get_comparison_matrix(uio): # Relates to poset not incomparibility graph
     n = len(uio)
     C = np.zeros((n,n))
+    print("uio:", uio)
     # 0: not comparable, 1 : less than, 2: equal 3: greater than
     for i in range(n):
         for j in range(i+1, n):
@@ -88,12 +117,12 @@ def getcorrectsequences(uio, verbose=False):
     if verbose:
         print("uio:", uio)
         print("C", C)
-    return [seq for seq in permutations(range(n)) if iscorrect(seq,C)]
+    return [seq for seq in getPermutationsOfN(n) if iscorrect(seq,C)]
 
 def get_correct_ab_sequences(uio,a,b):
     n = len(uio)
     C = get_comparison_matrix(uio)
-    return [seq for seq in permutations(range(n)) if isabcorrect(seq,a,b,C)]
+    return [seq for seq in getPermutationsOfN(n) if isabcorrect(seq,a,b,C)]
 
 def getmaximalinterval(subseq, C):
     maximals = []
@@ -140,6 +169,11 @@ def getsequencedatatomatrix(data, C):
             M[i,j] = relation
     return tuple(map(tuple, M))
 
+def getsequencedatatovector(data, C):
+    # vector of the edge-labels
+    n = len(data)
+    return tuple([C[data[i], data[j]] for i in range(n) for j in range(i+1, n)])
+
 """
 def comparesequencedata(data1, data2, C):
     n = len(data1)
@@ -156,7 +190,7 @@ def getcoeff(uio, l, k):
     only_lplusk_correct = 0
     n = len(uio)
     C = get_comparison_matrix(uio)
-    for seq in permutations(range(n)):
+    for seq in getPermutationsOfN(n):
         lk = isabcorrect(seq,l,k,C)
         lpk = iscorrect(seq, C)
         if lk and not lpk:
@@ -171,7 +205,7 @@ def getThml_2_coef(uio, l):
     C = get_comparison_matrix(uio)
     A = []
     B = []
-    for seq in permutations(range(n)):
+    for seq in getPermutationsOfN(n):
         if isabcorrect(seq, l, 2, C):
             data = getsequencedata(seq,C,p=1,l=l,k=2)
             #print("datax:", seq, data)
@@ -236,11 +270,14 @@ def getCategories(uio_list, l, k):
         n = len(uio)
         C = get_comparison_matrix(uio)
         #print("C:", C)
-        for seq in permutations(range(n)):
+        for seq in getPermutationsOfN(n):
             if isabcorrect(seq, l, k, C):
                 # get sequence data
                 data = getsequencedata(seq,C,p=1,l=l,k=k)
+                #print("data:", data)
                 M = getsequencedatatomatrix(data[1:], C)
+                #print("M:", M)
+                #print("V:", getsequencedatatovector(data[1:], C))
 
                 # determine category ID
                 if M not in categories:
@@ -268,11 +305,11 @@ def getCategories(uio_list, l, k):
     return counts
 
 if __name__ == "__main__":
-    print("yO", getThml_2_coef([0,0,0,0,0,0,1,2], 6))
+    #print("yO", getThml_2_coef([0,0,0,0,0,0,1,2], 6))
     #verifyl2Thm()
 
 
-    """ Look at categories
+    #Look at categories
     l = 4
     k = 2
     n = l+k
@@ -285,14 +322,19 @@ if __name__ == "__main__":
 
     print("First row of categories looks like:")
     print(categories[0])
+    print()
     print("the first coefficient is:")
     print(coeffs[0])
+    print("l, k correct sequences of all uio of length ", n, " is ", np.sum(np.array(categories)))
 
     # Solve Ax = b without linear programming, where A is count matrix and b the coefficients
     categories = np.array(categories)
     x = np.linalg.pinv(categories)@coeffs
     print("x:", [round(val, 3) for val in x])
-    """
+
+    print("A:", get_comparison_matrix([0,0,2,2,2]))
+    print("B:", get_comparison_matrix_new([0,0,2,2,2]))
+    
 
 
 
@@ -305,7 +347,7 @@ if __name__ == "__main__":
     """counting a,b correct sequences and step 3 data
     countcor = 0
     countabcor = 0
-    for seq in permutations(range(n)):
+    for seq in getPermutationsOfN(n):
         a = iscorrect(seq,C)
         b = isabcorrect(seq,l,k,C)
         if a:
