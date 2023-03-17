@@ -8,6 +8,7 @@ step 3: From each l,k correct sequence extract this data:
     This data can be viewed as a graph and we classify all these graphs(from all uio) into the emerging categories.
 step 4: e.g. linear programming
 
+# maybe we don't have  to use ~ for the filter
 
 """
 
@@ -198,6 +199,19 @@ def getcoeff(uio, l, k):
             only_lplusk_correct += 1
     #print("only_lplusk_correct:", only_lplusk_correct)
     return only_lk_correct - only_lplusk_correct
+
+def evaluate_Conditions(lk_correct_seqs, Condition_matrix):
+    # step 1: encode right condition into condition-MATRIX and check against all correct seqs
+    # step2 : RL: deep neural cross entropy method
+    # 
+    # neural network policy structures:
+    #   1: 45 or 46 , 60, 61, outputs for all the possible actions
+    #   2: there is a 2. input telling you at what edge we are, just 4 outputs
+    # 
+    # Training happens like this:
+    #   top 10 % become training data: conditions|->probability dist.
+    #   train our current policy / neural network w.r.t. this classificaation. 
+    pass
 
 def getThml_2_coef(uio, l):
     n = len(uio)
