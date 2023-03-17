@@ -14,7 +14,7 @@ step 4: e.g. linear programming
 from itertools import permutations
 from math import factorial as fac
 import numpy as np
-import networkx as nx
+#import networkx as nx
 import matplotlib.pyplot as plt 
 import sys
 import time 
@@ -42,7 +42,7 @@ def C_n(n):
     return binomial(2*n, n)/(n+1)
 
 
-def get_comparison_matrix_new(uio): # Relates to poset not incomparibility graph
+def get_comparison_matrix(uio): # Relates to poset not incomparibility graph
     n = len(uio)
     C = np.diag([EQ for _ in range(n)]) # sets eq correct and all other to incomparable for now
     # 0: not comparable, 1 : less than, 2: equal 3: greater than
@@ -51,13 +51,12 @@ def get_comparison_matrix_new(uio): # Relates to poset not incomparibility graph
             if uio[k] > l:
                 C[l, k] = LE
                 C[k,l] = GE
-    print(uio, C)
     return C
 
-def get_comparison_matrix(uio): # Relates to poset not incomparibility graph
+def get_comparison_matrix_old(uio): # Relates to poset not incomparibility graph
     n = len(uio)
     C = np.zeros((n,n))
-    print("uio:", uio)
+    #print("uio:", uio)
     # 0: not comparable, 1 : less than, 2: equal 3: greater than
     for i in range(n):
         for j in range(i+1, n):
@@ -104,7 +103,7 @@ def iscorrect(seq, C):
         # intersects with some previous interval
         intersects = False
         for j in range(0, i):
-            if C[seq[i], seq[j]] in [LE, EQ]:
+            if C[seq[i], seq[j]] in [LE, INCOMPARABLE]:
                 intersects = True
                 #break
         if not intersects:
@@ -143,7 +142,7 @@ def getsequencedata(seq,C, p, l, k): # step 3 for l,k
     n = l+k
     pairs = 0 # count number of registered critical pairs
     for i in range(l-1, 0, -1):
-        if C[seq[i], seq[i-1]] == EQ:
+        if C[seq[i], seq[i-1]] == INCOMPARABLE:
             pairs += 1
             data.append(seq[i-1])
             data.append(seq[i])
@@ -216,7 +215,7 @@ def getThml_2_coef(uio, l):
                     A.append(data)
                     #print("A")
                     allreadyinA = True
-                if C[e,a] == LE and C[f,b] == LE:
+                if C[a,e] == GE and C[b,f] == GE:
                     if allreadyinA:
                         print("A and B not disjoint!")
                         sys.exit()
@@ -227,6 +226,7 @@ def getThml_2_coef(uio, l):
                 sys.exit()
     #print("A:", len(A), "B:", len(B))
     return len(A) + len(B)
+    # [()]
 
 def verifyl2Thm():
     # verify Theorem for l,2
@@ -277,7 +277,7 @@ def getCategories(uio_list, l, k):
                 #print("data:", data)
                 M = getsequencedatatomatrix(data[1:], C)
                 #print("M:", M)
-                #print("V:", getsequencedatatovector(data[1:], C))
+                print("V:", getsequencedatatovector(data[1:], C))
 
                 # determine category ID
                 if M not in categories:
@@ -332,8 +332,6 @@ if __name__ == "__main__":
     x = np.linalg.pinv(categories)@coeffs
     print("x:", [round(val, 3) for val in x])
 
-    print("A:", get_comparison_matrix([0,0,2,2,2]))
-    print("B:", get_comparison_matrix_new([0,0,2,2,2]))
     
 
 
