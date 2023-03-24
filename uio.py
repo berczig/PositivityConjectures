@@ -1,12 +1,14 @@
 """
-step 1 : generate uio
-step 2: for any uio check all permutations and get the l,k correct sequences
-step 3: From each l,k correct sequence extract this data:
+step 1: generate uio
+step 2: for all uio check all permutations and get the l,k correct sequences
+step 3: From each l,k correct sequence extract this data(called the core):
     - last k+1 intervals
     - maximum interval from first l-1 intervals
     - p critical pairs from first intervals
-    This data can be viewed as a graph and we classify all these graphs(from all uio) into the emerging categories.
-step 4: e.g. linear programming
+step 4: This data can be viewed as a graph and we classify all these graphs(from all uio) into the emerging categories.
+step 5: Sum problem: find the graph G such that the number of graphs who have G as subgraph is exactly the coefficent c_{l,k}
+        - using linear programming (Adam, Gurobi)
+        - using RL
 
 # maybe we don't have  to use ~ for the filter
 
@@ -20,10 +22,10 @@ import matplotlib.pyplot as plt
 import sys
 import time 
 
-INCOMPARABLE = 0
-LE = 1
-EQ = 2
-GE = 3
+#INCOMPARABLE = 0
+#LE = 1
+#EQ = 2
+#GE = 3
 
 permutations_n = {}
 def getPermutationsOfN(n):
@@ -45,13 +47,13 @@ def C_n(n):
 
 def get_comparison_matrix(uio): # Relates to poset not incomparibility graph
     n = len(uio)
-    C = np.diag([EQ for _ in range(n)]) # sets eq correct and all other to incomparable for now
+    C = np.diag([UIO.EQUAL for _ in range(n)]) # sets eq correct and all other to incomparable for now
     # 0: not comparable, 1 : less than, 2: equal 3: greater than
     for l in range(n):
         for k in range(l+1, n):
             if uio[k] > l:
-                C[l, k] = LE
-                C[k,l] = GE
+                C[l, k] = UIO.LESS
+                C[k,l] = UIO.GREATER
     return C
 
 def get_comparison_matrix_old(uio): # Relates to poset not incomparibility graph
@@ -62,8 +64,8 @@ def get_comparison_matrix_old(uio): # Relates to poset not incomparibility graph
     for i in range(n):
         for j in range(i+1, n):
             if uio[j] <= i:
-                C[i,j] = EQ
-                C[j,i] = EQ
+                C[i,j] = UIO.EQUAL
+                C[j,i] = UIO.EQUAL
             else:
                 C[i, j] = LE
                 C[j,i] = GE
@@ -80,7 +82,7 @@ def uio_to_graph(uio):
     nx.draw(G)
     plt.show()
 
-def generate_uio(n):
+def generate_all_uios(n):
     A = []
     generate_uio_rec(A, [0], n, 1)
     print("Generated", len(A), "unit order intervals")
@@ -93,7 +95,7 @@ def generate_uio_rec(A, uio, n, i):
     for j in range(uio[i-1], i+1):
         generate_uio_rec(A, uio+[j], n, i+1)
 
-def isabcorrect(seq,a,b,C):
+def is_lk_correct(seq,a,b,C):
     return iscorrect(seq[:a], C) and iscorrect(seq[a:], C)
 
 def iscorrect(seq, C):
@@ -122,7 +124,7 @@ def getcorrectsequences(uio, verbose=False):
 def get_correct_ab_sequences(uio,a,b):
     n = len(uio)
     C = get_comparison_matrix(uio)
-    return [seq for seq in getPermutationsOfN(n) if isabcorrect(seq,a,b,C)]
+    return [seq for seq in getPermutationsOfN(n) if is_lk_correct(seq,a,b,C)]
 
 def getmaximalinterval(subseq, C):
     maximals = []
@@ -159,6 +161,7 @@ def getsequencedata(seq,C, p, l, k): # step 3 for l,k
     return data
 
 def getsequencedatatomatrix(data, C):
+    # takes data sequence and creates a matrix with hardcoded conversion (REPLACE THIS). Returns a tuple of tuples instead of matrix, so it can be used as keys
     n = len(data)
     M = np.zeros((n,n))
     for i in range(n):
@@ -191,7 +194,7 @@ def getcoeff(uio, l, k):
     n = len(uio)
     C = get_comparison_matrix(uio)
     for seq in getPermutationsOfN(n):
-        lk = isabcorrect(seq,l,k,C)
+        lk = is_lk_correct(seq,l,k,C)
         lpk = iscorrect(seq, C)
         if lk and not lpk:
             only_lk_correct += 1
@@ -200,18 +203,6 @@ def getcoeff(uio, l, k):
     #print("only_lplusk_correct:", only_lplusk_correct)
     return only_lk_correct - only_lplusk_correct
 
-def evaluate_Conditions(lk_correct_seqs, Condition_matrix):
-    # step 1: encode right condition into condition-MATRIX and check against all correct seqs
-    # step2 : RL: deep neural cross entropy method
-    # 
-    # neural network policy structures:
-    #   1: 45 or 46 , 60, 61, outputs for all the possible actions
-    #   2: there is a 2. input telling you at what edge we are, just 4 outputs
-    # 
-    # Training happens like this:
-    #   top 10 % become training data: conditions|->probability dist.
-    #   train our current policy / neural network w.r.t. this classificaation. 
-    pass
 
 def getThml_2_coef(uio, l):
     n = len(uio)
@@ -219,7 +210,7 @@ def getThml_2_coef(uio, l):
     A = []
     B = []
     for seq in getPermutationsOfN(n):
-        if isabcorrect(seq, l, 2, C):
+        if is_lk_correct(seq, l, 2, C):
             data = getsequencedata(seq,C,p=1,l=l,k=2)
             #print("datax:", seq, data)
             if data[0] == 1:
@@ -251,7 +242,7 @@ def verifyl2Thm():
     print("l:", l)
     print("k:", k)
     print("n:", n)
-    A = generate_uio(n)
+    A = generate_all_uios(n)
     for i,uio in enumerate(A):
         #uio_to_graph(uio)
         coef = getcoeff(uio,l,k)
@@ -285,7 +276,7 @@ def getCategories(uio_list, l, k):
         C = get_comparison_matrix(uio)
         #print("C:", C)
         for seq in getPermutationsOfN(n):
-            if isabcorrect(seq, l, k, C):
+            if is_lk_correct(seq, l, k, C):
                 # get sequence data
                 data = getsequencedata(seq,C,p=1,l=l,k=k)
                 #print("data:", data)
@@ -318,7 +309,8 @@ def getCategories(uio_list, l, k):
     print("Computed count matrix of shape (", rows,",",columns, ")",sep="")
     return counts
 
-if __name__ == "__main__":
+
+def do1():
     #print("yO", getThml_2_coef([0,0,0,0,0,0,1,2], 6))
     #verifyl2Thm()
 
@@ -330,7 +322,7 @@ if __name__ == "__main__":
     print("l =",l)
     print("k =",k)
     print("n =",n)
-    uios = generate_uio(n)
+    uios = generate_all_uios(n)
     categories = getCategories(uios, l, k)
     coeffs = np.array([getcoeff(uio,l,k) for uio in uios])
 
@@ -382,3 +374,210 @@ if __name__ == "__main__":
             print("number of correct sequences in uio:", num)
     print("uio with correct sequences:", K)
     """
+
+class UIO:
+
+    INCOMPARABLE = 100    # (i,j) is INCOMPARABLE if neither i < j nor j < i nor i = j -- connected in the incomparability graph -- intersecting intervals
+    LESS = 101              # (i,j) is LE iff i < j     interval i is to the left of j 
+    EQUAL = 102              # (i,j) is EQ iff i = j     interval i and interval j are same interval
+    GREATER = 103              # (i,j) is LE iff i > j     interval i is to the right of j
+
+    def __init__(self, uio_encoding):
+        self.n = len(uio_encoding)
+        self.encoding = uio_encoding
+
+        # decode encoding to get comparison matrix
+        self.comparison_matrix = np.zeros((self.n,self.n)) + self.EQUAL
+        for i in range(self.n):
+            for j in range(i+1, self.n):
+                if uio_encoding[j] <= i:
+                    self.comparison_matrix[i,j] = self.INCOMPARABLE
+                    self.comparison_matrix[j,i] = self.INCOMPARABLE
+                else:
+                    self.comparison_matrix[i, j] = self.LESS
+                    self.comparison_matrix[j,i] = self.GREATER
+        self.lkCorrectSequences = {} # {(l,k):[corseq1, corseq2,...], ... }
+
+        # compute correct sequences
+        self.computeCorrectSequences()
+    
+    ##### CORRECT SEQUENCES ####
+
+    def iscorrect(self, seq):
+        for i in range(1,len(seq)):
+            # not to the left of previos interval
+            if self.comparison_matrix[seq[i], seq[i-1]] == UIO.LESS:
+                return False
+            # intersects with some previous interval
+            intersects = False
+            for j in range(0, i):
+                if self.comparison_matrix[seq[i], seq[j]] in [UIO.LESS, UIO.INCOMPARABLE]:
+                    intersects = True
+                    #break
+            if not intersects:
+                return False
+        return True
+    
+    def is_lk_correct(self,seq,l,k):
+        return self.iscorrect(seq[:l]) and self.iscorrect(seq[l:])
+    
+    def computeCorrectSequences(self):
+        self.lkCorrectSequences[(self.n,0)] = [seq for seq in getPermutationsOfN(self.n) if self.iscorrect(seq)]
+    
+    def computelkCorrectSequences(self, l, k):
+        self.lkCorrectSequences[(l,k)] = [seq for seq in getPermutationsOfN(self.n) if self.is_lk_correct(seq,l,k)]
+        self.l = l
+        self.k = k
+
+    ##### THE CORE OF CORRECT SEQUENCE ####
+
+    def getmaximalinterval(self, subseq):
+        maximals = []
+        for i in subseq:
+            ismaximal = True
+            for j in subseq:
+                if self.comparison_matrix[j, i] == UIO.GREATER: # one very redundant comparison: i==j, but whatever
+                    # i can't be maximal
+                    ismaximal = False
+                    break
+            if ismaximal:
+                maximals.append(i)
+        return max(maximals)
+    
+    def getCore(self, seq, p): # step 3 for l,k
+        core = []
+        # take last critical pairs (at most p)
+        pairs = 0 # count number of registered critical pairs
+        for i in range(self.l-1, 0, -1):
+            if self.comparison_matrix[seq[i], seq[i-1]] == UIO.INCOMPARABLE:
+                pairs += 1
+                core.append(seq[i-1])
+                core.append(seq[i])
+                if pairs >= p:
+                    break
+        core.insert(0, pairs)
+
+        # maximal element in first l-1
+        core.append(self.getmaximalinterval(seq[:self.l-1]))
+
+        # last k+1 elements
+        core += seq[-(self.k+1):]
+        return core
+    
+    def computeCores(self, p):
+        # Assumes that computelkCorrectSequences has been called
+        self.cores = []
+        for seq in self.lkCorrectSequences[(self.l, self.k)]:
+            self.cores.append(self.getCore(seq, p))
+
+    #### GRAPH REPRESENTATIONS(TUPLE OF EDGES) OF CORE ####
+
+    def getCoreRepresentations(self):
+        representations = []
+        for core in self.cores:
+            k = len(core)
+            representations.append(tuple([self.comparison_matrix[core[i], core[j]] for i in range(1, k) for j in range(i+1, k)]))
+        return representations
+    
+    #### COEFFICIENT ####
+
+    def getCoefficient(self):
+        # assumes that lk correct sequences allready  have been calculated
+        return len(self.lkCorrectSequences[self.l, self.k]) - len(self.lkCorrectSequences[self.n, 0])
+
+def getAllCoreRepresentationsOfAllUios(l,k,p):
+
+    # Compute UIO length
+    n = l+k
+
+    # step 1
+    print(111122222222)
+    uios = [UIO(uio_encoding) for uio_encoding in generate_all_uios(n)]
+    coreRepresentations = []
+    print(122222222222222)
+
+    g = 0
+    for uio in uios:
+        g += 1
+        print("k:", g)
+        # step 2
+        uio.computelkCorrectSequences(l,k)
+
+        # step 3
+        uio.computeCores(p)
+
+        # step 4
+        coreRepresentations.append(uio.getCoreRepresentations())
+
+    return uios, coreRepresentations
+
+def count_cores(coreRepresentations, Condition_matrix, IGNORE_EDGE):
+    # step 1: encode right condition into condition-MATRIX and check against all correct seqs
+    counter = 0
+    #print("coreRepresentations:", len(coreRepresentations))
+    coreedges = Condition_matrix.shape[1]
+    #print("coreedges:", coreedges)
+
+    # Condition_matrix is not so straight to the point when one wants to check the conditions, so let's prune it a bit so it's easier to do the checking
+    Conditions = [[(i, edgecondition) for i, edgecondition in enumerate(conditionrow) if edgecondition != IGNORE_EDGE] 
+                  for conditionrow in Condition_matrix]
+    #print("Conditions:", Conditions)
+    
+    def coreFitsConditions(correp):
+        for rowcondition in Conditions:
+            fits = True
+            for edgeIndex, edgevalue in rowcondition:
+                if correp[edgeIndex] != edgevalue:
+                    fits = False
+                    break
+            if fits:
+                return True
+        return False
+    
+    # count how many fit 1 of the conditions
+    for correp in coreRepresentations:
+        if coreFitsConditions(correp):
+            counter += 1
+
+    return counter
+
+    # step 1: encode right condition into condition-MATRIX and check against all correct seqs
+            
+    # step2 : RL: deep neural cross entropy method
+    # 
+    # neural network policy structures:
+    #   1: 45 or 46 , 60, 61, outputs for all the possible actions
+    #   2: there is a 2. input telling you at what edge we are, just 4 outputs
+    # 
+    # Training happens like this:
+    #   top 10 % become training data: conditions|->probability dist.
+    #   train our current policy / neural network w.r.t. this classificaation. 
+
+# Example of a representation of a core (a,b,c,d,e,f) of length 6 with a representation of length 6*5/2 = 15:
+#    0   1   2   3   4       5   6   7   8       9   10  11      12  13      14  
+#    a,b a,c a,d a,e a,f     b,c b,d b,e b,f     c,d c,e c,f     d,e d,f     e,f
+
+def do2():
+    # Set UIO parameters
+    tstart = time.time()
+    l = 6
+    k = 2
+    p = 1
+    print(11111111111111)
+    uios, total_correps = getAllCoreRepresentationsOfAllUios(l,k,p)
+    print(222222222222222222)
+    # The thm needs c<e and d<f  OR  a>e and b > f  that translates to 
+    ThmConditionFilter = np.zeros((2,15))
+    ThmConditionFilter[0][10] = UIO.LESS
+    ThmConditionFilter[0][13] = UIO.LESS
+    ThmConditionFilter[1][3] = UIO.GREATER
+    ThmConditionFilter[1][8] = UIO.GREATER
+
+    tnow = time.time()
+    for i, correps in enumerate(total_correps):
+        print(i, "count:", count_cores(correps, ThmConditionFilter, 0), uios[i].getCoefficient())
+    print("checking:", time.time()-tnow)
+    print(333333333333333)
+    print("all.", time.time()-tstart)
+if __name__ == "__main__":
+    do2()

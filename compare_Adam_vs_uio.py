@@ -12,7 +12,7 @@ print("k:", k)
 print("n:", n)
 
 # check if we generate the same uios
-J =  uio.generate_uio(n)
+J =  uio.generate_all_uios(n)
 A = Adam.catalan(n)
 x = all([np.array_equal(A[i], J[i]) for i in range(len(A))])
 print("Generate same uios?:", x)
@@ -35,7 +35,7 @@ for a_uio in A:
         totalsame = False
 
     Alkcorseq = Adam.find_all_correct_l_k_sequences(a_uio, l, k, all_permutations)
-    Jlkcorseq = uio.get_correct_ab_sequences(a_uio, l, k)
+    Jlkcorseq = uio.get_correct_lk_sequences(a_uio, l, k)
     samelk = sorted(Jlkcorseq) == sorted([tuple(lkcorseq) for lkcorseq in Alkcorseq])
     if samelk == False:
         print("Adam's and my generated l,k correct sequences differ for the uio", a_uio)
