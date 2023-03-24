@@ -375,6 +375,8 @@ def do1():
     print("uio with correct sequences:", K)
     """
 
+###############################################################################################
+
 class UIO:
 
     INCOMPARABLE = 100    # (i,j) is INCOMPARABLE if neither i < j nor j < i nor i = j -- connected in the incomparability graph -- intersecting intervals
@@ -549,17 +551,14 @@ class ConditionEvaluator:
             self.trueCoefficients.append(uio.getCoefficient())
         print("ConditionEvaluator ready!")
 
-    def countComplyingCores(self, coreRepresentations, Condition_matrix):
+    def countComplyingCores(self, coreRepresentations, Conditions):
         if len(coreRepresentations) == 0:
             return 0
             
         counter = 0
-        coreedges = Condition_matrix.shape[1] # assume same number of critical pairs
+        coreedges = len(coreRepresentations[0]) # assume same number of critical pairs
 
         # for the case were the number of critical pairs can vary: using condition_matrix create another conditions2 for the case with fewer edges, then given a correp always check the length and pick the right conditions
-        # Condition_matrix is not so straight to the point when one wants to check the conditions, so let's prune it a bit so it's easier to do the checking
-        Conditions = [[(i, edgecondition) for i, edgecondition in enumerate(conditionrow) if edgecondition != self.ignoreEdge] 
-                    for conditionrow in Condition_matrix]
         
         def coreFitsConditions(correp):
             for rowcondition in Conditions:
@@ -585,8 +584,13 @@ class ConditionEvaluator:
 
         print("evaluate Condition_matrix:", Condition_matrix)
         score = 0 # bigger is better, negative
+
+        # Condition_matrix is not so straight to the point when one wants to check the conditions, so let's prune it a bit so it's easier to do the checking
+        Conditions = [[(i, edgecondition) for i, edgecondition in enumerate(conditionrow) if edgecondition != self.ignoreEdge] 
+                    for conditionrow in Condition_matrix]
+
         for i, corereps in enumerate(self.coreRepresentations):
-            amount = self.countComplyingCores(corereps, Condition_matrix)
+            amount = self.countComplyingCores(corereps, Conditions)
             difference = amount - self.trueCoefficients[i]
 
             if difference < 0: # too many conditions, didn't include enough cores
@@ -610,11 +614,10 @@ class ConditionEvaluator:
 #    0   1   2   3   4       5   6   7   8       9   10  11      12  13      14  
 #    a,b a,c a,d a,e a,f     b,c b,d b,e b,f     c,d c,e c,f     d,e d,f     e,f
 
-def do2():
+def checkThmConditionMatrix():
     # Set UIO parameters
     tstart = time.time()
     CE = ConditionEvaluator(l=4, k=2, p=1, ignoreEdge=0)
-    print(222222222222222222)
 
     # The thm needs c<e and d<f  OR  a>e and b > f  that translates to 
     ThmConditionFilter = np.zeros((2,15))
@@ -627,5 +630,6 @@ def do2():
     print("score:", CE.evaluate(ThmConditionFilter))
     print("checking:", time.time()-tnow)
     print("all.", time.time()-tstart)
+
 if __name__ == "__main__":
-    do2()
+    checkThmConditionMatrix()
