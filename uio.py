@@ -85,7 +85,7 @@ def uio_to_graph(uio):
 def generate_all_uios(n):
     A = []
     generate_uio_rec(A, [0], n, 1)
-    print("Generated", len(A), "unit order intervals")
+    print("Generated", len(A), "unit order intervals encodings")
     return A
 
 def generate_uio_rec(A, uio, n, i):
@@ -511,35 +511,88 @@ def getAllCoreRepresentationsOfAllUios(l,k,p):
 
     return uios, coreRepresentations
 
-def count_cores(coreRepresentations, Condition_matrix, IGNORE_EDGE):
-    # step 1: encode right condition into condition-MATRIX and check against all correct seqs
-    counter = 0
-    #print("coreRepresentations:", len(coreRepresentations))
-    coreedges = Condition_matrix.shape[1]
-    #print("coreedges:", coreedges)
+class ConditionEvaluator:
 
-    # Condition_matrix is not so straight to the point when one wants to check the conditions, so let's prune it a bit so it's easier to do the checking
-    Conditions = [[(i, edgecondition) for i, edgecondition in enumerate(conditionrow) if edgecondition != IGNORE_EDGE] 
-                  for conditionrow in Condition_matrix]
-    #print("Conditions:", Conditions)
-    
-    def coreFitsConditions(correp):
-        for rowcondition in Conditions:
-            fits = True
-            for edgeIndex, edgevalue in rowcondition:
-                if correp[edgeIndex] != edgevalue:
-                    fits = False
-                    break
-            if fits:
-                return True
-        return False
-    
-    # count how many fit 1 of the conditions
-    for correp in coreRepresentations:
-        if coreFitsConditions(correp):
-            counter += 1
+    def __init__(self, l, k, p, ignoreEdge):
+        self.coreRepresentations = []
+        self.trueCoefficients = []
+        self.ignoreEdge = ignoreEdge        
 
-    return counter
+        # Compute UIO length
+        self.n = l+k
+
+        print("Create ConditionEvaluator with n =", self.n, "l =", l, "k =", k, "p =", p)
+
+        # step 1
+        print("Generating uios and correct sequences...")
+        self.uios = []
+        uio_encodings = generate_all_uios(self.n)
+        self.uios_n = len(uio_encodings)
+        printvalue = self.uios_n//16
+        for i, uio_encoding in enumerate(uio_encodings):
+            if i%printvalue == 0:
+                print(i+1, "/", self.uios_n)
+            self.uios.append(UIO(uio_encoding))
+
+        print("Computing uio l,k correct sequences and cores...")
+        for i,uio in enumerate(self.uios):
+            if i%printvalue == 0:
+                print(i+1, "/", self.uios_n)
+            # step 2
+            uio.computelkCorrectSequences(l,k)
+
+            # step 3
+            uio.computeCores(p)
+
+            # step 4
+            self.coreRepresentations.append(uio.getCoreRepresentations())
+            self.trueCoefficients.append(uio.getCoefficient())
+        print("ConditionEvaluator ready!")
+
+    def countComplyingCores(self, coreRepresentations, Condition_matrix):
+        if len(coreRepresentations) == 0:
+            return 0
+            
+        counter = 0
+        coreedges = Condition_matrix.shape[1] # assume same number of critical pairs
+
+        # for the case were the number of critical pairs can vary: using condition_matrix create another conditions2 for the case with fewer edges, then given a correp always check the length and pick the right conditions
+        # Condition_matrix is not so straight to the point when one wants to check the conditions, so let's prune it a bit so it's easier to do the checking
+        Conditions = [[(i, edgecondition) for i, edgecondition in enumerate(conditionrow) if edgecondition != self.ignoreEdge] 
+                    for conditionrow in Condition_matrix]
+        
+        def coreFitsConditions(correp):
+            for rowcondition in Conditions:
+                fits = True
+                for edgeIndex, edgevalue in rowcondition:
+                    if correp[edgeIndex] != edgevalue:
+                        fits = False
+                        break
+                if fits:
+                    return True
+            return False
+        
+        # count how many fit 1 of the conditions
+        for correp in coreRepresentations:
+            if coreFitsConditions(correp):
+                counter += 1
+
+        return counter
+
+    def evaluate(self, Condition_matrix):
+        # for each uio of length l+k, check how many of its cores comply  with 
+        # the Condition_matrix and compare that amount with the true coefficient c_{l,k}
+
+        print("evaluate Condition_matrix:", Condition_matrix)
+        score = 0 # bigger is better, negative
+        for i, corereps in enumerate(self.coreRepresentations):
+            amount = self.countComplyingCores(corereps, Condition_matrix)
+            difference = amount - self.trueCoefficients[i]
+
+            if difference < 0: # too many conditions, didn't include enough cores
+                return -np.inf
+            score -= difference
+        return score
 
     # step 1: encode right condition into condition-MATRIX and check against all correct seqs
             
@@ -560,12 +613,9 @@ def count_cores(coreRepresentations, Condition_matrix, IGNORE_EDGE):
 def do2():
     # Set UIO parameters
     tstart = time.time()
-    l = 6
-    k = 2
-    p = 1
-    print(11111111111111)
-    uios, total_correps = getAllCoreRepresentationsOfAllUios(l,k,p)
+    CE = ConditionEvaluator(l=4, k=2, p=1, ignoreEdge=0)
     print(222222222222222222)
+
     # The thm needs c<e and d<f  OR  a>e and b > f  that translates to 
     ThmConditionFilter = np.zeros((2,15))
     ThmConditionFilter[0][10] = UIO.LESS
@@ -574,10 +624,8 @@ def do2():
     ThmConditionFilter[1][8] = UIO.GREATER
 
     tnow = time.time()
-    for i, correps in enumerate(total_correps):
-        print(i, "count:", count_cores(correps, ThmConditionFilter, 0), uios[i].getCoefficient())
+    print("score:", CE.evaluate(ThmConditionFilter))
     print("checking:", time.time()-tnow)
-    print(333333333333333)
     print("all.", time.time()-tstart)
 if __name__ == "__main__":
     do2()
