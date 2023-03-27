@@ -38,8 +38,7 @@ model = Sequential()
 model.add(Dense(FIRST_LAYER_NEURONS,  activation="relu"))
 model.add(Dense(SECOND_LAYER_NEURONS, activation="relu"))
 model.add(Dense(THIRD_LAYER_NEURONS, activation="relu"))
-model.add(Dense(ALPHABET_SIZE, activation="sigmoid"))
-model.add(Softmax())
+model.add(Dense(ALPHABET_SIZE, activation="softmax"))
 
 model.build((None, observation_space))
 model.compile(loss="categorical_crossentropy", optimizer=SGD(learning_rate = LEARNING_RATE)) #Adam optimizer also works well, with lower learning rate
