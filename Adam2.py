@@ -30,8 +30,9 @@ import math
 import matplotlib.pyplot as plt
 
 
-N = 19   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
-MYN = int(N*(N-1)/2)  #The length of the word we are generating. Here we are generating a graph, so we create a 0-1 word of length (N choose 2)
+N = 6   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
+ALPHABET_SIZE = 4
+MYN = ALPHABET_SIZE*int(N*(N-1)/2)  #The length of the word we are generating. Here we are generating a graph, so we create a 0-1 word of length (N choose 2)
 
 LEARNING_RATE = 0.0001 #Increase this to make convergence faster, decrease if the algorithm gets stuck in local optima too often.
 n_sessions =1000 #number of new sessions per iteration
@@ -66,9 +67,9 @@ model = Sequential()
 model.add(Dense(FIRST_LAYER_NEURONS,  activation="relu"))
 model.add(Dense(SECOND_LAYER_NEURONS, activation="relu"))
 model.add(Dense(THIRD_LAYER_NEURONS, activation="relu"))
-model.add(Dense(1, activation="sigmoid"))
+model.add(Dense(ALPHABET_SIZE, activation="sigmoid"))
 model.build((None, observation_space))
-model.compile(loss="binary_crossentropy", optimizer=SGD(learning_rate = LEARNING_RATE)) #Adam optimizer also works well, with lower learning rate
+model.compile(loss="categorical_crossentropy", optimizer=SGD(learning_rate = LEARNING_RATE)) #Adam optimizer also works well, with lower learning rate
 
 print(model.summary())
 
