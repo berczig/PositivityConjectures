@@ -32,7 +32,8 @@ import matplotlib.pyplot as plt
 
 N = 6   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
 ALPHABET_SIZE = 4
-MYN = ALPHABET_SIZE*int(N*(N-1)/2)  #The length of the word we are generating. Here we are generating a graph, so we create a 0-1 word of length (N choose 2)
+EDGES = int(N*(N-1)/2)
+MYN = ALPHABET_SIZE*EDGES  #The length of the word we are generating. Here we are generating a graph, so we create a 0-1 word of length (N choose 2)
 
 LEARNING_RATE = 0.0001 #Increase this to make convergence faster, decrease if the algorithm gets stuck in local optima too often.
 n_sessions =1000 #number of new sessions per iteration
@@ -46,14 +47,14 @@ THIRD_LAYER_NEURONS = 4
 n_actions = 2 #The size of the alphabet. In this file we will assume this is 2. There are a few things we need to change when the alphabet size is larger,
 			  #such as one-hot encoding the input, and using categorical_crossentropy as a loss function.
 			  
-observation_space = 2*MYN #Leave this at 2*MYN. The input vector will have size 2*MYN, where the first MYN letters encode our partial word (with zeros on
+observation_space = MYN + EDGES #Leave this at 2*MYN. The input vector will have size 2*MYN, where the first MYN letters encode our partial word (with zeros on
 						  #the positions we haven't considered yet), and the next MYN bits one-hot encode which letter we are considering now.
 						  #So e.g. [0,1,0,0,   0,0,1,0] means we have the partial word 01 and we are considering the third letter now.
 						  #Is there a better way to format the input to make it easier for the neural network to understand things?
 
 
 						  
-len_game = MYN 
+len_game = EDGES 
 state_dim = (observation_space,)
 
 INF = 1000000
@@ -142,7 +143,7 @@ def generate_session(agent, n_sessions, verbose = 1):
 	Code inspired by https://github.com/yandexdataschool/Practical_RL/blob/master/week01_intro/deep_crossentropy_method.ipynb
 	"""
 	states =  np.zeros([n_sessions, observation_space, len_game], dtype=int)
-	actions = np.zeros([n_sessions, len_game], dtype = int)
+	actions = np.zeros([n_sessions, ALPHABET_SIZE*len_game], dtype = int)
 	state_next = np.zeros([n_sessions,observation_space], dtype = int)
 	prob = np.zeros(n_sessions)
 	states[:,MYN,0] = 1
@@ -155,25 +156,24 @@ def generate_session(agent, n_sessions, verbose = 1):
 	while (True):
 		step += 1		
 		tic = time.time()
+
 		prob = agent.predict(states[:,:,step-1], batch_size = n_sessions) 
+		vectoraction = np.random.multinomial(1, prob, size=1).reshape(ALPHABET_SIZE)
 		pred_time += time.time()-tic
 		
 		for i in range(n_sessions):
-			
-			if np.random.rand() < prob[i]:
-				action = 1
-			else:
-				action = 0
-			actions[i][step-1] = action
+			actions[i][ALPHABET_SIZE*(step-1):ALPHABET_SIZE*step] = vectoraction
 			tic = time.time()
 			state_next[i] = states[i,:,step-1]
 			play_time += time.time()-tic
-			if (action > 0):
-				state_next[i][step-1] = action		
+
+			state_next[i][ALPHABET_SIZE*(step-1):ALPHABET_SIZE*step] = vectoraction
+
 			state_next[i][MYN + step-1] = 0
-			if (step < MYN):
-				state_next[i][MYN + step] = 1			
-			terminal = step == MYN
+			if (step < EDGES):
+				state_next[i][MYN + step] = 1
+
+			terminal = step == EDGES
 			tic = time.time()
 			if terminal:
 				total_score[i] = calcScore(state_next[i])
