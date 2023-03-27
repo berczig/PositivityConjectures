@@ -3,6 +3,7 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras.optimizers import SGD, Adam
 from keras.models import load_model
+from keras.layers import Softmax
 import numpy as np
 
 N = 6   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
@@ -38,6 +39,8 @@ model.add(Dense(FIRST_LAYER_NEURONS,  activation="relu"))
 model.add(Dense(SECOND_LAYER_NEURONS, activation="relu"))
 model.add(Dense(THIRD_LAYER_NEURONS, activation="relu"))
 model.add(Dense(ALPHABET_SIZE, activation="sigmoid"))
+model.add(Softmax())
+
 model.build((None, observation_space))
 model.compile(loss="categorical_crossentropy", optimizer=SGD(learning_rate = LEARNING_RATE)) #Adam optimizer also works well, with lower learning rate
 
