@@ -28,6 +28,7 @@ import pickle
 import time
 import math
 import matplotlib.pyplot as plt
+from uio import ConditionEvaluator
 
 
 N = 6   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
@@ -68,65 +69,24 @@ model = Sequential()
 model.add(Dense(FIRST_LAYER_NEURONS,  activation="relu"))
 model.add(Dense(SECOND_LAYER_NEURONS, activation="relu"))
 model.add(Dense(THIRD_LAYER_NEURONS, activation="relu"))
-model.add(Dense(ALPHABET_SIZE, activation="sigmoid"))
+model.add(Dense(ALPHABET_SIZE, activation="softmax"))
 model.build((None, observation_space))
 model.compile(loss="categorical_crossentropy", optimizer=SGD(learning_rate = LEARNING_RATE)) #Adam optimizer also works well, with lower learning rate
 
 print(model.summary())
 
-
+CE = ConditionEvaluator(l=4, k=2, p=1, ignoreEdge=0)
 
 
 def calcScore(state):
-	"""
-	Calculates the reward for a given word. 
-	This function is very slow, it can be massively sped up with numba -- but numba doesn't support networkx yet, which is very convenient to use here
-	:param state: the first MYN letters of this param are the word that the neural network has constructed.
-	:returns: the reward (a real number). Higher is better, the network will try to maximize this.
-	"""	
+	# state is of length MYN
+	graph = []
+	for step in range(EDGES):
+		actionvector = state[ALPHABET_SIZE*step:ALPHABET_SIZE*(step+1)]
+		edge = np.argmax(actionvector) +100 # 100,101,102,103
+		graph.append(edge)
 	
-	#Example reward function, for Conjecture 2.1
-	#Given a graph, it minimizes lambda_1 + mu.
-	#Takes a few hours  (between 300 and 10000 iterations) to converge (loss < 0.01) on my computer with these parameters if not using parallelization.
-	#There is a lot of run-to-run variance.
-	#Finds the counterexample some 30% (?) of the time with these parameters, but you can run several instances in parallel.
-	
-	#Construct the graph 
-	G= nx.Graph()
-	G.add_nodes_from(list(range(N)))
-	count = 0
-	for i in range(N):
-		for j in range(i+1,N):
-			if state[count] == 1:
-				G.add_edge(i,j)
-			count += 1
-	
-	#G is assumed to be connected in the conjecture. If it isn't, return a very negative reward.
-	if not (nx.is_connected(G)):
-		return -INF
-		
-	#Calculate the eigenvalues of G
-	evals = np.linalg.eigvalsh(nx.adjacency_matrix(G).todense())
-	evalsRealAbs = np.zeros_like(evals)
-	for i in range(len(evals)):
-		evalsRealAbs[i] = abs(evals[i])
-	lambda1 = max(evalsRealAbs)
-	
-	#Calculate the matching number of G
-	maxMatch = nx.max_weight_matching(G)
-	mu = len(maxMatch)
-		
-	#Calculate the reward. Since we want to minimize lambda_1 + mu, we return the negative of this.
-	#We add to this the conjectured best value. This way if the reward is positive we know we have a counterexample.
-	myScore = math.sqrt(N-1) + 1 - lambda1 - mu
-	if myScore > 0:
-		#You have found a counterexample. Do something with it.
-		print(state)
-		nx.draw_kamada_kawai(G)
-		plt.show()
-		exit()
-		
-	return myScore
+	return CE.evaluate(np.array([edge]))
 
 
 
@@ -157,7 +117,8 @@ def generate_session(agent, n_sessions, verbose = 1):
 		step += 1		
 		tic = time.time()
 
-		prob = agent.predict(states[:,:,step-1], batch_size = n_sessions) 
+		prob = agent.predict(states[:,:,step-1], batch_size = n_sessions)
+		print("prob:", prob) 
 		vectoraction = np.random.multinomial(1, prob, size=1).reshape(ALPHABET_SIZE)
 		pred_time += time.time()-tic
 		
