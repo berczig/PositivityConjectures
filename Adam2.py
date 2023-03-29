@@ -71,7 +71,7 @@ model.add(Dense(SECOND_LAYER_NEURONS, activation="relu"))
 model.add(Dense(THIRD_LAYER_NEURONS, activation="relu"))
 model.add(Dense(ALPHABET_SIZE, activation="softmax"))
 model.build((None, observation_space))
-model.compile(loss="categorical_crossentropy", optimizer=SGD(learning_rate = LEARNING_RATE)) #Adam optimizer also works well, with lower learning rate
+model.compile(loss="categorical_crossentropy", optimizer=SGD(learning_rate = LEARNING_RATE), run_eagerly=True) #Adam optimizer also works well, with lower learning rate
 
 print(model.summary())
 
@@ -86,7 +86,7 @@ def calcScore(state):
 		edge = np.argmax(actionvector) +100 # 100,101,102,103
 		graph.append(edge)
 	
-	return CE.evaluate(np.array([edge]))
+	return CE.evaluate(np.array([graph]))
 
 
 
@@ -118,11 +118,11 @@ def generate_session(agent, n_sessions, verbose = 1):
 		tic = time.time()
 
 		prob = agent.predict(states[:,:,step-1], batch_size = n_sessions)
-		print("prob:", prob) 
-		vectoraction = np.random.multinomial(1, prob, size=1).reshape(ALPHABET_SIZE)
+		#print("prob:", prob) 
 		pred_time += time.time()-tic
 		
 		for i in range(n_sessions):
+			vectoraction = np.random.multinomial(1, prob[i], size=1).reshape(ALPHABET_SIZE)
 			actions[i][ALPHABET_SIZE*(step-1):ALPHABET_SIZE*step] = vectoraction
 			tic = time.time()
 			state_next[i] = states[i,:,step-1]
@@ -255,6 +255,8 @@ for i in range(1000000): #1000000 generations should be plenty
 	select3_time = time.time()-tic
 	
 	tic = time.time()
+	print("elite_states:", elite_states.shape)
+	print("elite_actions:", elite_actions.shape)
 	model.fit(elite_states, elite_actions) #learn from the elite sessions
 	fit_time = time.time()-tic
 	
