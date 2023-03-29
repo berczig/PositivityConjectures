@@ -28,7 +28,7 @@ import pickle
 import time
 import math
 import matplotlib.pyplot as plt
-from uio import ConditionEvaluator
+from uio import ConditionEvaluator, UIO
 
 
 N = 6   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
@@ -75,7 +75,7 @@ model.compile(loss="categorical_crossentropy", optimizer=SGD(learning_rate = LEA
 
 print(model.summary())
 
-CE = ConditionEvaluator(l=4, k=2, p=1, ignoreEdge=0)
+CE = ConditionEvaluator(l=4, k=2, p=1, ignoreEdge=UIO.INCOMPARABLE)
 
 
 def calcScore(state):
@@ -102,6 +102,7 @@ def generate_session(agent, n_sessions, verbose = 1):
 	
 	Code inspired by https://github.com/yandexdataschool/Practical_RL/blob/master/week01_intro/deep_crossentropy_method.ipynb
 	"""
+	np.random.seed(42)
 	states =  np.zeros([n_sessions, observation_space, len_game], dtype=int)
 	actions = np.zeros([n_sessions, ALPHABET_SIZE*len_game], dtype = int)
 	state_next = np.zeros([n_sessions,observation_space], dtype = int)
@@ -113,6 +114,7 @@ def generate_session(agent, n_sessions, verbose = 1):
 	play_time = 0
 	scorecalc_time = 0
 	pred_time = 0
+	over_conditioned_graphs = [] # blacklist for graphs with -inf score
 	while (True):
 		step += 1		
 		tic = time.time()
@@ -120,9 +122,20 @@ def generate_session(agent, n_sessions, verbose = 1):
 		prob = agent.predict(states[:,:,step-1], batch_size = n_sessions)
 		#print("prob:", prob) 
 		pred_time += time.time()-tic
+
+		terminal = step == EDGES
 		
+		print(step, "over_conditioned_graphs:", len(over_conditioned_graphs))
+
+		#print("first prob:", prob[0])
 		for i in range(n_sessions):
+			if i in over_conditioned_graphs: # even doing nothing is represented by a non-zero vector(1 hot encoding)
+				actions[i][ALPHABET_SIZE*(step-1):ALPHABET_SIZE*step] = np.array([1,0,0,0]) # encoding  as in calcScore
+				continue
+
 			vectoraction = np.random.multinomial(1, prob[i], size=1).reshape(ALPHABET_SIZE)
+			#print("prob:", prob[i])
+			#print("vectoraction:", vectoraction)
 			actions[i][ALPHABET_SIZE*(step-1):ALPHABET_SIZE*step] = vectoraction
 			tic = time.time()
 			state_next[i] = states[i,:,step-1]
@@ -131,17 +144,22 @@ def generate_session(agent, n_sessions, verbose = 1):
 			state_next[i][ALPHABET_SIZE*(step-1):ALPHABET_SIZE*step] = vectoraction
 
 			state_next[i][MYN + step-1] = 0
-			if (step < EDGES):
-				state_next[i][MYN + step] = 1
 
-			terminal = step == EDGES
+			score = calcScore(state_next[i]) # actually we only use the first of the vector to calculate the score
+			#print("score:", score)
 			tic = time.time()
 			if terminal:
-				total_score[i] = calcScore(state_next[i])
+				total_score[i] = score
 			scorecalc_time += time.time()-tic
 			tic = time.time()
-			if not terminal:
-				states[i,:,step] = state_next[i]			
+
+			if score == -np.inf:
+				total_score[i] = calcScore(states[i, :, step-1]) # take score of not over conditioned graph
+				over_conditioned_graphs.append(i)
+			elif not terminal:
+				state_next[i][MYN + step] = 1
+				states[i,:,step] = state_next[i]	# update graph with policy from network
+
 			recordsess_time += time.time()-tic
 			
 		
@@ -166,17 +184,20 @@ def select_elites(states_batch, actions_batch, rewards_batch, percentile=50):
 	If this function is the bottleneck, it can easily be sped up using numba
 	"""
 	counter = n_sessions * (100.0 - percentile) / 100.0
+	print("rewards_batch:", rewards_batch)
 	reward_threshold = np.percentile(rewards_batch,percentile)
-
+	print("state batch:", states_batch.shape)
 	elite_states = []
 	elite_actions = []
 	elite_rewards = []
 	for i in range(len(states_batch)):
 		if rewards_batch[i] >= reward_threshold-0.0000001:		
 			if (counter > 0) or (rewards_batch[i] >= reward_threshold+0.0000001):
+				print("here")
 				for item in states_batch[i]:
 					elite_states.append(item.tolist())
-				for item in actions_batch[i]:
+				for item in actions_batch[i]: #### TODO step size ALPHABET_SIZE ####
+					print("item:", item )
 					elite_actions.append(item)			
 			counter -= 1
 	elite_states = np.array(elite_states, dtype = int)	

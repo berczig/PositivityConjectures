@@ -578,11 +578,12 @@ class ConditionEvaluator:
 
         return counter
 
-    def evaluate(self, Condition_matrix):
+    def evaluate(self, Condition_matrix, verbose=False):
         # for each uio of length l+k, check how many of its cores comply  with 
         # the Condition_matrix and compare that amount with the true coefficient c_{l,k}
 
-        print("evaluate Condition_matrix:", Condition_matrix)
+        if verbose:
+            print("evaluate Condition_matrix:", Condition_matrix)
         score = 0 # bigger is better, negative
 
         # Condition_matrix is not so straight to the point when one wants to check the conditions, so let's prune it a bit so it's easier to do the checking

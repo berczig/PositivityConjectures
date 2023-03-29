@@ -30,7 +30,7 @@ import math
 import matplotlib.pyplot as plt
 
 
-N = 19   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
+N = 6   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
 MYN = int(N*(N-1)/2)  #The length of the word we are generating. Here we are generating a graph, so we create a 0-1 word of length (N choose 2)
 
 LEARNING_RATE = 0.0001 #Increase this to make convergence faster, decrease if the algorithm gets stuck in local optima too often.
@@ -204,14 +204,16 @@ def select_elites(states_batch, actions_batch, rewards_batch, percentile=50):
 	If this function is the bottleneck, it can easily be sped up using numba
 	"""
 	counter = n_sessions * (100.0 - percentile) / 100.0
+	print("rewards_batch:", rewards_batch)
 	reward_threshold = np.percentile(rewards_batch,percentile)
-
+	print("state batch:", states_batch.shape)
 	elite_states = []
 	elite_actions = []
 	elite_rewards = []
 	for i in range(len(states_batch)):
 		if rewards_batch[i] >= reward_threshold-0.0000001:		
 			if (counter > 0) or (rewards_batch[i] >= reward_threshold+0.0000001):
+				print("here")
 				for item in states_batch[i]:
 					elite_states.append(item.tolist())
 				for item in actions_batch[i]:
@@ -294,8 +296,8 @@ for i in range(1000000): #1000000 generations should be plenty
 	
 	tic = time.time()
 	
-	#print("elite_states:", elite_states.shape)
-	#print("elite_actions:", elite_actions.shape)
+	print("elite_states:", elite_states.shape)
+	print("elite_actions:", elite_actions.shape)
 	model.fit(elite_states, elite_actions) #learn from the elite sessions
 	fit_time = time.time()-tic
 	
