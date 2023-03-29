@@ -32,7 +32,7 @@ from uio import ConditionEvaluator, UIO
 
 
 N = 6   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
-ALPHABET_SIZE = 4
+ALPHABET_SIZE = 1+3+3
 EDGES = int(N*(N-1)/2)
 MYN = ALPHABET_SIZE*EDGES  #The length of the word we are generating. Here we are generating a graph, so we create a 0-1 word of length (N choose 2)
 
@@ -80,14 +80,24 @@ CE = ConditionEvaluator(l=4, k=2, p=1, ignoreEdge=UIO.INCOMPARABLE)
 
 def calcScore(state):
 	# state is of length MYN
-	graph = []
+	graph = np.ones((2, EDGES))*UIO.INCOMPARABLE
 	for step in range(EDGES):
 		actionvector = state[ALPHABET_SIZE*step:ALPHABET_SIZE*(step+1)]
-		edge = np.argmax(actionvector) +100 # 100,101,102,103
-		graph.append(edge)
-	
-	return CE.evaluate(np.array([graph]))
+		if actionvector[0] == 0:
+			row = 0
+			edge = np.argmax(actionvector) # 100,101,102,103
+			if edge > 3:
+				row = 1
+				edge -= 3
+			graph[row][step] = edge + UIO.INCOMPARABLE
 
+
+	#print("state --> graph")
+	#print(state)
+	#print(1, graph[0])
+	#print(2, graph[1])
+	return CE.evaluate(graph)
+print("only zero state has reward of", calcScore(np.zeros(observation_space)))
 
 
 ####No need to change anything below here. 
@@ -104,7 +114,7 @@ def generate_session(agent, n_sessions, verbose = 1):
 	"""
 	np.random.seed(42)
 	states =  np.zeros([n_sessions, observation_space, len_game], dtype=int)
-	actions = np.zeros([n_sessions, ALPHABET_SIZE*len_game], dtype = int)
+	actions = np.zeros([n_sessions, len_game, ALPHABET_SIZE], dtype = int)
 	state_next = np.zeros([n_sessions,observation_space], dtype = int)
 	prob = np.zeros(n_sessions)
 	states[:,MYN,0] = 1
@@ -130,13 +140,13 @@ def generate_session(agent, n_sessions, verbose = 1):
 		#print("first prob:", prob[0])
 		for i in range(n_sessions):
 			if i in over_conditioned_graphs: # even doing nothing is represented by a non-zero vector(1 hot encoding)
-				actions[i][ALPHABET_SIZE*(step-1):ALPHABET_SIZE*step] = np.array([1,0,0,0]) # encoding  as in calcScore
+				actions[i][step-1][0] = 1 # [1,0,0,0] is do nothing, encoding  as in calcScore
 				continue
 
 			vectoraction = np.random.multinomial(1, prob[i], size=1).reshape(ALPHABET_SIZE)
 			#print("prob:", prob[i])
 			#print("vectoraction:", vectoraction)
-			actions[i][ALPHABET_SIZE*(step-1):ALPHABET_SIZE*step] = vectoraction
+			actions[i][step-1] = vectoraction
 			tic = time.time()
 			state_next[i] = states[i,:,step-1]
 			play_time += time.time()-tic
@@ -184,20 +194,16 @@ def select_elites(states_batch, actions_batch, rewards_batch, percentile=50):
 	If this function is the bottleneck, it can easily be sped up using numba
 	"""
 	counter = n_sessions * (100.0 - percentile) / 100.0
-	print("rewards_batch:", rewards_batch)
 	reward_threshold = np.percentile(rewards_batch,percentile)
-	print("state batch:", states_batch.shape)
 	elite_states = []
 	elite_actions = []
 	elite_rewards = []
 	for i in range(len(states_batch)):
 		if rewards_batch[i] >= reward_threshold-0.0000001:		
 			if (counter > 0) or (rewards_batch[i] >= reward_threshold+0.0000001):
-				print("here")
 				for item in states_batch[i]:
 					elite_states.append(item.tolist())
 				for item in actions_batch[i]: #### TODO step size ALPHABET_SIZE ####
-					print("item:", item )
 					elite_actions.append(item)			
 			counter -= 1
 	elite_states = np.array(elite_states, dtype = int)	
