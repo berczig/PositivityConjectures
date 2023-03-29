@@ -82,7 +82,7 @@ def calcScore(state):
 	:param state: the first MYN letters of this param are the word that the neural network has constructed.
 	:returns: the reward (a real number). Higher is better, the network will try to maximize this.
 	"""	
-	
+	return 1
 	#Example reward function, for Conjecture 2.1
 	#Given a graph, it minimizes lambda_1 + mu.
 	#Takes a few hours  (between 300 and 10000 iterations) to converge (loss < 0.01) on my computer with these parameters if not using parallelization.
@@ -293,6 +293,9 @@ for i in range(1000000): #1000000 generations should be plenty
 	select3_time = time.time()-tic
 	
 	tic = time.time()
+	
+	#print("elite_states:", elite_states.shape)
+	#print("elite_actions:", elite_actions.shape)
 	model.fit(elite_states, elite_actions) #learn from the elite sessions
 	fit_time = time.time()-tic
 	
