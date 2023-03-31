@@ -536,6 +536,7 @@ class ConditionEvaluator:
         uio_encodings = generate_all_uios(self.n)
         self.uios_n = len(uio_encodings)
         printvalue = self.uios_n//16
+        print("printe every:", printvalue)
         for i, uio_encoding in enumerate(uio_encodings):
             if i%printvalue == 0:
                 print(i+1, "/", self.uios_n)

@@ -28,10 +28,13 @@ import pickle
 import time
 import math
 import matplotlib.pyplot as plt
-from uio import ConditionEvaluator, UIO
+import uio
 
 
-N = 6   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
+l = 4
+k = 2
+p = 1
+N = l+k   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
 ALPHABET_SIZE = 1+3+3
 EDGES = int(N*(N-1)/2)
 MYN = ALPHABET_SIZE*EDGES  #The length of the word we are generating. Here we are generating a graph, so we create a 0-1 word of length (N choose 2)
@@ -62,7 +65,7 @@ INF = 1000000
 
 def convertStateToConditionMatrix(state):
 	# state is of length MYN
-	graph = np.ones((2, EDGES))*UIO.INCOMPARABLE
+	graph = np.ones((2, EDGES))*uio.UIO.INCOMPARABLE
 	for step in range(EDGES):
 		actionvector = state[ALPHABET_SIZE*step:ALPHABET_SIZE*(step+1)]
 		if actionvector[0] == 0:
@@ -71,7 +74,7 @@ def convertStateToConditionMatrix(state):
 			if edge > 3:
 				row = 1
 				edge -= 3
-			graph[row][step] = edge + UIO.INCOMPARABLE
+			graph[row][step] = edge + uio.UIO.INCOMPARABLE
 	return graph
 
 def calcScore(state):
@@ -228,7 +231,7 @@ if __name__ == "__main__":
 
 	print(model.summary())
 
-	CE = ConditionEvaluator(l=4, k=2, p=1, ignoreEdge=UIO.INCOMPARABLE)
+	CE = uio.ConditionEvaluator(l=l, k=k, p=p, ignoreEdge=uio.UIO.INCOMPARABLE)
 
 	print("only zero state has reward of", calcScore(np.zeros(observation_space)))
 
