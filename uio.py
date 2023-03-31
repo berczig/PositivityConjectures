@@ -21,6 +21,7 @@ import numpy as np
 import matplotlib.pyplot as plt 
 import sys
 import time 
+import stanley_crossentropy
 
 #INCOMPARABLE = 0
 #LE = 1
@@ -383,6 +384,7 @@ class UIO:
     LESS = 101              # (i,j) is LE iff i < j     interval i is to the left of j 
     EQUAL = 102              # (i,j) is EQ iff i = j     interval i and interval j are same interval
     GREATER = 103              # (i,j) is LE iff i > j     interval i is to the right of j
+    RELATIONTEXT = {LESS:"<", EQUAL:"=", GREATER:">"}
 
     def __init__(self, uio_encoding):
         self.n = len(uio_encoding)
@@ -519,6 +521,9 @@ class ConditionEvaluator:
         self.coreRepresentations = []
         self.trueCoefficients = []
         self.ignoreEdge = ignoreEdge        
+        self.l = l
+        self.k = k
+        self.p = p
 
         # Compute UIO length
         self.n = l+k
@@ -598,6 +603,26 @@ class ConditionEvaluator:
                 return -np.inf
             score -= difference
         return score
+    
+    def convertConditionMatrixToText(self, Condition_matrix):
+        rows, columns = Condition_matrix.shape
+        rowtexts = []
+        for row in range(rows):
+            index = 0
+            rowtext = []
+            aORD = ord("a")
+            for i in range(self.n):
+                for j in range(i+1, self.n):
+                    edge = Condition_matrix[row][index]
+
+                    if edge != self.ignoreEdge:
+                        rowtext.append(chr(aORD+i)+UIO.RELATIONTEXT[edge]+chr(aORD+j))
+                    index += 1
+            if rowtext:
+                rowtexts.append(" AND ".join(rowtext))
+        return " OR \n".join(rowtexts)
+
+
 
     # step 1: encode right condition into condition-MATRIX and check against all correct seqs
             
@@ -627,10 +652,34 @@ def checkThmConditionMatrix():
     ThmConditionFilter[1][3] = UIO.GREATER
     ThmConditionFilter[1][8] = UIO.GREATER
 
+    print(CE.convertConditionMatrixToText(ThmConditionFilter))
+
     tnow = time.time()
     print("score:", CE.evaluate(ThmConditionFilter))
     print("checking:", time.time()-tnow)
     print("all.", time.time()-tstart)
 
+def inspectStatesFromFile(file, edges, edgetypes):
+    print("Reading file ", file)
+    print("UIO of length n. Inspecting states...")
+    CE = ConditionEvaluator(l=4, k=2, p=1, ignoreEdge=UIO.INCOMPARABLE)
+    with open(file) as f:
+        lines = f.readlines()
+        for edge in range(0, len(lines), edges):
+            state = []
+            for i in range(edges):
+                if i < edges-1:
+                    line = lines[edge+i][1:]
+                else:
+                    line = lines[edge+i][1:-2] # remove ] and \n
+                vectoraction = eval(line.replace(" ", ",")) #convert black spaces to commas. Evaluate this string as python list
+                state += vectoraction
+            print(15*"-")
+            condmat = stanley_crossentropy.convertStateToConditionMatrix(state)
+            conditiontext = CE.convertConditionMatrixToText(condmat)
+            print(conditiontext, "\nhas a score of ", CE.evaluate(condmat))
+            
+
 if __name__ == "__main__":
-    checkThmConditionMatrix()
+    inspectStatesFromFile("best_species_txt_763.txt", 15, 7)
+    #checkThmConditionMatrix()
