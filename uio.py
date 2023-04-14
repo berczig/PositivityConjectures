@@ -566,7 +566,7 @@ class ConditionEvaluator:
 
         # for the case were the number of critical pairs can vary: using condition_matrix create another conditions2 for the case with fewer edges, then given a correp always check the length and pick the right conditions
         
-        def coreFitsConditions(correp):
+        def coreFitsConditions(correp): # ANDs conditions in row together
             for rowcondition in Conditions:
                 fits = True
                 for edgeIndex, edgevalue in rowcondition:
@@ -587,6 +587,7 @@ class ConditionEvaluator:
     def evaluate(self, Condition_matrix, verbose=False):
         # for each uio of length l+k, check how many of its cores comply  with 
         # the Condition_matrix and compare that amount with the true coefficient c_{l,k}
+        # 
 
         if verbose:
             print("evaluate Condition_matrix:", Condition_matrix)
