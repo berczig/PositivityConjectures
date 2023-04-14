@@ -13,6 +13,8 @@
 # I used keras version 2.3.1, not sure if this is important, but I recommend this just to be safe.
 
 
+# todo: visualite state with graph component
+
 
 
 import networkx as nx #for various graph parameters, such as eigenvalues, macthing number, etc
@@ -173,6 +175,8 @@ def select_elites(states_batch, actions_batch, rewards_batch, percentile=50):
 	
 	This function was mostly taken from https://github.com/yandexdataschool/Practical_RL/blob/master/week01_intro/deep_crossentropy_method.ipynb
 	If this function is the bottleneck, it can easily be sped up using numba
+
+	hard penalty: if more than 3 edges stop 
 	"""
 	counter = n_sessions * (100.0 - percentile) / 100.0
 	reward_threshold = np.percentile(rewards_batch,percentile)
