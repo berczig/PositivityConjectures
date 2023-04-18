@@ -42,8 +42,8 @@ ALPHABET_SIZE = 1+3+3
 EDGES = int(N*(N-1)/2)
 MYN = ALPHABET_SIZE*EDGES  #The length of the word we are generating. Here we are generating a graph, so we create a 0-1 word of length (N choose 2)
 
-LEARNING_RATE = 0.0001 #Increase this to make convergence faster, decrease if the algorithm gets stuck in local optima too often.
-n_sessions =1500 #number of new sessions per iteration
+LEARNING_RATE = 0.01 #Increase this to make convergence faster, decrease if the algorithm gets stuck in local optima too often.
+n_sessions =300 #number of new sessions per iteration
 percentile = 93 #top 100-X percentile we are learning from
 super_percentile = 94 #top 100-X percentile that survives to next iteration
 
@@ -161,7 +161,7 @@ def generate_session(agent, n_sessions, verbose = 1):
 				total_score[i] = score
 			scorecalc_time += time.time()-tic
 			tic = time.time()
-			print(edges[i])
+			#print(edges[i])
 			if score == -np.inf or edges[i] > 4:
 				total_score[i] = calcScore(states[i, :, step-1]) # take score of not over conditioned graph
 				over_conditioned_graphs.append(i)
