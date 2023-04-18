@@ -36,6 +36,7 @@ import uio
 l = 4
 k = 2
 p = 1
+# k+2+2*p
 N = l+k   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
 ALPHABET_SIZE = 1+3+3
 EDGES = int(N*(N-1)/2)
@@ -79,8 +80,15 @@ def convertStateToConditionMatrix(state):
 			graph[row][step] = edge + uio.UIO.INCOMPARABLE
 	return graph
 
+all_scores = {}
 def calcScore(state):
-	return CE.evaluate(convertStateToConditionMatrix(state))
+	key_state = tuple(state)
+	if key_state in all_scores:
+		return all_scores[key_state]
+	else:
+		new_score = CE.evaluate(convertStateToConditionMatrix(state))
+		all_scores[key_state] = new_score
+		return new_score
 
 
 ####No need to change anything below here. 
@@ -95,6 +103,7 @@ def generate_session(agent, n_sessions, verbose = 1):
 	
 	Code inspired by https://github.com/yandexdataschool/Practical_RL/blob/master/week01_intro/deep_crossentropy_method.ipynb
 	"""
+	print("generate_session")
 	np.random.seed(42)
 	states =  np.zeros([n_sessions, observation_space, len_game], dtype=int)
 	actions = np.zeros([n_sessions, len_game, ALPHABET_SIZE], dtype = int)
@@ -122,6 +131,7 @@ def generate_session(agent, n_sessions, verbose = 1):
 
 		#print("first prob:", prob[0])
 		for i in range(n_sessions):
+			#t0 = time.time()
 			if i in over_conditioned_graphs: # even doing nothing is represented by a non-zero vector(1 hot encoding)
 				actions[i][step-1][0] = 1 # [1,0,0,0] is do nothing, encoding  as in calcScore
 				continue
@@ -138,7 +148,9 @@ def generate_session(agent, n_sessions, verbose = 1):
 
 			state_next[i][MYN + step-1] = 0
 
+			#t = time.time()
 			score = calcScore(state_next[i]) # actually we only use the first of the vector to calculate the score
+			#t1 = time.time()-t
 			#print("score:", score)
 			tic = time.time()
 			if terminal:
@@ -154,7 +166,9 @@ def generate_session(agent, n_sessions, verbose = 1):
 				states[i,:,step] = state_next[i]	# update graph with policy from network
 
 			recordsess_time += time.time()-tic
-			
+			#t2 = time.time()-t0
+			#if t2 != 0:
+			#	print(100*t1/t2)
 		
 		if terminal:
 			break
