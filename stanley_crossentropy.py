@@ -117,6 +117,7 @@ def generate_session(agent, n_sessions, verbose = 1):
 	scorecalc_time = 0
 	pred_time = 0
 	over_conditioned_graphs = [] # blacklist for graphs with -inf score
+	edges = np.zeros(n_sessions)
 	while (True):
 		step += 1		
 		tic = time.time()
@@ -137,6 +138,9 @@ def generate_session(agent, n_sessions, verbose = 1):
 				continue
 
 			vectoraction = np.random.multinomial(1, prob[i], size=1).reshape(ALPHABET_SIZE)
+			if vectoraction[0] != 1:
+				edges[i] += 1
+					
 			#print("prob:", prob[i])
 			#print("vectoraction:", vectoraction)
 			actions[i][step-1] = vectoraction
@@ -157,8 +161,8 @@ def generate_session(agent, n_sessions, verbose = 1):
 				total_score[i] = score
 			scorecalc_time += time.time()-tic
 			tic = time.time()
-
-			if score == -np.inf:
+			print(edges[i])
+			if score == -np.inf or edges[i] > 4:
 				total_score[i] = calcScore(states[i, :, step-1]) # take score of not over conditioned graph
 				over_conditioned_graphs.append(i)
 			elif not terminal:
@@ -277,7 +281,6 @@ if __name__ == "__main__":
 		actions_batch = np.array(sessions[1], dtype = int)
 		rewards_batch = np.array(sessions[2])
 		states_batch = np.transpose(states_batch,axes=[0,2,1])
-		
 		states_batch = np.append(states_batch,super_states,axis=0)
 
 		if i>0:
