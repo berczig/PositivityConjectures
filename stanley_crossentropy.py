@@ -33,16 +33,17 @@ import matplotlib.pyplot as plt
 import uio
 
 
-l = 4
-k = 2
-p = 1
+l = 6
+k = 3
+p = 2
 # k+2+2*p
 N = l+k   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
 ALPHABET_SIZE = 1+3+3
 EDGES = int(N*(N-1)/2)
 MYN = ALPHABET_SIZE*EDGES  #The length of the word we are generating. Here we are generating a graph, so we create a 0-1 word of length (N choose 2)
 
-LEARNING_RATE = 0.01 #Increase this to make convergence faster, decrease if the algorithm gets stuck in local optima too often.
+MAX_EXPECTED_EDGES = 6
+LEARNING_RATE = 0.1 #Increase this to make convergence faster, decrease if the algorithm gets stuck in local optima too often.
 n_sessions =300 #number of new sessions per iteration
 percentile = 93 #top 100-X percentile we are learning from
 super_percentile = 94 #top 100-X percentile that survives to next iteration
@@ -162,7 +163,7 @@ def generate_session(agent, n_sessions, verbose = 1):
 			scorecalc_time += time.time()-tic
 			tic = time.time()
 			#print(edges[i])
-			if score == -np.inf or edges[i] > 4:
+			if score == -np.inf or edges[i] > MAX_EXPECTED_EDGES:
 				total_score[i] = calcScore(states[i, :, step-1]) # take score of not over conditioned graph
 				over_conditioned_graphs.append(i)
 			elif not terminal:

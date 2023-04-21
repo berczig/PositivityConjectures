@@ -12,7 +12,31 @@ step 5: Sum problem: find the graph G such that the number of graphs who have G 
 
 # maybe we don't have  to use ~ for the filter
 
+
+TODO:
+    - double check that I get the right number of categories:
+        uio_old:
+        l,k		l,k cor seq		categories
+        4,2		6416			384
+        5,2                     667
+        6,2		1227180			793
+
+        uio:
+        l,k		l,k cor seq		categories
+        4,2		6416			440
+        5,2                     723
+        6,2		1227180			849
+
 """
+
+from __future__ import print_function
+from sys import getsizeof, stderr
+from itertools import chain
+from collections import deque
+try:
+    from reprlib import repr
+except ImportError:
+    pass
 
 from itertools import permutations
 from math import factorial as fac
@@ -23,11 +47,10 @@ import sys
 import time 
 import stanley_crossentropy
 
-#INCOMPARABLE = 0
-#LE = 1
-#EQ = 2
-#GE = 3
 
+
+
+# COMBINATORIC FUNCTIONS
 permutations_n = {}
 def getPermutationsOfN(n):
     # calculate all permutations of 1,..,n once - used multiple times
@@ -43,45 +66,17 @@ def binomial(x, y):
         return 0
 
 def C_n(n):
+    """ 
+    n   Catalan number / uios   total correct sequences     total n-2,2 correct sequences   total n-3,3 correct sequences   total n-2,2 correct sequences categories    total n-3,3 correct sequences categories
+    3   5.0
+    4   14.0																											
+    5   42.0
+    6   132.0												6416															439
+    7   429.0
+    8   1430.0												1227180															848
+    9   4862.0
+    """
     return binomial(2*n, n)/(n+1)
-
-
-def get_comparison_matrix(uio): # Relates to poset not incomparibility graph
-    n = len(uio)
-    C = np.diag([UIO.EQUAL for _ in range(n)]) # sets eq correct and all other to incomparable for now
-    # 0: not comparable, 1 : less than, 2: equal 3: greater than
-    for l in range(n):
-        for k in range(l+1, n):
-            if uio[k] > l:
-                C[l, k] = UIO.LESS
-                C[k,l] = UIO.GREATER
-    return C
-
-def get_comparison_matrix_old(uio): # Relates to poset not incomparibility graph
-    n = len(uio)
-    C = np.zeros((n,n))
-    #print("uio:", uio)
-    # 0: not comparable, 1 : less than, 2: equal 3: greater than
-    for i in range(n):
-        for j in range(i+1, n):
-            if uio[j] <= i:
-                C[i,j] = UIO.EQUAL
-                C[j,i] = UIO.EQUAL
-            else:
-                C[i, j] = LE
-                C[j,i] = GE
-    return C
-
-def uio_to_graph(uio):
-    G=nx.Graph()
-    n = len(uio)
-    G.add_nodes_from(range(n))
-    for i in range(n):
-        for j in range(i+1, n):
-            if uio[j] <= i:
-                G.add_edge(i,j)
-    nx.draw(G)
-    plt.show()
 
 def generate_all_uios(n):
     A = []
@@ -96,285 +91,20 @@ def generate_uio_rec(A, uio, n, i):
     for j in range(uio[i-1], i+1):
         generate_uio_rec(A, uio+[j], n, i+1)
 
-def is_lk_correct(seq,a,b,C):
-    return iscorrect(seq[:a], C) and iscorrect(seq[a:], C)
 
-def iscorrect(seq, C):
-    for i in range(1,len(seq)):
-        # not to the left of previos interval
-        if C[seq[i], seq[i-1]] == LE:
-            return False
-        # intersects with some previous interval
-        intersects = False
-        for j in range(0, i):
-            if C[seq[i], seq[j]] in [LE, INCOMPARABLE]:
-                intersects = True
-                #break
-        if not intersects:
-            return False
-    return True
+###
 
-def getcorrectsequences(uio, verbose=False):
+def uio_to_graph(uio):
+    G=nx.Graph()
     n = len(uio)
-    C = get_comparison_matrix(uio)
-    if verbose:
-        print("uio:", uio)
-        print("C", C)
-    return [seq for seq in getPermutationsOfN(n) if iscorrect(seq,C)]
-
-def get_correct_ab_sequences(uio,a,b):
-    n = len(uio)
-    C = get_comparison_matrix(uio)
-    return [seq for seq in getPermutationsOfN(n) if is_lk_correct(seq,a,b,C)]
-
-def getmaximalinterval(subseq, C):
-    maximals = []
-    for i in subseq:
-        ismaximal = True
-        for j in subseq:
-            if C[j, i] == GE: # one very redundant comparison: i==j, but whatever
-                # i can't be maximal
-                ismaximal = False
-                break
-        if ismaximal:
-            maximals.append(i)
-    return max(maximals)
-
-def getsequencedata(seq,C, p, l, k): # step 3 for l,k
-    data = []
-    # take last critical pairs (at most p)
-    n = l+k
-    pairs = 0 # count number of registered critical pairs
-    for i in range(l-1, 0, -1):
-        if C[seq[i], seq[i-1]] == INCOMPARABLE:
-            pairs += 1
-            data.append(seq[i-1])
-            data.append(seq[i])
-            if pairs >= p:
-                break
-    data.insert(0, pairs)
-
-    # maximal element in first l-1
-    data.append(getmaximalinterval(seq[:l-1], C))
-
-    # last k+1 elements
-    data += seq[-(k+1):]
-    return data
-
-def getsequencedatatomatrix(data, C):
-    # takes data sequence and creates a matrix with hardcoded conversion (REPLACE THIS). Returns a tuple of tuples instead of matrix, so it can be used as keys
-    n = len(data)
-    M = np.zeros((n,n))
-    for i in range(n):
-        for j in range(n):
-            relation = C[data[i], data[j]]
-            if relation == 0:
-                relation = 2
-            M[i,j] = relation
-    return tuple(map(tuple, M))
-
-def getsequencedatatovector(data, C):
-    # vector of the edge-labels
-    n = len(data)
-    return tuple([C[data[i], data[j]] for i in range(n) for j in range(i+1, n)])
-
-"""
-def comparesequencedata(data1, data2, C):
-    n = len(data1)
+    G.add_nodes_from(range(n))
     for i in range(n):
         for j in range(i+1, n):
-            edge1 = C[data1[i], data1[j]]
-            edge2 = C[data2[i], data2[j]]
-            if edge1 != edge2:
-                return False
-    return True"""
+            if uio[j] <= i:
+                G.add_edge(i,j)
+    nx.draw(G)
+    plt.show()
 
-def getcoeff(uio, l, k):
-    only_lk_correct = 0
-    only_lplusk_correct = 0
-    n = len(uio)
-    C = get_comparison_matrix(uio)
-    for seq in getPermutationsOfN(n):
-        lk = is_lk_correct(seq,l,k,C)
-        lpk = iscorrect(seq, C)
-        if lk and not lpk:
-            only_lk_correct += 1
-        elif lpk and not lk:
-            only_lplusk_correct += 1
-    #print("only_lplusk_correct:", only_lplusk_correct)
-    return only_lk_correct - only_lplusk_correct
-
-
-def getThml_2_coef(uio, l):
-    n = len(uio)
-    C = get_comparison_matrix(uio)
-    A = []
-    B = []
-    for seq in getPermutationsOfN(n):
-        if is_lk_correct(seq, l, 2, C):
-            data = getsequencedata(seq,C,p=1,l=l,k=2)
-            #print("datax:", seq, data)
-            if data[0] == 1:
-                a,b,c,d,e,f = data[1:]
-                allreadyinA = False
-                if C[c,e] == LE and C[d,f] == LE:
-                    A.append(data)
-                    #print("A")
-                    allreadyinA = True
-                if C[a,e] == GE and C[b,f] == GE:
-                    if allreadyinA:
-                        print("A and B not disjoint!")
-                        sys.exit()
-                    B.append(data)
-                    #print("B")
-            else:
-                print("Only found", data[0], "critical pairs in ",l,2,"!")
-                sys.exit()
-    #print("A:", len(A), "B:", len(B))
-    return len(A) + len(B)
-    # [()]
-
-def verifyl2Thm():
-    # verify Theorem for l,2
-    l = 6
-    k = 2
-    n = l+k
-    print("verifyl2Thm")
-    print("l:", l)
-    print("k:", k)
-    print("n:", n)
-    A = generate_all_uios(n)
-    for i,uio in enumerate(A):
-        #uio_to_graph(uio)
-        coef = getcoeff(uio,l,k)
-        coef_thm = getThml_2_coef(uio, l)
-        print(uio)
-        if coef != coef_thm:
-            print(i, "wrong", uio, coef, coef_thm)
-        else:
-            print(i, "right!", coef)    
-
-def getCategories(uio_list, l, k):
-    # uio_list : list of uios of same lengths
-    #
-    # lets say we have 2 datasequences:
-    # (a1,b1,c1,d1,e1,f1)
-    # (a2,b2,c2,d2,e2,f2)
-    # and all edges have the same type but actually b1=c1 (so it has only 5 edges)
-    # Should we put them in the same category? Yes, because w.r.t. the relation it's the same
-    categories = {} # category:ID
-    categories_counters = [] # list of dicts(category counters)
-    n = len(uio_list[0])
-    rows = len(uio_list)
-    printval = 0
-    for uio in uio_list:
-        printval += 1
-        if printval%10 == 0:
-            pass
-            #print(printval, "/",rows)
-        counter = {}
-        n = len(uio)
-        C = get_comparison_matrix(uio)
-        #print("C:", C)
-        for seq in getPermutationsOfN(n):
-            if is_lk_correct(seq, l, k, C):
-                # get sequence data
-                data = getsequencedata(seq,C,p=1,l=l,k=k)
-                #print("data:", data)
-                M = getsequencedatatomatrix(data[1:], C)
-                #print("M:", M)
-                print("V:", getsequencedatatovector(data[1:], C))
-
-                # determine category ID
-                if M not in categories:
-                    ID = len(categories)
-                    categories[M] = ID
-                else:
-                    ID = categories[M]
-
-                # count this observed category
-                if ID not in counter:
-                    counter[ID] = 1
-                else:
-                    counter[ID] += 1
-        categories_counters.append(counter)
-
-    # Turn collected category-count data into a matrix
-    columns = len(categories)
-    print("Found",columns, "categories")
-    counts = []
-    for i in range(rows):
-        counter = categories_counters[i]
-        row = [0 if j not in counter else counter[j] for j in range(columns)]
-        counts.append(row)
-    print("Computed count matrix of shape (", rows,",",columns, ")",sep="")
-    return counts
-
-
-def do1():
-    #print("yO", getThml_2_coef([0,0,0,0,0,0,1,2], 6))
-    #verifyl2Thm()
-
-
-    #Look at categories
-    l = 4
-    k = 2
-    n = l+k
-    print("l =",l)
-    print("k =",k)
-    print("n =",n)
-    uios = generate_all_uios(n)
-    categories = getCategories(uios, l, k)
-    coeffs = np.array([getcoeff(uio,l,k) for uio in uios])
-
-    print("First row of categories looks like:")
-    print(categories[0])
-    print()
-    print("the first coefficient is:")
-    print(coeffs[0])
-    print("l, k correct sequences of all uio of length ", n, " is ", np.sum(np.array(categories)))
-
-    # Solve Ax = b without linear programming, where A is count matrix and b the coefficients
-    categories = np.array(categories)
-    x = np.linalg.pinv(categories)@coeffs
-    print("x:", [round(val, 3) for val in x])
-
-    
-
-
-
-    """
-    for g in getcorrectsequences(uio):
-        print("cor seq:", g)
-    for g in get_correct_ab_sequences(uio, l, k):
-        print("l 2 cor", g)"""
-
-    """counting a,b correct sequences and step 3 data
-    countcor = 0
-    countabcor = 0
-    for seq in getPermutationsOfN(n):
-        a = iscorrect(seq,C)
-        b = isabcorrect(seq,l,k,C)
-        if a:
-            countcor += 1
-        if b:
-            countabcor += 1
-        if a or b:
-            print(seq, iscorrect(seq,C), b)
-        print(getsequencedata(seq, C, 1, l, k))
-    print("countcor:", countcor)
-    print("countabcor:", countabcor)
-    """
-
-    """
-    K = 0
-    for uio in A:
-        num = len(getcorrectsequences(uio))
-        if num != 0:
-            K += 1
-            print("number of correct sequences in uio:", num)
-    print("uio with correct sequences:", K)
-    """
 
 ###############################################################################################
 
@@ -518,15 +248,17 @@ def getAllCoreRepresentationsOfAllUios(l,k,p):
 class ConditionEvaluator:
 
     def __init__(self, l, k, p, ignoreEdge):
-        self.coreRepresentations = []
+        self.coreRepresentations = [] # the i'th entry contains all coreRepresentations of the i'th uio
         self.trueCoefficients = []
         self.ignoreEdge = ignoreEdge        
         self.l = l
         self.k = k
         self.p = p
+        self.XYZ = {}
 
         # Compute UIO length
         self.n = l+k
+        t = time.time()
 
         print("Create ConditionEvaluator with n =", self.n, "l =", l, "k =", k, "p =", p)
 
@@ -555,7 +287,8 @@ class ConditionEvaluator:
             # step 4
             self.coreRepresentations.append(uio.getCoreRepresentations())
             self.trueCoefficients.append(uio.getCoefficient())
-        print("ConditionEvaluator ready!")
+        self.countCategories2()
+        print("ConditionEvaluator ready! - time elapsed to create:", time.time()-t)
 
     def countComplyingCores(self, coreRepresentations, Conditions):
         if len(coreRepresentations) == 0:
@@ -583,8 +316,49 @@ class ConditionEvaluator:
                 counter += 1
 
         return counter
+    
+    def coreFitsConditions2(self, correp, Conditions): # ANDs conditions in row together
+        for rowcondition in Conditions:
+            fits = True
+            for edgeIndex, edgevalue in rowcondition:
+                if correp[edgeIndex] != edgevalue:
+                    fits = False
+                    break
+            if fits:
+                return True
+        return False
+    
+    def evaluate2(self, Condition_matrix, verbose=False):
+        # for each uio of length l+k, check how many of its cores comply  with 
+        # the Condition_matrix and compare that amount with the true coefficient c_{l,k}
+        # 
+
+        if verbose:
+            print("evaluate Condition_matrix:", Condition_matrix)
+        score = 0 # bigger is better, negative
+
+        # Condition_matrix is not so straight to the point when one wants to check the conditions, so let's prune it a bit so it's easier to do the checking
+        Conditions = [[(i, edgecondition) for i, edgecondition in enumerate(conditionrow) if edgecondition != self.ignoreEdge] 
+                    for conditionrow in Condition_matrix]
+
+        counted = np.zeros(self.uios_n) # the i'th entry is the number of correps associated to the i'th uio that fit the Conditions
+        for primeCoreRep in self.XYZ:
+            print("primeCoreRep:", primeCoreRep)
+            if self.coreFitsConditions2(primeCoreRep, Conditions) == True:
+                print("hey")
+                counted += self.XYZ[primeCoreRep]
+        difference = counted - np.array(self.trueCoefficients)
+        print("sum:", sum(counted))
+        print("sum:", sum(difference))
+        print("sum:", sum(self.trueCoefficients))
+        print("difference:", difference)
+        for x in difference:
+            if x < 0:
+                return -np.inf
+        return -sum(difference)
 
     def evaluate(self, Condition_matrix, verbose=False):
+        return self.evaluate2(Condition_matrix, verbose)
         # for each uio of length l+k, check how many of its cores comply  with 
         # the Condition_matrix and compare that amount with the true coefficient c_{l,k}
         # 
@@ -623,7 +397,94 @@ class ConditionEvaluator:
             if rowtext:
                 rowtexts.append(" AND ".join(rowtext))
         return " OR \n".join(rowtexts)
+    
+    def countCategories2(self):
+        categories = {} # category:ID
+        # knows the representative corereps
+        # how many of them per uio
+        ID = 0
+        counter = {} # categoryID:dict(uioID:occurrences)
+        for uioID, corereps in enumerate(self.coreRepresentations):
+            for corerep in enumerate(corereps):
+                # determine category ID
+                if corerep not in categories:
+                    ID = len(categories)
+                    categories[corerep] = ID
+                else:
+                    ID = categories[corerep]
 
+                # count this observed category
+                if ID not in counter:
+                    counter[ID] = {uioID:1}
+                else:
+                    categoryOccurrencer = counter[ID]
+                    if uioID not in categoryOccurrencer:
+                        categoryOccurrencer[uioID] = 1
+                    else:
+                        categoryOccurrencer[uioID] += 1
+
+        # Turn collected category-count data into a matrix
+        for cat in categories:
+            counted = np.zeros(self.uios_n)
+            ID = categories[cat]
+            for uioID in counter[ID]:
+                counted[uioID] = counter[ID][uioID]
+            self.XYZ[cat] = counted
+
+        columns = len(categories)
+        print("Found",columns, "categories")
+        print("size:", total_size(counter))
+    
+    def countCategories(self):
+        categories = {} # category:ID
+        categories_counters = [] # list of dicts(category counters)
+        # knows the representative corereps
+        # how many of them per uio
+        ID = 0
+        for corereps in self.coreRepresentations:
+            counter = {}
+            for i, corerep in enumerate(corereps):
+                # determine category ID
+                if corerep not in categories:
+                    ID = len(categories)
+                    categories[corerep] = ID
+                else:
+                    ID = categories[corerep]
+
+                # count this observed category
+                if ID not in counter:
+                    counter[ID] = 1
+                else:
+                    counter[ID] += 1
+            categories_counters.append(counter)
+
+        # Turn collected category-count data into a matrix
+        columns = len(categories)
+        print("Found",columns, "categories")
+        counts = []
+        for i in range(self.uios_n):
+            counter = categories_counters[i]
+            row = [0 if j not in counter else counter[j] for j in range(columns)]
+            counts.append(row)
+
+        print("Computed count matrix of shape (", self.uios_n,",",columns, ")",sep="")
+        print("size:", total_size(counts), counts[0])
+        return counts
+        # size of matrix categories representation:
+        # 4,2 490700
+        # 5,2 2637756
+        # 6,2 9954224
+          #    39537300
+
+        # size of matrix categories representation:
+        # 4,2 293756
+        # 5,2 
+        # 6,2 39537300
+        
+        #num = sum([val for val in counter.values()])
+        #for key in counter:
+        #    print(key, counter[key])
+        #print("num:", num)
 
 
     # step 1: encode right condition into condition-MATRIX and check against all correct seqs
@@ -637,6 +498,47 @@ class ConditionEvaluator:
     # Training happens like this:
     #   top 10 % become training data: conditions|->probability dist.
     #   train our current policy / neural network w.r.t. this classificaation. 
+
+
+def total_size(o, handlers={}, verbose=False):
+    """ Returns the approximate memory footprint an object and all of its contents.
+
+    Automatically finds the contents of the following builtin containers and
+    their subclasses:  tuple, list, deque, dict, set and frozenset.
+    To search other containers, add handlers to iterate over their contents:
+
+        handlers = {SomeContainerClass: iter,
+                    OtherContainerClass: OtherContainerClass.get_elements}
+
+    """
+    dict_handler = lambda d: chain.from_iterable(d.items())
+    all_handlers = {tuple: iter,
+                    list: iter,
+                    deque: iter,
+                    dict: dict_handler,
+                    set: iter,
+                    frozenset: iter,
+                   }
+    all_handlers.update(handlers)     # user handlers take precedence
+    seen = set()                      # track which object id's have already been seen
+    default_size = getsizeof(0)       # estimate sizeof object without __sizeof__
+
+    def sizeof(o):
+        if id(o) in seen:       # do not double count the same object
+            return 0
+        seen.add(id(o))
+        s = getsizeof(o, default_size)
+
+        if verbose:
+            print(s, type(o), repr(o), file=stderr)
+
+        for typ, handler in all_handlers.items():
+            if isinstance(o, typ):
+                s += sum(map(sizeof, handler(o)))
+                break
+        return s
+
+    return sizeof(o)
 
 # Example of a representation of a core (a,b,c,d,e,f) of length 6 with a representation of length 6*5/2 = 15:
 #    0   1   2   3   4       5   6   7   8       9   10  11      12  13      14  
@@ -681,7 +583,11 @@ def inspectStatesFromFile(file, edges, edgetypes):
             conditiontext = CE.convertConditionMatrixToText(condmat)
             print(conditiontext, "\nhas a score of ", CE.evaluate(condmat))
             
+def testCountCategories():
+    CE = ConditionEvaluator(l=4, k=2, p=1, ignoreEdge=0)
+    CE.countCategories2()
 
 if __name__ == "__main__":
-    inspectStatesFromFile("best_species_txt_763.txt", 15, 7)
-    #checkThmConditionMatrix()
+    #testCountCategories()
+    #inspectStatesFromFile("best_species_txt_763.txt", 15, 7)
+    checkThmConditionMatrix()
