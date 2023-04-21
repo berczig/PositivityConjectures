@@ -33,16 +33,16 @@ import matplotlib.pyplot as plt
 import uio
 
 
-l = 6
+l = 5
 k = 2
 p = 1
 # k+2+2*p
-N = l+k   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
+NumCritIntervals = k+2+2*p   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
 ALPHABET_SIZE = 1+3+3
-EDGES = int(N*(N-1)/2)
+EDGES = int(NumCritIntervals*(NumCritIntervals-1)/2)
 MYN = ALPHABET_SIZE*EDGES  #The length of the word we are generating. Here we are generating a graph, so we create a 0-1 word of length (N choose 2)
 
-MAX_EXPECTED_EDGES = 6
+MAX_EXPECTED_EDGES = 2*k
 LEARNING_RATE = 0.1 #Increase this to make convergence faster, decrease if the algorithm gets stuck in local optima too often.
 n_sessions =300 #number of new sessions per iteration
 percentile = 93 #top 100-X percentile we are learning from
