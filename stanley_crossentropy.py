@@ -34,8 +34,8 @@ import uio
 
 
 l = 6
-k = 3
-p = 2
+k = 2
+p = 1
 # k+2+2*p
 N = l+k   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
 ALPHABET_SIZE = 1+3+3

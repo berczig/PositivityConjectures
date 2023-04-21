@@ -71,8 +71,8 @@ def C_n(n):
     3   5.0
     4   14.0																											
     5   42.0
-    6   132.0												6416															439
-    7   429.0
+    6   132.0												6416															440
+    7   429.0                                                                                                               723
     8   1430.0												1227180															848
     9   4862.0
     """
@@ -254,7 +254,7 @@ class ConditionEvaluator:
         self.l = l
         self.k = k
         self.p = p
-        self.XYZ = {}
+        self.coreOccurrences = {} # category/core type: list(i'th entry is number of times this tpe appears in i'th uio)
 
         # Compute UIO length
         self.n = l+k
@@ -342,16 +342,16 @@ class ConditionEvaluator:
                     for conditionrow in Condition_matrix]
 
         counted = np.zeros(self.uios_n) # the i'th entry is the number of correps associated to the i'th uio that fit the Conditions
-        for primeCoreRep in self.XYZ:
-            print("primeCoreRep:", primeCoreRep)
+        for primeCoreRep in self.coreOccurrences:
+            #print("primeCoreRep:", primeCoreRep)
             if self.coreFitsConditions2(primeCoreRep, Conditions) == True:
-                print("hey")
-                counted += self.XYZ[primeCoreRep]
+                #print("hey")
+                counted += self.coreOccurrences[primeCoreRep]
         difference = counted - np.array(self.trueCoefficients)
-        print("sum:", sum(counted))
-        print("sum:", sum(difference))
-        print("sum:", sum(self.trueCoefficients))
-        print("difference:", difference)
+        #print("sum:", sum(counted))
+        #print("sum:", sum(difference))
+        #print("sum:", sum(self.trueCoefficients))
+        #print("difference:", difference)
         for x in difference:
             if x < 0:
                 return -np.inf
@@ -405,7 +405,7 @@ class ConditionEvaluator:
         ID = 0
         counter = {} # categoryID:dict(uioID:occurrences)
         for uioID, corereps in enumerate(self.coreRepresentations):
-            for corerep in enumerate(corereps):
+            for corerep in corereps:
                 # determine category ID
                 if corerep not in categories:
                     ID = len(categories)
@@ -425,11 +425,12 @@ class ConditionEvaluator:
 
         # Turn collected category-count data into a matrix
         for cat in categories:
+            #print("cat:", cat)
             counted = np.zeros(self.uios_n)
             ID = categories[cat]
             for uioID in counter[ID]:
                 counted[uioID] = counter[ID][uioID]
-            self.XYZ[cat] = counted
+            self.coreOccurrences[cat] = counted
 
         columns = len(categories)
         print("Found",columns, "categories")
@@ -584,10 +585,10 @@ def inspectStatesFromFile(file, edges, edgetypes):
             print(conditiontext, "\nhas a score of ", CE.evaluate(condmat))
             
 def testCountCategories():
-    CE = ConditionEvaluator(l=4, k=2, p=1, ignoreEdge=0)
+    CE = ConditionEvaluator(l=6, k=2, p=1, ignoreEdge=0)
     CE.countCategories2()
 
 if __name__ == "__main__":
-    #testCountCategories()
+    testCountCategories()
     #inspectStatesFromFile("best_species_txt_763.txt", 15, 7)
-    checkThmConditionMatrix()
+    #checkThmConditionMatrix()
