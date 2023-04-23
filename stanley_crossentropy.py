@@ -30,12 +30,12 @@ import pickle
 import time
 import math
 import matplotlib.pyplot as plt
-import uio
+from uio import UIO, ConditionEvaluator, UIODataExtractor
 
 
-l = 6
-k = 3
-p = 2
+l = 4
+k = 2
+p = 1
 # k+2+2*p
 NumCritIntervals = k+2+2*p   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
 ALPHABET_SIZE = 1+3+3
@@ -65,11 +65,12 @@ observation_space = MYN + EDGES #Leave this at 2*MYN. The input vector will have
 len_game = EDGES 
 state_dim = (observation_space,)
 
+load_file = "coreTypes_l=6_k=3_p=2_ignore=100.bin"
 INF = 1000000
 
 def convertStateToConditionMatrix(state):
 	# state is of length MYN
-	graph = np.ones((2, EDGES))*uio.UIO.INCOMPARABLE
+	graph = np.ones((2, EDGES))*UIO.INCOMPARABLE
 	for step in range(EDGES):
 		actionvector = state[ALPHABET_SIZE*step:ALPHABET_SIZE*(step+1)]
 		if actionvector[0] == 0:
@@ -78,7 +79,7 @@ def convertStateToConditionMatrix(state):
 			if edge > 3:
 				row = 1
 				edge -= 3
-			graph[row][step] = edge + uio.UIO.INCOMPARABLE
+			graph[row][step] = edge + UIO.INCOMPARABLE
 	return graph
 
 all_scores = {}
@@ -105,7 +106,6 @@ def generate_session(agent, n_sessions, verbose = 1):
 	Code inspired by https://github.com/yandexdataschool/Practical_RL/blob/master/week01_intro/deep_crossentropy_method.ipynb
 	"""
 	print("generate_session")
-	np.random.seed(42)
 	states =  np.zeros([n_sessions, observation_space, len_game], dtype=int)
 	actions = np.zeros([n_sessions, len_game, ALPHABET_SIZE], dtype = int)
 	state_next = np.zeros([n_sessions,observation_space], dtype = int)
@@ -244,6 +244,7 @@ if __name__ == "__main__":
 	#I usually used relu activation in the hidden layers but play around to see what activation function and what optimizer works best.
 	#It is important that the loss is binary cross-entropy if alphabet size is 2.
 
+
 	model = Sequential()
 	model.add(Dense(FIRST_LAYER_NEURONS,  activation="relu"))
 	model.add(Dense(SECOND_LAYER_NEURONS, activation="relu"))
@@ -254,7 +255,15 @@ if __name__ == "__main__":
 
 	print(model.summary())
 
-	CE = uio.ConditionEvaluator(l=l, k=k, p=p, ignoreEdge=uio.UIO.INCOMPARABLE)
+
+	#CE = ConditionEvaluator(l=l, k=k, p=p, ignoreEdge=UIO.INCOMPARABLE)
+	CE = None
+	if load_file == "":
+		CE = ConditionEvaluator(l=l, k=k, p=p, ignoreEdge=UIO.INCOMPARABLE, uiodataextractor=UIODataExtractor(l,k,p))
+	else:
+		CE = ConditionEvaluator(l=l, k=k, p=p, ignoreEdge=UIO.INCOMPARABLE)
+		CE.load(load_file)
+
 
 	print("only zero state has reward of", calcScore(np.zeros(observation_space)))
 

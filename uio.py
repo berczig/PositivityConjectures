@@ -5,7 +5,8 @@ step 3: From each l,k correct sequence extract this data(called the core):
     - last k+1 intervals
     - maximum interval from first l-1 intervals
     - p critical pairs from first intervals
-step 4: This data can be viewed as a graph and we classify all these graphs(from all uio) into the emerging categories.
+step 4: This data can be viewed as a graph and we classify all these graphs(from all uio) into the emerging coreTypes. 
+    Then number of coreTypes is much smaller than the number of l,k correct sequences
 step 5: Sum problem: find the graph G such that the number of graphs who have G as subgraph is exactly the coefficent c_{l,k}
         - using linear programming (Adam, Gurobi)
         - using RL
@@ -26,9 +27,35 @@ TODO:
         4,2		6416			440
         5,2                     723
         6,2		1227180			849
+    - np.seed is not enough to replicate same results
 
+
+
+other notes:
+# step 1: encode right condition into condition-MATRIX and check against all correct seqs    
+# step2 : RL: deep neural cross entropy method
+# 
+# neural network policy structures:
+#   1: 45 or 46 , 60, 61, outputs for all the possible actions
+#   2: there is a 2. input telling you at what edge we are, just 4 outputs
+# 
+# Training happens like this:
+#   top 10 % become training data: conditions|->probability dist.
+#   train our current policy / neural network w.r.t. this classificaation. 
+
+    
+
+
+Info table:
+    n   Catalan number / uios   total correct sequences     total n-2,2 correct sequences   total n-3,3 correct sequences   total n-2,2 correct sequences categories    total n-3,3 correct sequences categories
+    3   5.0
+    4   14.0																											
+    5   42.0
+    6   132.0												6416															440
+    7   429.0                                                                                                               723                                         10238
+    8   1430.0												1227180															848
+    9   4862.0                                                                              19121202                                                                    89443
 """
-
 from __future__ import print_function
 from sys import getsizeof, stderr
 from itertools import chain
@@ -44,8 +71,8 @@ import numpy as np
 #import networkx as nx
 import matplotlib.pyplot as plt 
 import sys
+import pickle
 import time 
-import stanley_crossentropy
 
 
 
@@ -66,16 +93,6 @@ def binomial(x, y):
         return 0
 
 def C_n(n):
-    """ 
-    n   Catalan number / uios   total correct sequences     total n-2,2 correct sequences   total n-3,3 correct sequences   total n-2,2 correct sequences categories    total n-3,3 correct sequences categories
-    3   5.0
-    4   14.0																											
-    5   42.0
-    6   132.0												6416															440
-    7   429.0                                                                                                               723
-    8   1430.0												1227180															848
-    9   4862.0
-    """
     return binomial(2*n, n)/(n+1)
 
 def generate_all_uios(n):
@@ -106,6 +123,24 @@ def uio_to_graph(uio):
     plt.show()
 
 
+class Loadable:
+    """
+    pickles, saves, loads all attributes of the superclass
+    """
+
+    def save(self, filename):
+        # saves all currently present attributes of the instance
+        with open(filename, 'wb') as f:
+            pickle.dump(self,f)
+
+    def load(self, filename):
+        # loads dump and sets all attributes of dump as attributes of the current instance
+        with open(filename, 'rb') as f:
+            loaded_instance = pickle.load(f)
+            for var in vars(loaded_instance):
+                setattr(self, var, getattr(loaded_instance, var))
+
+
 ###############################################################################################
 
 class UIO:
@@ -131,6 +166,7 @@ class UIO:
                     self.comparison_matrix[i, j] = self.LESS
                     self.comparison_matrix[j,i] = self.GREATER
         self.lkCorrectSequences = {} # {(l,k):[corseq1, corseq2,...], ... }
+        self.lkCorrectSequences_n = {} # {(l,k):number of (l,k) correct sequences}
 
         # compute correct sequences
         self.computeCorrectSequences()
@@ -157,9 +193,11 @@ class UIO:
     
     def computeCorrectSequences(self):
         self.lkCorrectSequences[(self.n,0)] = [seq for seq in getPermutationsOfN(self.n) if self.iscorrect(seq)]
+        self.lkCorrectSequences_n[(self.n,0)] = len(self.lkCorrectSequences[(self.n,0)])
     
     def computelkCorrectSequences(self, l, k):
         self.lkCorrectSequences[(l,k)] = [seq for seq in getPermutationsOfN(self.n) if self.is_lk_correct(seq,l,k)]
+        self.lkCorrectSequences_n[(l,k)] = len(self.lkCorrectSequences[(l,k)])
         self.l = l
         self.k = k
 
@@ -219,192 +257,63 @@ class UIO:
         # assumes that lk correct sequences allready  have been calculated
         return len(self.lkCorrectSequences[self.l, self.k]) - len(self.lkCorrectSequences[self.n, 0])
 
-def getAllCoreRepresentationsOfAllUios(l,k,p):
 
-    # Compute UIO length
-    n = l+k
-
-    # step 1
-    print(111122222222)
-    uios = [UIO(uio_encoding) for uio_encoding in generate_all_uios(n)]
-    coreRepresentations = []
-    print(122222222222222)
-
-    g = 0
-    for uio in uios:
-        g += 1
-        print("k:", g)
-        # step 2
-        uio.computelkCorrectSequences(l,k)
-
-        # step 3
-        uio.computeCores(p)
-
-        # step 4
-        coreRepresentations.append(uio.getCoreRepresentations())
-
-    return uios, coreRepresentations
-
-class ConditionEvaluator:
-
-    def __init__(self, l, k, p, ignoreEdge):
-        self.coreRepresentations = [] # the i'th entry contains all coreRepresentations of the i'th uio
-        self.trueCoefficients = []
-        self.ignoreEdge = ignoreEdge        
+class UIODataExtractor:
+    def __init__(self, l, k, p):
         self.l = l
         self.k = k
         self.p = p
-        self.coreOccurrences = {} # category/core type: list(i'th entry is number of times this tpe appears in i'th uio)
+        self.coreTypesRaw = [] # list of all coreTypes
+        self.coreTypes = {} # coreType(int):occurrences(list), i'th entry in occurrences is how often that type appeared in i'th uio
+        self.trueCoefficients = [] # i'th entry is the coefficient c_{l,k} of the i'th uio's CSF
 
         # Compute UIO length
         self.n = l+k
+
+        print("Create UIODataExtractor with l =", l, "k =", k, "p =", p)
         t = time.time()
 
-        print("Create ConditionEvaluator with n =", self.n, "l =", l, "k =", k, "p =", p)
-
-        # step 1
-        print("Generating uios and correct sequences...")
+        # step 1 - Generate UIOs
         self.uios = []
         uio_encodings = generate_all_uios(self.n)
         self.uios_n = len(uio_encodings)
         printvalue = self.uios_n//16
-        print("printe every:", printvalue)
+
+        print("Generating uios and correct sequences...(print every", str(printvalue)+")")
         for i, uio_encoding in enumerate(uio_encodings):
             if i%printvalue == 0:
                 print(i+1, "/", self.uios_n)
             self.uios.append(UIO(uio_encoding))
+        print("Generated correct sequences:", sum([uio.lkCorrectSequences_n[(self.n, 0)] for uio in self.uios]))
 
         print("Computing uio l,k correct sequences and cores...")
         for i,uio in enumerate(self.uios):
             if i%printvalue == 0:
                 print(i+1, "/", self.uios_n)
-            # step 2
+            # step 2 - compute l,k correct sequences
             uio.computelkCorrectSequences(l,k)
 
-            # step 3
+            # step 3 - compute the cores
             uio.computeCores(p)
 
-            # step 4
-            self.coreRepresentations.append(uio.getCoreRepresentations())
+            # step 4.1 - generate the coreTypes from the cores (The core is independent of the comparison matrix from its UIO) 
+            self.coreTypesRaw.append(uio.getCoreRepresentations())
             self.trueCoefficients.append(uio.getCoefficient())
-        self.countCategories2()
-        print("ConditionEvaluator ready! - time elapsed to create:", time.time()-t)
+        print("Generated l,k correct sequences:", sum([uio.lkCorrectSequences_n[(self.l, self.k)] for uio in self.uios]))
 
-    def countComplyingCores(self, coreRepresentations, Conditions):
-        if len(coreRepresentations) == 0:
-            return 0
-            
-        counter = 0
-        coreedges = len(coreRepresentations[0]) # assume same number of critical pairs
+        # step 4.2 - classify the coreTypes by counting how many different types there are
+        self.countCategories()
 
-        # for the case were the number of critical pairs can vary: using condition_matrix create another conditions2 for the case with fewer edges, then given a correp always check the length and pick the right conditions
-        
-        def coreFitsConditions(correp): # ANDs conditions in row together
-            for rowcondition in Conditions:
-                fits = True
-                for edgeIndex, edgevalue in rowcondition:
-                    if correp[edgeIndex] != edgevalue:
-                        fits = False
-                        break
-                if fits:
-                    return True
-            return False
-        
-        # count how many fit 1 of the conditions
-        for correp in coreRepresentations:
-            if coreFitsConditions(correp):
-                counter += 1
+        print("Created UIODataExtractor in", round(time.time()-t,3), "seconds")
 
-        return counter
-    
-    def coreFitsConditions2(self, correp, Conditions): # ANDs conditions in row together
-        for rowcondition in Conditions:
-            fits = True
-            for edgeIndex, edgevalue in rowcondition:
-                if correp[edgeIndex] != edgevalue:
-                    fits = False
-                    break
-            if fits:
-                return True
-        return False
-    
-    def evaluate2(self, Condition_matrix, verbose=False):
-        # for each uio of length l+k, check how many of its cores comply  with 
-        # the Condition_matrix and compare that amount with the true coefficient c_{l,k}
-        # 
-
-        if verbose:
-            print("evaluate Condition_matrix:", Condition_matrix)
-        score = 0 # bigger is better, negative
-
-        # Condition_matrix is not so straight to the point when one wants to check the conditions, so let's prune it a bit so it's easier to do the checking
-        Conditions = [[(i, edgecondition) for i, edgecondition in enumerate(conditionrow) if edgecondition != self.ignoreEdge] 
-                    for conditionrow in Condition_matrix]
-
-        counted = np.zeros(self.uios_n) # the i'th entry is the number of correps associated to the i'th uio that fit the Conditions
-        for primeCoreRep in self.coreOccurrences:
-            #print("primeCoreRep:", primeCoreRep)
-            if self.coreFitsConditions2(primeCoreRep, Conditions) == True:
-                #print("hey")
-                counted += self.coreOccurrences[primeCoreRep]
-        difference = counted - np.array(self.trueCoefficients)
-        #print("sum:", sum(counted))
-        #print("sum:", sum(difference))
-        #print("sum:", sum(self.trueCoefficients))
-        #print("difference:", difference)
-        for x in difference:
-            if x < 0:
-                return -np.inf
-        return -sum(difference)
-
-    def evaluate(self, Condition_matrix, verbose=False):
-        return self.evaluate2(Condition_matrix, verbose)
-        # for each uio of length l+k, check how many of its cores comply  with 
-        # the Condition_matrix and compare that amount with the true coefficient c_{l,k}
-        # 
-
-        if verbose:
-            print("evaluate Condition_matrix:", Condition_matrix)
-        score = 0 # bigger is better, negative
-
-        # Condition_matrix is not so straight to the point when one wants to check the conditions, so let's prune it a bit so it's easier to do the checking
-        Conditions = [[(i, edgecondition) for i, edgecondition in enumerate(conditionrow) if edgecondition != self.ignoreEdge] 
-                    for conditionrow in Condition_matrix]
-
-        for i, corereps in enumerate(self.coreRepresentations):
-            amount = self.countComplyingCores(corereps, Conditions)
-            difference = amount - self.trueCoefficients[i]
-
-            if difference < 0: # too many conditions, didn't include enough cores
-                return -np.inf
-            score -= difference
-        return score
-    
-    def convertConditionMatrixToText(self, Condition_matrix):
-        rows, columns = Condition_matrix.shape
-        rowtexts = []
-        for row in range(rows):
-            index = 0
-            rowtext = []
-            aORD = ord("a")
-            for i in range(self.n):
-                for j in range(i+1, self.n):
-                    edge = Condition_matrix[row][index]
-
-                    if edge != self.ignoreEdge:
-                        rowtext.append(chr(aORD+i)+UIO.RELATIONTEXT[edge]+chr(aORD+j))
-                    index += 1
-            if rowtext:
-                rowtexts.append(" AND ".join(rowtext))
-        return " OR \n".join(rowtexts)
-    
-    def countCategories2(self):
+    def countCategories(self):
+        print("Categorizing core types...")
         categories = {} # category:ID
         # knows the representative corereps
         # how many of them per uio
         ID = 0
         counter = {} # categoryID:dict(uioID:occurrences)
-        for uioID, corereps in enumerate(self.coreRepresentations):
+        for uioID, corereps in enumerate(self.coreTypesRaw):
             for corerep in corereps:
                 # determine category ID
                 if corerep not in categories:
@@ -430,75 +339,87 @@ class ConditionEvaluator:
             ID = categories[cat]
             for uioID in counter[ID]:
                 counted[uioID] = counter[ID][uioID]
-            self.coreOccurrences[cat] = counted
+            self.coreTypes[cat] = counted
 
         columns = len(categories)
         print("Found",columns, "categories")
-        print("size:", total_size(counter))
+        #print("size:", total_size(counter))
+
+class ConditionEvaluator(Loadable):
+
+    def __init__(self, l, k, p, ignoreEdge, uiodataextractor:UIODataExtractor=None):
+        self.l = l
+        self.k = k
+        self.p = p
+        self.ignoreEdge = ignoreEdge        
+
+        # Compute UIO length
+        self.n = l+k
+
+        if uiodataextractor != None:
+            self.trueCoefficients = uiodataextractor.trueCoefficients
+            self.coreTypes = uiodataextractor.coreTypes 
+            self.uios_n = uiodataextractor.uios_n
+            print("Created ConditionEvaluator Using UIODataExtractor, n =", self.n, "l =", l, "k =", k, "p =", p)
+            print("Using", len(self.coreTypes), "core types / categories for the ConditionEvaluator")
+
+    def load(self, filename):
+        super().load(filename)
+        print("Created ConditionEvaluator by loading file, n =", self.n, "l =", self.l, "k =", self.k, "p =", self.p)
+        print("Using", len(self.coreTypes), "core types / categories for the ConditionEvaluator")
     
-    def countCategories(self):
-        categories = {} # category:ID
-        categories_counters = [] # list of dicts(category counters)
-        # knows the representative corereps
-        # how many of them per uio
-        ID = 0
-        for corereps in self.coreRepresentations:
-            counter = {}
-            for i, corerep in enumerate(corereps):
-                # determine category ID
-                if corerep not in categories:
-                    ID = len(categories)
-                    categories[corerep] = ID
-                else:
-                    ID = categories[corerep]
+    def coreFitsConditions(self, correp, Conditions): # ANDs conditions in row together
+        for rowcondition in Conditions:
+            fits = True
+            for edgeIndex, edgevalue in rowcondition:
+                if correp[edgeIndex] != edgevalue:
+                    fits = False
+                    break
+            if fits:
+                return True
+        return False
+    
 
-                # count this observed category
-                if ID not in counter:
-                    counter[ID] = 1
-                else:
-                    counter[ID] += 1
-            categories_counters.append(counter)
+    def evaluate(self, Condition_matrix, verbose=False):
+        # for each uio of length l+k, check how many of its cores comply  with 
+        # the Condition_matrix and compare that amount with the true coefficient c_{l,k}
+        if verbose:
+            print("evaluate Condition_matrix:", Condition_matrix)
+        score = 0 # bigger is better, negative
 
-        # Turn collected category-count data into a matrix
-        columns = len(categories)
-        print("Found",columns, "categories")
-        counts = []
-        for i in range(self.uios_n):
-            counter = categories_counters[i]
-            row = [0 if j not in counter else counter[j] for j in range(columns)]
-            counts.append(row)
+        # Condition_matrix is not so straight to the point when one wants to check the conditions, so let's prune it a bit so it's easier to do the checking
+        Conditions = [[(i, edgecondition) for i, edgecondition in enumerate(conditionrow) if edgecondition != self.ignoreEdge] 
+                    for conditionrow in Condition_matrix]
 
-        print("Computed count matrix of shape (", self.uios_n,",",columns, ")",sep="")
-        print("size:", total_size(counts), counts[0])
-        return counts
-        # size of matrix categories representation:
-        # 4,2 490700
-        # 5,2 2637756
-        # 6,2 9954224
-          #    39537300
+        counted = np.zeros(self.uios_n) # the i'th entry is the number of correps associated to the i'th uio that fit the Conditions
+        for primeCoreRep in self.coreTypes:
+            if self.coreFitsConditions(primeCoreRep, Conditions) == True:
+                counted += self.coreTypes[primeCoreRep]
+        difference = counted - np.array(self.trueCoefficients)
+        for x in difference:
+            if x < 0:
+                return -np.inf
+        return -sum(difference)
+    
+    def convertConditionMatrixToText(self, Condition_matrix):
+        rows, columns = Condition_matrix.shape
+        rowtexts = []
+        for row in range(rows):
+            index = 0
+            rowtext = []
+            aORD = ord("a")
+            for i in range(self.n):
+                for j in range(i+1, self.n):
+                    edge = Condition_matrix[row][index]
 
-        # size of matrix categories representation:
-        # 4,2 293756
-        # 5,2 
-        # 6,2 39537300
-        
-        #num = sum([val for val in counter.values()])
-        #for key in counter:
-        #    print(key, counter[key])
-        #print("num:", num)
+                    if edge != self.ignoreEdge:
+                        rowtext.append(chr(aORD+i)+UIO.RELATIONTEXT[edge]+chr(aORD+j))
+                    index += 1
+            if rowtext:
+                rowtexts.append(" AND ".join(rowtext))
+        return " OR \n".join(rowtexts)
+    
 
-
-    # step 1: encode right condition into condition-MATRIX and check against all correct seqs
-            
-    # step2 : RL: deep neural cross entropy method
-    # 
-    # neural network policy structures:
-    #   1: 45 or 46 , 60, 61, outputs for all the possible actions
-    #   2: there is a 2. input telling you at what edge we are, just 4 outputs
-    # 
-    # Training happens like this:
-    #   top 10 % become training data: conditions|->probability dist.
-    #   train our current policy / neural network w.r.t. this classificaation. 
 
 
 def total_size(o, handlers={}, verbose=False):
@@ -548,7 +469,9 @@ def total_size(o, handlers={}, verbose=False):
 def checkThmConditionMatrix():
     # Set UIO parameters
     tstart = time.time()
+    #CE = ConditionEvaluator(l=4, k=2, p=1, ignoreEdge=0, uiodataextractor=UIODataExtractor(l=4,k=2,p=1))
     CE = ConditionEvaluator(l=4, k=2, p=1, ignoreEdge=0)
+    CE.load("CEsave.bin")
 
     # The thm needs c<e and d<f  OR  a>e and b > f  that translates to 
     ThmConditionFilter = np.zeros((2,15))
@@ -580,15 +503,38 @@ def inspectStatesFromFile(file, edges, edgetypes):
                 vectoraction = eval(line.replace(" ", ",")) #convert black spaces to commas. Evaluate this string as python list
                 state += vectoraction
             print(15*"-")
+            import stanley_crossentropy # pickle problem mixed with circular problem
             condmat = stanley_crossentropy.convertStateToConditionMatrix(state)
             conditiontext = CE.convertConditionMatrixToText(condmat)
             print(conditiontext, "\nhas a score of ", CE.evaluate(condmat))
             
 def testCountCategories():
     CE = ConditionEvaluator(l=6, k=2, p=1, ignoreEdge=0)
-    CE.countCategories2()
+    CE.countCategories()
+
+def testsave():
+    t = time.time()
+    l = 4
+    k = 3
+    p = 2
+    ignore = UIO.INCOMPARABLE
+    DE = UIODataExtractor(l,k,p)
+    CE = ConditionEvaluator(l,k,p,ignore,DE)
+    CE.save("coreTypes_l={}_k={}_p={}_ignore={}.bin".format(l,k,p, ignore))
+    print("testsave elapsed:", time.time()-t)
+
+def testload():
+    l = 4
+    k = 2
+    p = 1
+    CE = ConditionEvaluator(l,k,p,0)
+    CE.load("coreTypes_l=4_k=2_p=1.bin")
+    for key in CE.coreTypes:
+        print(key, CE.coreTypes[key])
 
 if __name__ == "__main__":
-    testCountCategories()
+    testsave()
+    #testload()
+    #testCountCategories()
     #inspectStatesFromFile("best_species_txt_763.txt", 15, 7)
     #checkThmConditionMatrix()
