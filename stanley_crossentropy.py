@@ -33,8 +33,8 @@ import matplotlib.pyplot as plt
 from uio import UIO, ConditionEvaluator, UIODataExtractor
 
 
-l = 4
-k = 2
+l = 6
+k = 3
 p = 1
 # k+2+2*p
 NumCritIntervals = k+2+2*p   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 

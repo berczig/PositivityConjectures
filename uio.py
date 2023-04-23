@@ -27,6 +27,12 @@ TODO:
         4,2		6416			440
         5,2                     723
         6,2		1227180			849
+    - run conditionmatrix with fewer rows
+    - save uio data                                          DONE
+    - dynamic change of learning rate
+    - fix this error: when all the score sof the graphs appear to be the same then the multinomial distribution function gives an error
+    - fill out table of combinatorical stuff
+    - make the parameters in stanley_cross nicer and more clear
     - np.seed is not enough to replicate same results
 
 
@@ -53,7 +59,7 @@ Info table:
     5   42.0
     6   132.0												6416															440
     7   429.0                                                                                                               723                                         10238
-    8   1430.0												1227180															848
+    8   1430.0												1227180															848                                         40946
     9   4862.0                                                                              19121202                                                                    89443
 """
 from __future__ import print_function
@@ -264,7 +270,7 @@ class UIODataExtractor:
         self.k = k
         self.p = p
         self.coreTypesRaw = [] # list of all coreTypes
-        self.coreTypes = {} # coreType(int):occurrences(list), i'th entry in occurrences is how often that type appeared in i'th uio
+        self.coreTypes = {} # coreType(int):occurrences(dict), key i in occurrences is how often that type appeared in i'th uio
         self.trueCoefficients = [] # i'th entry is the coefficient c_{l,k} of the i'th uio's CSF
 
         # Compute UIO length
@@ -337,9 +343,9 @@ class UIODataExtractor:
             #print("cat:", cat)
             counted = np.zeros(self.uios_n)
             ID = categories[cat]
-            for uioID in counter[ID]:
-                counted[uioID] = counter[ID][uioID]
-            self.coreTypes[cat] = counted
+            #for uioID in counter[ID]:
+                #counted[uioID] = counter[ID][uioID]
+            self.coreTypes[cat] = counter[ID]
 
         columns = len(categories)
         print("Found",columns, "categories")
@@ -394,7 +400,9 @@ class ConditionEvaluator(Loadable):
         counted = np.zeros(self.uios_n) # the i'th entry is the number of correps associated to the i'th uio that fit the Conditions
         for primeCoreRep in self.coreTypes:
             if self.coreFitsConditions(primeCoreRep, Conditions) == True:
-                counted += self.coreTypes[primeCoreRep]
+                dict_ = self.coreTypes[primeCoreRep]
+                for uioID in dict_:
+                    counted[uioID] += dict_[uioID]
         difference = counted - np.array(self.trueCoefficients)
         for x in difference:
             if x < 0:
@@ -514,7 +522,7 @@ def testCountCategories():
 
 def testsave():
     t = time.time()
-    l = 4
+    l = 6
     k = 3
     p = 2
     ignore = UIO.INCOMPARABLE
