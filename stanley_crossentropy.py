@@ -29,11 +29,13 @@ from statistics import mean
 import pickle
 import time
 import math
+import os
 import matplotlib.pyplot as plt
 import sys
 from uio import UIO, ConditionEvaluator, UIODataExtractor
 from extra import PartiallyLoadable
 
+os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE" # fix to omp: error #15 on my laptop
 
 l = 4
 k = 2
@@ -68,14 +70,14 @@ len_game = EDGES
 state_dim = (observation_space,)
 
 load_cores_file = "saves/coreTypes_l=4_k=2_p=1_ignore=100.bin"
-load_model_file = "saves/teststanleymodelsave"
-save_model_file = "saves/teststanleymodelsave"
+load_model_file = "saves/teststanleymodelsaveagain"
+save_model_file = "saves/teststanleymodelsaveagain"
 
 if load_model_file != "":
-	load_model_file += "{}{}{}".format(l,k,p)
+	load_model_file += "[l={}k={}p={}]".format(l,k,p)
 if save_model_file != "":
-	save_model_file += "{}{}{}".format(l,k,p)
-saving_interval = 20
+	save_model_file += "[l={}k={}p={}]".format(l,k,p)
+saving_interval = 10
 INF = 1000000
 
 def convertStateToConditionMatrix(state):
@@ -92,9 +94,10 @@ def convertStateToConditionMatrix(state):
 			graph[row][step] = edge + UIO.INCOMPARABLE
 	return graph
 
-all_scores = {}
 def calcScore(state):
+	global all_scores
 	key_state = tuple(state)
+	#print("all_scores:", len(all_scores))
 	if key_state in all_scores:
 		return all_scores[key_state]
 	else:
@@ -263,6 +266,7 @@ class DataSaver(PartiallyLoadable):
 		self.meanscore_history = [] # history of mean score
 		self.numgraph_history = [] # history of number of graphs which we allready have calculated the score of
 		self.calculationtime_history = []
+		self.all_scores = {} # graph:score
 
 		if load_model_file == "":
 			#Model structure: a sequential network with three hidden layers, sigmoid activation in the output.
@@ -277,13 +281,14 @@ class DataSaver(PartiallyLoadable):
 			self.model.compile(loss="categorical_crossentropy", optimizer=SGD(learning_rate = LEARNING_RATE), run_eagerly=True) #Adam optimizer also works well, with lower learning rate
 		else:
 			self.load(load_model_file)
+			self.make_plots()
 
 		print(self.model.summary())
 
 
 	def save(self, filename):
 		super().save(filename+".mybin")
-		print("saving model:", load_model_file)
+		print("saving model:", save_model_file)
 		self.model.save(filename)
 
 	def load(self, filename):
@@ -295,22 +300,26 @@ class DataSaver(PartiallyLoadable):
 	def make_plots(self):
 		n = len(self.bestscore_history)
 		times = list(range(n))
+		plt.title("best score")
 		plt.plot(times, self.bestscore_history)
 		plt.show()
+		plt.title("mean score")
 		plt.plot(times, self.meanscore_history)
 		plt.show()
+		plt.title("number of different conditions checked")
 		plt.plot(times, self.numgraph_history)
 		plt.show()
+		plt.title("computation time of the i'th step")
 		plt.plot(times, self.calculationtime_history)
 		plt.show()
 	
 if __name__ == "__main__":
-
-	DS = DataSaver(["step", "bestscore_history", "meanscore_history", "numgraph_history", "calculationtime_history"],
+	DS = DataSaver(["step", "bestscore_history", "meanscore_history", "numgraph_history", 
+	"calculationtime_history", "all_scores"],
 		 load_model_file)
-	DS.make_plots()	
 	model = DS.model
 	startstep = DS.step
+	all_scores = DS.all_scores
 
 	#CE = ConditionEvaluator(l=l, k=k, p=p, ignoreEdge=UIO.INCOMPARABLE)
 	CE = None
@@ -419,6 +428,8 @@ if __name__ == "__main__":
 				f.write("\n")
 
 		if ((i+1)%saving_interval == 0):
-			DS.step = i
+			DS.step = i+1
+			DS.all_scores = all_scores
 			if save_model_file != "":
 				DS.save(save_model_file)
+				#DS.make_plots()

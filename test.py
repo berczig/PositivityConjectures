@@ -10,6 +10,8 @@ from keras.models import load_model
 from extra import PartiallyLoadable
 import random
 
+
+
 """
 class Mytest:
     def __init__(self):

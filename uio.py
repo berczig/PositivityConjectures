@@ -41,11 +41,25 @@ TODO:
     - graph over loss while training
     - plot graph as networkx
     - save model?   
-        weights             DONE
-        step                DONE
+        weights                 DONE
+        step                    DONE
+        bestscores              DONE
+        meansccore              DONE
+        calculationtime         DONE
+        numberofgraphs          DONE
         adams elites etc    ..
         stategraph scores   ..
+            different format
+        bestgraph in each step ..
+
     - save scores of graphs?
+    - permutate core
+    - incooperate aprior knowledge about the core
+    - only use random portion of uios when doing 1 stpe
+    - display best graph
+    - evolution animation
+    -tuesday 02.05 2 pm
+    - check maximal
 
 
 
@@ -215,7 +229,8 @@ class UIO:
                     break
             if ismaximal:
                 maximals.append(i)
-        return max(maximals)
+        print(max(maximals) == np.argmax(maximals))
+        return np.argmax(maximals)
     
     def getCore(self, seq, p): # step 3 for l,k
         core = []
@@ -417,7 +432,7 @@ class ConditionEvaluator(Loadable):
             aORD = ord("a")
             for i in range(self.n):
                 for j in range(i+1, self.n):
-                    edge = Condition_matrix[row][index]
+                    edge = int(Condition_matrix[row][index])
 
                     if edge != self.ignoreEdge:
                         rowtext.append(chr(aORD+i)+UIO.RELATIONTEXT[edge]+chr(aORD+j))
@@ -482,11 +497,11 @@ def checkThmConditionMatrix():
     # Set UIO parameters
     tstart = time.time()
     #CE = ConditionEvaluator(l=4, k=2, p=1, ignoreEdge=0, uiodataextractor=UIODataExtractor(l=4,k=2,p=1))
-    CE = ConditionEvaluator(l=4, k=2, p=1, ignoreEdge=0)
-    CE.load("CEsave.bin")
+    CE = ConditionEvaluator(l=4, k=2, p=1, ignoreEdge=100)
+    CE.load("saves/coreTypes_l=4_k=2_p=1_ignore=100.bin")
 
     # The thm needs c<e and d<f  OR  a>e and b > f  that translates to 
-    ThmConditionFilter = np.zeros((2,15))
+    ThmConditionFilter = np.ones((2,15))*UIO.INCOMPARABLE
     ThmConditionFilter[0][10] = UIO.LESS
     ThmConditionFilter[0][13] = UIO.LESS
     ThmConditionFilter[1][3] = UIO.GREATER
@@ -545,8 +560,8 @@ def testload():
         print(key, CE.coreTypes[key])
 
 if __name__ == "__main__":
-    testsave()
+    #testsave()
     #testload()
     #testCountCategories()
     #inspectStatesFromFile("best_species_txt_763.txt", 15, 7)
-    #checkThmConditionMatrix()
+    checkThmConditionMatrix()
