@@ -30,11 +30,12 @@ import pickle
 import time
 import math
 import matplotlib.pyplot as plt
+import sys
 from uio import UIO, ConditionEvaluator, UIODataExtractor
 
 
-l = 6
-k = 3
+l = 4
+k = 2
 p = 1
 # k+2+2*p
 NumCritIntervals = k+2+2*p   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
@@ -43,8 +44,8 @@ EDGES = int(NumCritIntervals*(NumCritIntervals-1)/2)
 MYN = ALPHABET_SIZE*EDGES  #The length of the word we are generating. Here we are generating a graph, so we create a 0-1 word of length (N choose 2)
 
 MAX_EXPECTED_EDGES = 2*k
-LEARNING_RATE = 1 #Increase this to make convergence faster, decrease if the algorithm gets stuck in local optima too often.
-n_sessions =300 #number of new sessions per iteration
+LEARNING_RATE = 0.2 #Increase this to make convergence faster, decrease if the algorithm gets stuck in local optima too often.
+n_sessions = 100 #number of new sessions per iteration
 percentile = 93 #top 100-X percentile we are learning from
 super_percentile = 94 #top 100-X percentile that survives to next iteration
 
@@ -65,7 +66,7 @@ observation_space = MYN + EDGES #Leave this at 2*MYN. The input vector will have
 len_game = EDGES 
 state_dim = (observation_space,)
 
-load_file = "coreTypes_l=6_k=3_p=2_ignore=100.bin"
+load_file = "coreTypes_l=4_k=2_p=1_ignore=100.bin"
 INF = 1000000
 
 def convertStateToConditionMatrix(state):
@@ -123,13 +124,16 @@ def generate_session(agent, n_sessions, verbose = 1):
 		step += 1		
 		tic = time.time()
 
-		prob = agent.predict(states[:,:,step-1], batch_size = n_sessions)
-		#print("prob:", prob) 
+		prob = agent.predict(states[:,:,step-1], batch_size = n_sessions, verbose=None)
+		# np.random.multinomial implicitly casts to float64, this create the possibility that a row sums to > 1
+		prob = np.float64(prob)
+		prob = (prob.T / np.sum(prob, axis=1)).T # normalize each row
+		
 		pred_time += time.time()-tic
 
 		terminal = step == EDGES
 		
-		print(step, "over_conditioned_graphs:", len(over_conditioned_graphs))
+		#print(step, "over_conditioned_graphs:", len(over_conditioned_graphs))
 
 		#print("first prob:", prob[0])
 		for i in range(n_sessions):
@@ -139,6 +143,7 @@ def generate_session(agent, n_sessions, verbose = 1):
 				continue
 
 			vectoraction = np.random.multinomial(1, prob[i], size=1).reshape(ALPHABET_SIZE)
+
 			if vectoraction[0] != 1:
 				edges[i] += 1
 					
@@ -330,6 +335,7 @@ if __name__ == "__main__":
 
 		score_time = time.time()-tic
 		
+		print("all scores:", len(all_scores))
 		print("\n" + str(i) +  ". Best individuals: " + str(np.flip(np.sort(super_rewards))))
 		
 		#uncomment below line to print out how much time each step in this loop takes. 
