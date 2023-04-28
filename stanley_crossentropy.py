@@ -32,6 +32,7 @@ import math
 import matplotlib.pyplot as plt
 import sys
 from uio import UIO, ConditionEvaluator, UIODataExtractor
+from extra import PartiallyLoadable
 
 
 l = 4
@@ -66,7 +67,15 @@ observation_space = MYN + EDGES #Leave this at 2*MYN. The input vector will have
 len_game = EDGES 
 state_dim = (observation_space,)
 
-load_file = "coreTypes_l=4_k=2_p=1_ignore=100.bin"
+load_cores_file = "saves/coreTypes_l=4_k=2_p=1_ignore=100.bin"
+load_model_file = "saves/teststanleymodelsave"
+save_model_file = "saves/teststanleymodelsave"
+
+if load_model_file != "":
+	load_model_file += "{}{}{}".format(l,k,p)
+if save_model_file != "":
+	save_model_file += "{}{}{}".format(l,k,p)
+saving_interval = 20
 INF = 1000000
 
 def convertStateToConditionMatrix(state):
@@ -243,31 +252,73 @@ def select_super_sessions(states_batch, actions_batch, rewards_batch, percentile
 	super_actions = np.array(super_actions, dtype = int)
 	super_rewards = np.array(super_rewards)
 	return super_states, super_actions, super_rewards
+
+class DataSaver(PartiallyLoadable):
+
+	def __init__(self, save_vars, load_model_file):
+		super().__init__(save_vars) # set saveable variables
+
+		self.step = 0
+		self.bestscore_history = [] # history of best score
+		self.meanscore_history = [] # history of mean score
+		self.numgraph_history = [] # history of number of graphs which we allready have calculated the score of
+		self.calculationtime_history = []
+
+		if load_model_file == "":
+			#Model structure: a sequential network with three hidden layers, sigmoid activation in the output.
+			#I usually used relu activation in the hidden layers but play around to see what activation function and what optimizer works best.
+			#It is important that the loss is binary cross-entropy if alphabet size is 2.
+			self.model = Sequential()
+			self.model.add(Dense(FIRST_LAYER_NEURONS,  activation="relu"))
+			self.model.add(Dense(SECOND_LAYER_NEURONS, activation="relu"))
+			self.model.add(Dense(THIRD_LAYER_NEURONS, activation="relu"))
+			self.model.add(Dense(ALPHABET_SIZE, activation="softmax"))
+			self.model.build((None, observation_space))
+			self.model.compile(loss="categorical_crossentropy", optimizer=SGD(learning_rate = LEARNING_RATE), run_eagerly=True) #Adam optimizer also works well, with lower learning rate
+		else:
+			self.load(load_model_file)
+
+		print(self.model.summary())
+
+
+	def save(self, filename):
+		super().save(filename+".mybin")
+		print("saving model:", load_model_file)
+		self.model.save(filename)
+
+	def load(self, filename):
+		super().load(filename+".mybin")
+		print("step:::::::::::::", self._savehelper.step)
+		print("loading model:", load_model_file)
+		self.model = load_model(filename)
+
+	def make_plots(self):
+		n = len(self.bestscore_history)
+		times = list(range(n))
+		plt.plot(times, self.bestscore_history)
+		plt.show()
+		plt.plot(times, self.meanscore_history)
+		plt.show()
+		plt.plot(times, self.numgraph_history)
+		plt.show()
+		plt.plot(times, self.calculationtime_history)
+		plt.show()
 	
 if __name__ == "__main__":
-	#Model structure: a sequential network with three hidden layers, sigmoid activation in the output.
-	#I usually used relu activation in the hidden layers but play around to see what activation function and what optimizer works best.
-	#It is important that the loss is binary cross-entropy if alphabet size is 2.
 
-
-	model = Sequential()
-	model.add(Dense(FIRST_LAYER_NEURONS,  activation="relu"))
-	model.add(Dense(SECOND_LAYER_NEURONS, activation="relu"))
-	model.add(Dense(THIRD_LAYER_NEURONS, activation="relu"))
-	model.add(Dense(ALPHABET_SIZE, activation="softmax"))
-	model.build((None, observation_space))
-	model.compile(loss="categorical_crossentropy", optimizer=SGD(learning_rate = LEARNING_RATE), run_eagerly=True) #Adam optimizer also works well, with lower learning rate
-
-	print(model.summary())
-
+	DS = DataSaver(["step", "bestscore_history", "meanscore_history", "numgraph_history", "calculationtime_history"],
+		 load_model_file)
+	DS.make_plots()	
+	model = DS.model
+	startstep = DS.step
 
 	#CE = ConditionEvaluator(l=l, k=k, p=p, ignoreEdge=UIO.INCOMPARABLE)
 	CE = None
-	if load_file == "":
+	if load_cores_file == "":
 		CE = ConditionEvaluator(l=l, k=k, p=p, ignoreEdge=UIO.INCOMPARABLE, uiodataextractor=UIODataExtractor(l,k,p))
 	else:
 		CE = ConditionEvaluator(l=l, k=k, p=p, ignoreEdge=UIO.INCOMPARABLE)
-		CE.load(load_file)
+		CE.load(load_cores_file)
 
 
 	print("only zero state has reward of", calcScore(np.zeros(observation_space)))
@@ -284,9 +335,10 @@ if __name__ == "__main__":
 
 	myRand = random.randint(0,1000) #used in the filename
 
-	for i in range(INF): #1000000 generations should be plenty
+	for i in range(startstep, INF): #1000000 generations should be plenty
 		#generate new sessions
 		#performance can be improved with joblib
+		tic0 = time.time()
 		tic = time.time()
 		sessions = generate_session(model,n_sessions,0) #change 0 to 1 to print out how much time each step in generate_session takes 
 		sessgen_time = time.time()-tic
@@ -298,7 +350,7 @@ if __name__ == "__main__":
 		states_batch = np.transpose(states_batch,axes=[0,2,1])
 		states_batch = np.append(states_batch,super_states,axis=0)
 
-		if i>0:
+		if i > startstep:
 			actions_batch = np.append(actions_batch,np.array(super_actions),axis=0)	
 		rewards_batch = np.append(rewards_batch,super_rewards)
 			
@@ -337,6 +389,10 @@ if __name__ == "__main__":
 		
 		print("all scores:", len(all_scores))
 		print("\n" + str(i) +  ". Best individuals: " + str(np.flip(np.sort(super_rewards))))
+		DS.bestscore_history.append(super_rewards[0])
+		DS.meanscore_history.append(np.mean(super_rewards))
+		DS.numgraph_history.append(len(all_scores))
+		DS.calculationtime_history.append(time.time()-tic0)
 		
 		#uncomment below line to print out how much time each step in this loop takes. 
 		print(	"Mean reward: " + str(mean_all_reward) + "\nSessgen: " + str(sessgen_time) + ", other: " + str(randomcomp_time) + ", select1: " + str(select1_time) + ", select2: " + str(select2_time) + ", select3: " + str(select3_time) +  ", fit: " + str(fit_time) + ", score: " + str(score_time)) 
@@ -361,3 +417,8 @@ if __name__ == "__main__":
 			with open('best_species_timeline_txt_'+str(myRand)+'.txt', 'a') as f:
 				f.write(str(super_actions[0]))
 				f.write("\n")
+
+		if ((i+1)%saving_interval == 0):
+			DS.step = i
+			if save_model_file != "":
+				DS.save(save_model_file)

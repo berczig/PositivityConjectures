@@ -27,13 +27,25 @@ TODO:
         4,2		6416			440
         5,2                     723
         6,2		1227180			849
-    - run conditionmatrix with fewer rows
+    - run conditionmatrix with fewer/more rows(logical) so: 
+            COND1 OR COND2
+            AND
+            COND3 OR COND4
+    - change adams saveouts
     - save uio data                                          DONE
     - dynamic change of learning rate
-    - fix this error: when all the score sof the graphs appear to be the same then the multinomial distribution function gives an error
+    - fix this error: when all the score sof the graphs appear to be the same then the multinomial distribution function gives an error     DONE
     - fill out table of combinatorical stuff
     - make the parameters in stanley_cross nicer and more clear
     - np.seed is not enough to replicate same results
+    - graph over loss while training
+    - plot graph as networkx
+    - save model?   
+        weights             DONE
+        step                DONE
+        adams elites etc    ..
+        stategraph scores   ..
+    - save scores of graphs?
 
 
 
@@ -79,6 +91,7 @@ import matplotlib.pyplot as plt
 import sys
 import pickle
 import time 
+from extra import Loadable
 
 
 
@@ -127,24 +140,6 @@ def uio_to_graph(uio):
                 G.add_edge(i,j)
     nx.draw(G)
     plt.show()
-
-
-class Loadable:
-    """
-    pickles, saves, loads all attributes of the superclass
-    """
-
-    def save(self, filename):
-        # saves all currently present attributes of the instance
-        with open(filename, 'wb') as f:
-            pickle.dump(self,f)
-
-    def load(self, filename):
-        # loads dump and sets all attributes of dump as attributes of the current instance
-        with open(filename, 'rb') as f:
-            loaded_instance = pickle.load(f)
-            for var in vars(loaded_instance):
-                setattr(self, var, getattr(loaded_instance, var))
 
 
 ###############################################################################################
@@ -265,6 +260,9 @@ class UIO:
 
 
 class UIODataExtractor:
+    """
+    UIODataExtractor Creates all uio and computes l,k and correct sequences and the cores and counts the core types
+    """
     def __init__(self, l, k, p):
         self.l = l
         self.k = k
@@ -402,7 +400,8 @@ class ConditionEvaluator(Loadable):
             if self.coreFitsConditions(primeCoreRep, Conditions) == True:
                 dict_ = self.coreTypes[primeCoreRep]
                 for uioID in dict_:
-                    counted[uioID] += dict_[uioID]
+                    a = dict_[uioID]
+                    counted[uioID] += a
         difference = counted - np.array(self.trueCoefficients)
         for x in difference:
             if x < 0:
@@ -474,6 +473,11 @@ def total_size(o, handlers={}, verbose=False):
 #    0   1   2   3   4       5   6   7   8       9   10  11      12  13      14  
 #    a,b a,c a,d a,e a,f     b,c b,d b,e b,f     c,d c,e c,f     d,e d,f     e,f
 
+## Standalone functions 
+def calculateCombinatoricalTable():
+
+    pass
+
 def checkThmConditionMatrix():
     # Set UIO parameters
     tstart = time.time()
@@ -522,9 +526,9 @@ def testCountCategories():
 
 def testsave():
     t = time.time()
-    l = 6
-    k = 3
-    p = 2
+    l = 4
+    k = 2
+    p = 1
     ignore = UIO.INCOMPARABLE
     DE = UIODataExtractor(l,k,p)
     CE = ConditionEvaluator(l,k,p,ignore,DE)
