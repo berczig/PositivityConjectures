@@ -34,21 +34,23 @@ import matplotlib.pyplot as plt
 import sys
 from uio import UIO, ConditionEvaluator, UIODataExtractor
 from extra import PartiallyLoadable
+from datetime import datetime
 
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE" # fix to omp: error #15 on my laptop
 
-l = 4
-k = 2
-p = 1
+l = 6
+k = 3
+p = 2
 # k+2+2*p
 NumCritIntervals = k+2+2*p   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
-ALPHABET_SIZE = 1+3+3
+NUMBER_OF_ORS = 2
+MAX_EXPECTED_EDGES = 2*k
+ALPHABET_SIZE = 1+NUMBER_OF_ORS*3
 EDGES = int(NumCritIntervals*(NumCritIntervals-1)/2)
 MYN = ALPHABET_SIZE*EDGES  #The length of the word we are generating. Here we are generating a graph, so we create a 0-1 word of length (N choose 2)
 
-MAX_EXPECTED_EDGES = 2*k
-LEARNING_RATE = 0.2 #Increase this to make convergence faster, decrease if the algorithm gets stuck in local optima too often.
-n_sessions = 100 #number of new sessions per iteration
+LEARNING_RATE = 0.1 #Increase this to make convergence faster, decrease if the algorithm gets stuck in local optima too often.
+n_sessions = 300 #number of new sessions per iteration
 percentile = 93 #top 100-X percentile we are learning from
 super_percentile = 94 #top 100-X percentile that survives to next iteration
 
@@ -69,28 +71,30 @@ observation_space = MYN + EDGES #Leave this at 2*MYN. The input vector will have
 len_game = EDGES 
 state_dim = (observation_space,)
 
-load_cores_file = "saves/coreTypes_l=4_k=2_p=1_ignore=100.bin"
-load_model_file = "saves/teststanleymodelsaveagain"
-save_model_file = "saves/teststanleymodelsaveagain"
+load_cores_file = "saves/coreTypes_l={}_k={}_p={}_ignore=100.bin".format(l,k,p)
+load_model_file = "" #"saves/170uio2ORs" # "saves/190uio" # "saves/150"
+save_model_file = "saves/170uio2ORs"
+reduce_uio = 170
+
+# got  150 uios down to score=0 in 2 steps (300 graphs, 0.1 learning rate)
+# got  80 uios down to score=0 in 4 steps 
 
 if load_model_file != "":
 	load_model_file += "[l={}k={}p={}]".format(l,k,p)
 if save_model_file != "":
 	save_model_file += "[l={}k={}p={}]".format(l,k,p)
-saving_interval = 10
+saving_frequency = 600 # how many seconds to wait between each save
 INF = 1000000
 
 def convertStateToConditionMatrix(state):
 	# state is of length MYN
-	graph = np.ones((2, EDGES))*UIO.INCOMPARABLE
+	graph = np.ones((NUMBER_OF_ORS, EDGES))*UIO.INCOMPARABLE
 	for step in range(EDGES):
 		actionvector = state[ALPHABET_SIZE*step:ALPHABET_SIZE*(step+1)]
-		if actionvector[0] == 0:
+		if actionvector[0] == 0: # if 1 in 0'th index then do nothing (UIO.INCOMPARABLE)
 			row = 0
 			edge = np.argmax(actionvector) # 100,101,102,103
-			if edge > 3:
-				row = 1
-				edge -= 3
+			row = (edge-1)//3
 			graph[row][step] = edge + UIO.INCOMPARABLE
 	return graph
 
@@ -258,7 +262,7 @@ def select_super_sessions(states_batch, actions_batch, rewards_batch, percentile
 
 class DataSaver(PartiallyLoadable):
 
-	def __init__(self, save_vars, load_model_file):
+	def __init__(self, save_vars, load_model_file, CE):
 		super().__init__(save_vars) # set saveable variables
 
 		self.step = 0
@@ -267,6 +271,7 @@ class DataSaver(PartiallyLoadable):
 		self.numgraph_history = [] # history of number of graphs which we allready have calculated the score of
 		self.calculationtime_history = []
 		self.all_scores = {} # graph:score
+		self.CE = CE
 
 		if load_model_file == "":
 			#Model structure: a sequential network with three hidden layers, sigmoid activation in the output.
@@ -300,10 +305,10 @@ class DataSaver(PartiallyLoadable):
 	def make_plots(self):
 		n = len(self.bestscore_history)
 		times = list(range(n))
-		plt.title("best score")
+		plt.title("best score ("+str(self.bestscore_history[-1])+")")
 		plt.plot(times, self.bestscore_history)
 		plt.show()
-		plt.title("mean score")
+		plt.title("mean score ("+str(self.meanscore_history[-1])+")")
 		plt.plot(times, self.meanscore_history)
 		plt.show()
 		plt.title("number of different conditions checked")
@@ -312,15 +317,19 @@ class DataSaver(PartiallyLoadable):
 		plt.title("computation time of the i'th step")
 		plt.plot(times, self.calculationtime_history)
 		plt.show()
+
+		print("looking for best score...")
+		bestscore = -99999999999
+		beststate = None
+		for state in self.all_scores:
+			if self.all_scores[state] > bestscore:
+				bestscore = self.all_scores[state]
+				beststate = state
+		condmat = convertStateToConditionMatrix(beststate)
+		conditiontext = self.CE.convertConditionMatrixToText(condmat)
+		print(conditiontext, "\nhas a score of ", self.CE.evaluate(condmat))
 	
 if __name__ == "__main__":
-	DS = DataSaver(["step", "bestscore_history", "meanscore_history", "numgraph_history", 
-	"calculationtime_history", "all_scores"],
-		 load_model_file)
-	model = DS.model
-	startstep = DS.step
-	all_scores = DS.all_scores
-
 	#CE = ConditionEvaluator(l=l, k=k, p=p, ignoreEdge=UIO.INCOMPARABLE)
 	CE = None
 	if load_cores_file == "":
@@ -328,7 +337,15 @@ if __name__ == "__main__":
 	else:
 		CE = ConditionEvaluator(l=l, k=k, p=p, ignoreEdge=UIO.INCOMPARABLE)
 		CE.load(load_cores_file)
+	if reduce_uio != 0:
+		CE.narrowCoreTypeSelection(list(range(reduce_uio)))
 
+	DS = DataSaver(["step", "bestscore_history", "meanscore_history", "numgraph_history", 
+	"calculationtime_history", "all_scores"],
+		 load_model_file, CE)
+	model = DS.model
+	startstep = DS.step
+	all_scores = DS.all_scores
 
 	print("only zero state has reward of", calcScore(np.zeros(observation_space)))
 
@@ -339,6 +356,7 @@ if __name__ == "__main__":
 	sessgen_time = 0
 	fit_time = 0
 	score_time = 0
+	next_save_time = time.time() + saving_frequency
 
 
 
@@ -427,9 +445,13 @@ if __name__ == "__main__":
 				f.write(str(super_actions[0]))
 				f.write("\n")
 
-		if ((i+1)%saving_interval == 0):
+		if time.time() > next_save_time:
+			print("#"*500)
+			print("saving at ", datetime.fromtimestamp(time.time()).strftime("%A, %B %d, %Y %I:%M:%S"))
 			DS.step = i+1
 			DS.all_scores = all_scores
 			if save_model_file != "":
 				DS.save(save_model_file)
 				#DS.make_plots()
+			print("done saving at ", datetime.fromtimestamp(time.time()).strftime("%A, %B %d, %Y %I:%M:%S"))
+			next_save_time = time.time() + saving_frequency

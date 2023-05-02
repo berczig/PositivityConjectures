@@ -55,11 +55,12 @@ TODO:
     - save scores of graphs?
     - permutate core
     - incooperate aprior knowledge about the core
-    - only use random portion of uios when doing 1 stpe
-    - display best graph
+    - only use random portion of uios when doing 1 step     DONE
+    - display best graph                                    DONE
     - evolution animation
     -tuesday 02.05 2 pm
     - check maximal
+    - save files get too big because I save all_scores
 
 
 
@@ -100,6 +101,7 @@ except ImportError:
 from itertools import permutations
 from math import factorial as fac
 import numpy as np
+import random
 #import networkx as nx
 import matplotlib.pyplot as plt 
 import sys
@@ -318,6 +320,7 @@ class UIODataExtractor:
             # step 4.1 - generate the coreTypes from the cores (The core is independent of the comparison matrix from its UIO) 
             self.coreTypesRaw.append(uio.getCoreRepresentations())
             self.trueCoefficients.append(uio.getCoefficient())
+        self.trueCoefficients = np.array(self.trueCoefficients)
         print("Generated l,k correct sequences:", sum([uio.lkCorrectSequences_n[(self.l, self.k)] for uio in self.uios]))
 
         # step 4.2 - classify the coreTypes by counting how many different types there are
@@ -376,14 +379,21 @@ class ConditionEvaluator(Loadable):
         self.n = l+k
 
         if uiodataextractor != None:
-            self.trueCoefficients = uiodataextractor.trueCoefficients
+            self.trueCoefficients = np.array(uiodataextractor.trueCoefficients)
             self.coreTypes = uiodataextractor.coreTypes 
+            self.activeCoreTypes = self.coreTypes
+            self.activeTrueCoefficients = self.trueCoefficients
             self.uios_n = uiodataextractor.uios_n
+            self.activeuios_n = self.uios_n
             print("Created ConditionEvaluator Using UIODataExtractor, n =", self.n, "l =", l, "k =", k, "p =", p)
             print("Using", len(self.coreTypes), "core types / categories for the ConditionEvaluator")
 
     def load(self, filename):
         super().load(filename)
+        self.trueCoefficients = np.array(self.trueCoefficients)         # I set these because I use an old save where this data isnt saved
+        self.activeCoreTypes = self.coreTypes
+        self.activeTrueCoefficients = self.trueCoefficients
+        self.activeuios_n = self.uios_n
         print("Created ConditionEvaluator by loading file, n =", self.n, "l =", self.l, "k =", self.k, "p =", self.p)
         print("Using", len(self.coreTypes), "core types / categories for the ConditionEvaluator")
     
@@ -410,14 +420,14 @@ class ConditionEvaluator(Loadable):
         Conditions = [[(i, edgecondition) for i, edgecondition in enumerate(conditionrow) if edgecondition != self.ignoreEdge] 
                     for conditionrow in Condition_matrix]
 
-        counted = np.zeros(self.uios_n) # the i'th entry is the number of correps associated to the i'th uio that fit the Conditions
-        for primeCoreRep in self.coreTypes:
+        counted = np.zeros(self.activeuios_n) # the i'th entry is the number of correps associated to the i'th uio that fit the Conditions
+        for primeCoreRep in self.activeCoreTypes:
             if self.coreFitsConditions(primeCoreRep, Conditions) == True:
-                dict_ = self.coreTypes[primeCoreRep]
+                dict_ = self.activeCoreTypes[primeCoreRep]
                 for uioID in dict_:
                     a = dict_[uioID]
                     counted[uioID] += a
-        difference = counted - np.array(self.trueCoefficients)
+        difference = counted - self.activeTrueCoefficients
         for x in difference:
             if x < 0:
                 return -np.inf
@@ -440,6 +450,29 @@ class ConditionEvaluator(Loadable):
             if rowtext:
                 rowtexts.append(" AND ".join(rowtext))
         return " OR \n".join(rowtexts)
+    
+    def narrowCoreTypeSelection(self, random_uios):
+        # only use a portion of the coreTypes corresponding to n_uios random uios when evaluating a conditionMatrix
+        #print("n:", self.n, "C_n:", C_n(self.n))
+        #total_uios = C_n(self.n)
+        #random_uios = random.sample(range(total_uios), n_uios)
+
+        # copy all the coretypes which appear in at least one of the selected uios
+        print("narrowCoreTypeSelection")
+        self.activeuios_n = len(random_uios)
+        self.activeTrueCoefficients = self.trueCoefficients[random_uios]
+        self.activeCoreTypes = {}
+        for coretype in self.coreTypes:
+            counts = self.coreTypes[coretype]
+            for uioID in counts:
+                if uioID in random_uios: # is one of the randoms
+                    if coretype not in self.activeCoreTypes:
+                        self.activeCoreTypes[coretype] = {uioID:counts[uioID]}
+                    else:
+                        self.activeCoreTypes[coretype][uioID] = counts[uioID]
+        print(len(self.coreTypes))
+        print("activeCoreTypes:", len(self.activeCoreTypes))
+
     
 
 
