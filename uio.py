@@ -54,13 +54,13 @@ TODO:
 
     - save scores of graphs?
     - permutate core
-    - incooperate aprior knowledge about the core
-    - only use random portion of uios when doing 1 step     DONE
-    - display best graph                                    DONE
+    - incooperate aprior knowledge about the core a < b etc.
+    - only use random portion of uios when doing 1 step like 300
+    - display best graph
     - evolution animation
-    -tuesday 02.05 2 pm
-    - check maximal
-    - save files get too big because I save all_scores
+    -tuesday 02.05, 2 pm
+    - check getmaximalinterval
+    - calculate eschers and minimal interval 
 
 
 
@@ -275,6 +275,17 @@ class UIO:
         # assumes that lk correct sequences allready  have been calculated
         return len(self.lkCorrectSequences[self.l, self.k]) - len(self.lkCorrectSequences[self.n, 0])
 
+    #################### ESCHERS ###################
+
+    def isescher(self, seq):
+        for i in range(len(seq)-1):
+            if self.comparison_matrix[seq[i], seq[i+1]] == UIO.GREATER:
+                return False
+        return self.comparison_matrix[seq[-1], seq[0]] != UIO.GREATER
+
+    def geteschers(self):
+        return [seq for seq in getPermutationsOfN(self.n) if self.isescher(seq)]
+            
 
 class UIODataExtractor:
     """
@@ -592,9 +603,26 @@ def testload():
     for key in CE.coreTypes:
         print(key, CE.coreTypes[key])
 
+def eschertest():
+    n = 6
+    A = generate_all_uios(n)
+    for uio_encod in A:
+        uio = UIO(uio_encod)
+        eschers = 0
+        corrects = 0
+        for seq in getPermutationsOfN(n-1):
+            if uio.is_lk_correct(seq, n, 0):
+                corrects += 1
+            if uio.isescher(seq):
+                eschers += 1
+        dif  =corrects-eschers
+        print(eschers, corrects)
+        if dif != 0:
+            print("#"*200, dif)
 if __name__ == "__main__":
     #testsave()
     #testload()
     #testCountCategories()
     #inspectStatesFromFile("best_species_txt_763.txt", 15, 7)
-    checkThmConditionMatrix()
+    #checkThmConditionMatrix()
+    eschertest()
