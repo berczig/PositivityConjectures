@@ -173,7 +173,7 @@ class UIO:
         self.encoding = uio_encoding
 
         # decode encoding to get comparison matrix
-        self.comparison_matrix = np.zeros((self.n,self.n)) + self.EQUAL
+        self.comparison_matrix = np.zeros((self.n,self.n)) + self.EQUAL # (i,j)'th index says how i is in relation to j
         for i in range(self.n):
             for j in range(i+1, self.n):
                 if uio_encoding[j] <= i:
@@ -184,6 +184,9 @@ class UIO:
                     self.comparison_matrix[j,i] = self.GREATER
         self.lkCorrectSequences = {} # {(l,k):[corseq1, corseq2,...], ... }
         self.lkCorrectSequences_n = {} # {(l,k):number of (l,k) correct sequences}
+
+        self.eschers = []
+        self.subeschers = {} # {length k:all k-subeschers}
 
         # compute correct sequences
         self.computeCorrectSequences()
@@ -285,6 +288,28 @@ class UIO:
 
     def geteschers(self):
         return [seq for seq in getPermutationsOfN(self.n) if self.isescher(seq)]
+    
+    def computevalidsubeschers(self, escher, k): # k > 0 
+        subeschers = []
+        #print("k:", k)
+        for m in range(self.n): # m can be 0
+            #print("m:", m)
+            #print("indices:", (m+k)%self.n, (m+1)%self.n)
+            cond1 = self.comparison_matrix[escher[(m+k)%self.n], escher[(m+1)%self.n]] != UIO.GREATER # EQUAL also intersects
+            #print("cond1:", cond1)
+            #print("indices:", m, (m+k+1)%self.n)
+            cond2 = self.comparison_matrix[escher[m], escher[(m+k+1)%self.n]] != UIO.GREATER
+            #print("cond2:", cond2)
+            if cond1 and cond2:
+                lastindex = m+k+1
+                if lastindex > self.n:
+                    subeschers.append(escher[m+1:]+escher[:lastindex-self.n])
+                    # subeschers.append(list(range(m+1,self.n))+list(range(lastindex-self.n)))
+                else:
+                    # subeschers.append(list(range(m+1,lastindex)))
+                    subeschers.append(escher[m+1:lastindex])
+            
+        self.subeschers[(escher,k)] = subeschers
             
 
 class UIODataExtractor:
@@ -606,19 +631,29 @@ def testload():
 def eschertest():
     n = 6
     A = generate_all_uios(n)
+    A = [[0, 0, 1, 2, 3, 4]]
     for uio_encod in A:
         uio = UIO(uio_encod)
-        eschers = 0
-        corrects = 0
-        for seq in getPermutationsOfN(n-1):
+        eschers = uio.geteschers()
+        neschers = len(eschers)
+        print(25*"#", "uio:", uio_encod, 25*"#")
+        uio.computelkCorrectSequences(n, 0)
+        print(" - has", neschers, "eschers and {} corrects sequences".format(uio.lkCorrectSequences_n[(n,0)]))
+        for i, escher in enumerate(eschers):
+            print("{}/{}".format(i+1, neschers), "escher:", escher)
+            for k in range(1, n+1):
+                uio.computevalidsubeschers(escher, k)
+                print(k, "-subeschers:", uio.subeschers[(escher, k)], sep="")
+        
+        """for seq in getPermutationsOfN(n-1):
             if uio.is_lk_correct(seq, n, 0):
                 corrects += 1
             if uio.isescher(seq):
                 eschers += 1
         dif  =corrects-eschers
-        print(eschers, corrects)
         if dif != 0:
-            print("#"*200, dif)
+            print("#"*200, dif)"""
+        
 if __name__ == "__main__":
     #testsave()
     #testload()
