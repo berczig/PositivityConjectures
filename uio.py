@@ -93,6 +93,7 @@ from __future__ import print_function
 from sys import getsizeof, stderr
 from itertools import chain
 from collections import deque
+from memory_profiler import profile
 try:
     from reprlib import repr
 except ImportError:
@@ -182,14 +183,18 @@ class UIO:
                 else:
                     self.comparison_matrix[i, j] = self.LESS
                     self.comparison_matrix[j,i] = self.GREATER
+        """
+        for i in range(n):
+            for j in range(1, i-1):
+                if i <= """
         self.lkCorrectSequences = {} # {(l,k):[corseq1, corseq2,...], ... }
         self.lkCorrectSequences_n = {} # {(l,k):number of (l,k) correct sequences}
 
-        self.eschers = []
-        self.subeschers = {} # {length k:all k-subeschers}
+        self.eschers = {} # {n:[eschers of length n]}
+        self.subeschers = {} # {(escher, length k):all k-subeschers}
 
         # compute correct sequences
-        self.computeCorrectSequences()
+        #self.computeCorrectSequences()
     
     ##### CORRECT SEQUENCES ####
 
@@ -207,6 +212,7 @@ class UIO:
             if not intersects:
                 return False
         return True
+
     
     def is_lk_correct(self,seq,l,k):
         return self.iscorrect(seq[:l]) and self.iscorrect(seq[l:])
@@ -286,31 +292,99 @@ class UIO:
                 return False
         return self.comparison_matrix[seq[-1], seq[0]] != UIO.GREATER
 
-    def geteschers(self):
-        return [seq for seq in getPermutationsOfN(self.n) if self.isescher(seq)]
+    def computeeschers(self, n):
+        print("compute eschers for length", n)
+        self.eschers[n] = [seq for seq in getPermutationsOfN(n) if self.isescher(seq)]
     
     def computevalidsubeschers(self, escher, k): # k > 0 
         subeschers = []
         #print("k:", k)
-        for m in range(self.n): # m can be 0
+        h = len(escher)
+        for m in range(h): # m can be 0
             #print("m:", m)
             #print("indices:", (m+k)%self.n, (m+1)%self.n)
-            cond1 = self.comparison_matrix[escher[(m+k)%self.n], escher[(m+1)%self.n]] != UIO.GREATER # EQUAL also intersects
+            cond1 = self.comparison_matrix[escher[(m+k)%h], escher[(m+1)%h]] != UIO.GREATER # EQUAL also intersects
             #print("cond1:", cond1)
             #print("indices:", m, (m+k+1)%self.n)
-            cond2 = self.comparison_matrix[escher[m], escher[(m+k+1)%self.n]] != UIO.GREATER
+            cond2 = self.comparison_matrix[escher[m], escher[(m+k+1)%h]] != UIO.GREATER
             #print("cond2:", cond2)
             if cond1 and cond2:
                 lastindex = m+k+1
                 if lastindex > self.n:
-                    subeschers.append(escher[m+1:]+escher[:lastindex-self.n])
+                    subeschers.append(escher[m+1:]+escher[:lastindex-h])
                     # subeschers.append(list(range(m+1,self.n))+list(range(lastindex-self.n)))
                 else:
                     # subeschers.append(list(range(m+1,lastindex)))
                     subeschers.append(escher[m+1:lastindex])
             
         self.subeschers[(escher,k)] = subeschers
+
+    def computevalidsubescherstartingpoints(self, escher, k): # k > 0 
+        subeschers = []
+        #print("k:", k)
+        h = len(escher)
+        for m in range(h): # m can be 0
+            #print("m:", m)
+            #print("indices:", (m+k)%self.n, (m+1)%self.n)
+            cond1 = self.comparison_matrix[escher[(m+k)%h], escher[(m+1)%h]] != UIO.GREATER # EQUAL also intersects
+            #print("cond1:", cond1)
+            #print("indices:", m, (m+k+1)%self.n)
+            cond2 = self.comparison_matrix[escher[m], escher[(m+k+1)%h]] != UIO.GREATER
+            #print("cond2:", cond2)
+            if cond1 and cond2:
+                lastindex = m+k+1
+                if lastindex > self.n:
+                    subeschers.append(escher[m+1:]+escher[:lastindex-h])
+                    # subeschers.append(list(range(m+1,self.n))+list(range(lastindex-self.n)))
+                else:
+                    # subeschers.append(list(range(m+1,lastindex)))
+                    subeschers.append(escher[m+1:lastindex])
             
+        self.subeschers[(escher,k)] = subeschers
+
+    def getsubeschers(self, escher, k):
+        if (escher, k) not in self.subeschers:
+            self.computevalidsubeschers(escher, k)
+        return self.subeschers[(escher, k)]
+
+    def getInsertionPoints(self, u, v, lcm = 0): # u of length n > k
+        n = len(u)
+        k = len(v)
+        self.comparison_matrix
+        if lcm == 0:
+            lcm = np.lcm(n,k) # implement
+        points = []
+        for i in range(lcm):
+            if self.comparison_matrix[u[i%n], v[(i+1)%k]] != UIO.GREATER and self.comparison_matrix[v[i%k], u[(i+1)%n]] != UIO.GREATER:
+                points.append(i)
+        #print("found {} insertion points between {} and {}".format(len(points),u,v))
+        return points
+
+    def getEscherPairs(self, n,k):
+        self.pairs = []
+        for seq in getPermutationsOfN(n+k):
+            if self.isescher(seq[:n]) and self.isescher(seq[n:]):
+                self.pairs.append((seq[:n], seq[n:]))
+        print("escher pairs:", len(self.pairs))
+                
+    def getEscherCore(self, u, v): # u is length n
+        n = len(u)
+        k = len(v)
+        lcm = np.lcm(n, k)
+        #print("type:", type(u), u)
+        uu = u*(lcm//n)
+        return (self.getInsertionPoints(u, v, lcm), self.getsubeschers(uu, k))
+
+    def getEschersCores(self, n, k):
+        cores = []
+        for v in [n,k]:
+            if v not in self.eschers:
+                self.computeeschers(v)
+        for u,v in self.pairs:
+        #for u in self.eschers[n]:
+            #for v in self.eschers[k]:
+            cores.append(self.getEscherCore(u,v))
+        return cores            
 
 class UIODataExtractor:
     """
@@ -631,10 +705,15 @@ def testload():
 def eschertest():
     n = 6
     A = generate_all_uios(n)
-    A = [[0, 0, 1, 2, 3, 4]]
+    A = [[0, 0, 1, 1, 4, 4]]
     for uio_encod in A:
         uio = UIO(uio_encod)
-        eschers = uio.geteschers()
+        uio.computeeschers(n)
+        eschers = uio.eschers[n]
+        uio.computeeschers(2)
+        uio.computeeschers(4)
+        print("2 eschers:", len(uio.eschers[2]))
+        print("4 eschers:", len(uio.eschers[4]))
         neschers = len(eschers)
         print(25*"#", "uio:", uio_encod, 25*"#")
         uio.computelkCorrectSequences(n, 0)
@@ -654,10 +733,27 @@ def eschertest():
         if dif != 0:
             print("#"*200, dif)"""
         
+
+def eschercoretest():
+    n = 4
+    k = 2
+    N = n+k
+    #A = generate_all_uios(N)
+    A = [[0,0,1,1,4,4]]
+    #A = [[0,0,0,0,0,0,0,0,0,0]]
+    for uio_encod in A:
+        uio = UIO(uio_encod)
+        t = time.time()
+        uio.getEscherPairs(n,k)
+        print("elapsed time: {}".format(time.time()-t))
+        cores = uio.getEschersCores(n,k)
+        for core in cores:
+            print(core)
+
 if __name__ == "__main__":
     #testsave()
     #testload()
     #testCountCategories()
     #inspectStatesFromFile("best_species_txt_763.txt", 15, 7)
     #checkThmConditionMatrix()
-    eschertest()
+    eschercoretest()
