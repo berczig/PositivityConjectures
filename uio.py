@@ -93,7 +93,7 @@ from __future__ import print_function
 from sys import getsizeof, stderr
 from itertools import chain
 from collections import deque
-from memory_profiler import profile
+
 try:
     from reprlib import repr
 except ImportError:
@@ -788,19 +788,18 @@ def eschertest():
         
 
 def eschercoretest():
-    n = 6
+    n = 4
     k = 3
     N = n+k
     lcm = np.lcm(n,k)
-    A = generate_all_uios(N)[:20]
-    # 000012
+    A = generate_all_uios(N)
+    # [0, 0, 1, 2, 2, 3, 5]
     #A = [[0,0,1,1,4,4]]
     #A = [[0,0,0,1, 2]]
     Primer7 = [[0,0,1,2,3]]
     Nonbubbler = [[0,0,1,1,3]]
-    wrongy = [[0,0,1,1,3]]
-    wrongy2 = [[0,0,0,0,1,2]]
-    #A = wrongy2
+    wrongy = [[0, 0, 1, 2, 2, 3, 5]]
+    A = wrongy
     #A = wrongy
     #A = [[0,0,1,1,3,3,3]]
     #A = [[0,0,0,0,0,0]]
@@ -810,7 +809,7 @@ def eschercoretest():
         t = time.time()
         uio.getEscherPairs(n,k)
         #print("elapsed time: {}".format(time.time()-t))
-        cores = uio.getEschersCores(n,k, verbose=False)
+        cores = uio.getEschersCores(n,k, verbose=True)
         uio.computelkCorrectSequences(n,k)
         truecoef = uio.getCoefficient()
         goods = 0
@@ -819,7 +818,7 @@ def eschercoretest():
             #print(core, isgood)
             if isgood:
                 goods += 1
-        print("conjecture:", goods, "true:", truecoef,"eschers:", len(cores), uio_encod)
+        print("uio:", uio_encod, "conjecture coef:", goods, "true coef:", truecoef,"eschers:", len(cores))
         if goods != truecoef:
             print("diff")
         #print("conjectured coeff:", goods, "true coeff:", truecoef)
