@@ -194,7 +194,7 @@ class UIO:
         self.subeschers = {} # {(escher, length k):all k-subeschers}
 
         # compute correct sequences
-        #self.computeCorrectSequences()
+        self.computeCorrectSequences()
     
     ##### CORRECT SEQUENCES ####
 
@@ -310,8 +310,8 @@ class UIO:
             #print("cond2:", cond2)
             if cond1 and cond2:
                 lastindex = m+k+1
-                if lastindex > self.n:
-                    subeschers.append(escher[m+1:]+escher[:lastindex-h])
+                if lastindex > h:
+                    subeschers.append(escher[m+1:]+escher[:lastindex%h])
                     # subeschers.append(list(range(m+1,self.n))+list(range(lastindex-self.n)))
                 else:
                     # subeschers.append(list(range(m+1,lastindex)))
@@ -319,28 +319,15 @@ class UIO:
             
         self.subeschers[(escher,k)] = subeschers
 
-    def computevalidsubescherstartingpoints(self, escher, k): # k > 0 
-        subeschers = []
-        #print("k:", k)
+    def getvalidsubescherstartingpoints(self, escher, k): # k > 0 
+        subeschersstartingpoint = []
         h = len(escher)
         for m in range(h): # m can be 0
-            #print("m:", m)
-            #print("indices:", (m+k)%self.n, (m+1)%self.n)
             cond1 = self.comparison_matrix[escher[(m+k)%h], escher[(m+1)%h]] != UIO.GREATER # EQUAL also intersects
-            #print("cond1:", cond1)
-            #print("indices:", m, (m+k+1)%self.n)
             cond2 = self.comparison_matrix[escher[m], escher[(m+k+1)%h]] != UIO.GREATER
-            #print("cond2:", cond2)
             if cond1 and cond2:
-                lastindex = m+k+1
-                if lastindex > self.n:
-                    subeschers.append(escher[m+1:]+escher[:lastindex-h])
-                    # subeschers.append(list(range(m+1,self.n))+list(range(lastindex-self.n)))
-                else:
-                    # subeschers.append(list(range(m+1,lastindex)))
-                    subeschers.append(escher[m+1:lastindex])
-            
-        self.subeschers[(escher,k)] = subeschers
+                subeschersstartingpoint.append(m)
+        return subeschersstartingpoint
 
     def getsubeschers(self, escher, k):
         if (escher, k) not in self.subeschers:
@@ -350,9 +337,8 @@ class UIO:
     def getInsertionPoints(self, u, v, lcm = 0): # u of length n > k
         n = len(u)
         k = len(v)
-        self.comparison_matrix
         if lcm == 0:
-            lcm = np.lcm(n,k) # implement
+            lcm = np.lcm(n,k)
         points = []
         for i in range(lcm):
             if self.comparison_matrix[u[i%n], v[(i+1)%k]] != UIO.GREATER and self.comparison_matrix[v[i%k], u[(i+1)%n]] != UIO.GREATER:
@@ -373,7 +359,8 @@ class UIO:
         lcm = np.lcm(n, k)
         #print("type:", type(u), u)
         uu = u*(lcm//n)
-        return (self.getInsertionPoints(u, v, lcm), self.getsubeschers(uu, k))
+        #print("uu:", uu)
+        return (self.getInsertionPoints(u, v, lcm), self.getvalidsubescherstartingpoints(uu, k))
 
     def getEschersCores(self, n, k):
         cores = []
@@ -383,8 +370,42 @@ class UIO:
         for u,v in self.pairs:
         #for u in self.eschers[n]:
             #for v in self.eschers[k]:
-            cores.append(self.getEscherCore(u,v))
+            core = self.getEscherCore(u,v)
+            print(u,v, self.coreIsGood(core, n, k, np.lcm(n,k)), core)
+            cores.append(core)
         return cores            
+
+    def coreIsGood(self, core, n, k, lcm):
+        # G_i i'th insertion points, Y1 = n, Y2 = n+k, R = right endpoint of left most subescher ( indexing starting at 1)
+        # I     no insertions 
+        # II    R < G1 < Y1 = n
+        # III   n = Y1 <= G1 and n+k = Y2 < G2
+        # in 0 indexing:
+        # I     no insertions
+        # II    0 < R < G1 < n-1
+        # III   n-1 <= G1 and n+k-1 < G2 
+        insertions, escherstartpoints = core
+        if len(insertions) == 0:
+            return True
+        if insertions[0] <= n-1: 
+            for subescherstartpoint in escherstartpoints:
+                if subescherstartpoint > 0 and (subescherstartpoint + k-1) < insertions[0]: # completly contained
+                    return True
+        else: # exceptional case "R doesn't play a role"
+            if len(insertions) == 1:
+                return True  # because Y2 < G2 = inf
+            else:
+                return n+k-1 < insertions[1]
+            #insertions.append(insertions[0]+lcm)  # repeat
+        if len(insertions) == 2:
+            if escherstartpoints[0] + k > insertions[0] and insertions[1] > n+k-1:
+                return True 
+        return False
+    
+    def getColorPoints(self, core):
+        insertions, escherstartpoints = core
+        red = insertions
+        
 
 class UIODataExtractor:
     """
@@ -705,7 +726,7 @@ def testload():
 def eschertest():
     n = 6
     A = generate_all_uios(n)
-    A = [[0, 0, 1, 1, 4, 4]]
+    A = [[0, 0, 1, 1, 3, 3]]
     for uio_encod in A:
         uio = UIO(uio_encod)
         uio.computeeschers(n)
@@ -735,20 +756,34 @@ def eschertest():
         
 
 def eschercoretest():
-    n = 4
+    n = 5
     k = 2
     N = n+k
-    #A = generate_all_uios(N)
-    A = [[0,0,1,1,4,4]]
+    lcm = np.lcm(n,k)
+    A = generate_all_uios(N)
+    #A = [[0,0,1,1,4,4]]
+    #A = [[0,0,0,1, 2]]
+    A = [[0,0,1,1,2,3,3]]
+    #A = [[0,0,0,0,0,0]]
     #A = [[0,0,0,0,0,0,0,0,0,0]]
     for uio_encod in A:
         uio = UIO(uio_encod)
         t = time.time()
         uio.getEscherPairs(n,k)
-        print("elapsed time: {}".format(time.time()-t))
+        #print("elapsed time: {}".format(time.time()-t))
         cores = uio.getEschersCores(n,k)
+        uio.computelkCorrectSequences(n,k)
+        truecoef = uio.getCoefficient()
+        goods = 0
         for core in cores:
-            print(core)
+            isgood = uio.coreIsGood(core, n, k, lcm)
+            #print(core, isgood)
+            if isgood:
+                goods += 1
+        if goods != truecoef:
+            print("diff", goods, "vs", truecoef, len(cores), uio_encod)
+    print("coef:", goods, truecoef)
+        #print("conjectured coeff:", goods, "true coeff:", truecoef)
 
 if __name__ == "__main__":
     #testsave()
