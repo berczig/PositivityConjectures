@@ -293,7 +293,7 @@ class UIO:
         return self.comparison_matrix[seq[-1], seq[0]] != UIO.GREATER
 
     def computeeschers(self, n):
-        print("compute eschers for length", n)
+        #print("compute eschers for length", n)
         self.eschers[n] = [seq for seq in getPermutationsOfN(n) if self.isescher(seq)]
     
     def computevalidsubeschers(self, escher, k): # k > 0 
@@ -322,11 +322,20 @@ class UIO:
     def getvalidsubescherstartingpoints(self, escher, k): # k > 0 
         subeschersstartingpoint = []
         h = len(escher)
+        #print("escher length:", h)
         for m in range(h): # m can be 0
             cond1 = self.comparison_matrix[escher[(m+k)%h], escher[(m+1)%h]] != UIO.GREATER # EQUAL also intersects
             cond2 = self.comparison_matrix[escher[m], escher[(m+k+1)%h]] != UIO.GREATER
+            #if m == 1:
+            #    print((m+k)%h, escher[(m+k)%h])
+            #    print((m+1)%h, escher[(m+1)%h])
+            #    print(m, escher[m])
+            #    print((m+k+1)%h, escher[(m+k+1)%h])
+            #print("m:", m)
+            #print("cond1:", cond1)
+            #print("cond2:", cond2)
             if cond1 and cond2:
-                subeschersstartingpoint.append(m)
+                subeschersstartingpoint.append(m+1)
         return subeschersstartingpoint
 
     def getsubeschers(self, escher, k):
@@ -351,7 +360,18 @@ class UIO:
         for seq in getPermutationsOfN(n+k):
             if self.isescher(seq[:n]) and self.isescher(seq[n:]):
                 self.pairs.append((seq[:n], seq[n:]))
-        print("escher pairs:", len(self.pairs))
+        #print("escher pairs:", len(self.pairs))
+
+    def cyclicslice(self, tuple, start, end): # end exclusive
+        #print("tuple:", tuple, start, end)
+        n = len(tuple)
+        start = start%n
+        end = end%n
+        if start < end:
+            return tuple[start:end]
+        elif start == end:
+            return tuple
+        return tuple[start:]+tuple[:end]
                 
     def getEscherCore(self, u, v): # u is length n
         n = len(u)
@@ -360,9 +380,17 @@ class UIO:
         #print("type:", type(u), u)
         uu = u*(lcm//n)
         #print("uu:", uu)
-        return (self.getInsertionPoints(u, v, lcm), self.getvalidsubescherstartingpoints(uu, k))
+        insertions = self.getInsertionPoints(u,v,lcm)
+        subeschers = []
+        if len(insertions) > 0:
+            insertion = insertions[0]
+            extrav = self.cyclicslice(v,insertion+1,insertion+2)
+            #print("extrav:", extrav)
+            subeschers = self.getvalidsubescherstartingpoints(uu[:insertion+1]+extrav, k)
+        return (insertions, subeschers)
+        #return (self.getInsertionPoints(u, v, lcm), self.getvalidsubescherstartingpoints(uu, k))
 
-    def getEschersCores(self, n, k):
+    def getEschersCores(self, n, k, verbose=False):
         cores = []
         for v in [n,k]:
             if v not in self.eschers:
@@ -371,7 +399,8 @@ class UIO:
         #for u in self.eschers[n]:
             #for v in self.eschers[k]:
             core = self.getEscherCore(u,v)
-            print(u,v, self.coreIsGood(core, n, k, np.lcm(n,k)), core)
+            if verbose:
+                print(u,v, self.coreIsGood(core, n, k, np.lcm(n,k)), core)
             cores.append(core)
         return cores            
 
@@ -387,9 +416,12 @@ class UIO:
         insertions, escherstartpoints = core
         if len(insertions) == 0:
             return True
+        #
+        # 
+        # print("insertions:", len(insertions), escherstartpoints)
         if insertions[0] <= n-1: 
             for subescherstartpoint in escherstartpoints:
-                if subescherstartpoint > 0 and (subescherstartpoint + k-1) < insertions[0]: # completly contained
+                if subescherstartpoint > 0 and (subescherstartpoint + k-1) < insertions[0]+1: # completly contained
                     return True
         else: # exceptional case "R doesn't play a role"
             if len(insertions) == 1:
@@ -397,9 +429,9 @@ class UIO:
             else:
                 return n+k-1 < insertions[1]
             #insertions.append(insertions[0]+lcm)  # repeat
-        if len(insertions) == 2:
-            if escherstartpoints[0] + k > insertions[0] and insertions[1] > n+k-1:
-                return True 
+        #if len(insertions) == 2:
+            #if escherstartpoints[0] + k > insertions[0] and insertions[1] > n+k-1:
+                #return True 
         return False
     
     def getColorPoints(self, core):
@@ -756,14 +788,21 @@ def eschertest():
         
 
 def eschercoretest():
-    n = 5
-    k = 2
+    n = 6
+    k = 3
     N = n+k
     lcm = np.lcm(n,k)
-    A = generate_all_uios(N)
+    A = generate_all_uios(N)[:20]
+    # 000012
     #A = [[0,0,1,1,4,4]]
     #A = [[0,0,0,1, 2]]
-    A = [[0,0,1,1,2,3,3]]
+    Primer7 = [[0,0,1,2,3]]
+    Nonbubbler = [[0,0,1,1,3]]
+    wrongy = [[0,0,1,1,3]]
+    wrongy2 = [[0,0,0,0,1,2]]
+    #A = wrongy2
+    #A = wrongy
+    #A = [[0,0,1,1,3,3,3]]
     #A = [[0,0,0,0,0,0]]
     #A = [[0,0,0,0,0,0,0,0,0,0]]
     for uio_encod in A:
@@ -771,7 +810,7 @@ def eschercoretest():
         t = time.time()
         uio.getEscherPairs(n,k)
         #print("elapsed time: {}".format(time.time()-t))
-        cores = uio.getEschersCores(n,k)
+        cores = uio.getEschersCores(n,k, verbose=False)
         uio.computelkCorrectSequences(n,k)
         truecoef = uio.getCoefficient()
         goods = 0
@@ -780,9 +819,9 @@ def eschercoretest():
             #print(core, isgood)
             if isgood:
                 goods += 1
+        print("conjecture:", goods, "true:", truecoef,"eschers:", len(cores), uio_encod)
         if goods != truecoef:
-            print("diff", goods, "vs", truecoef, len(cores), uio_encod)
-    print("coef:", goods, truecoef)
+            print("diff")
         #print("conjectured coeff:", goods, "true coeff:", truecoef)
 
 if __name__ == "__main__":
