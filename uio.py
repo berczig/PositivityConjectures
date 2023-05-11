@@ -799,7 +799,7 @@ def eschercoretest():
     Primer7 = [[0,0,1,2,3]]
     Nonbubbler = [[0,0,1,1,3]]
     wrongy = [[0, 0, 1, 2, 2, 3, 5]]
-    A = wrongy
+    #A = wrongy
     #A = wrongy
     #A = [[0,0,1,1,3,3,3]]
     #A = [[0,0,0,0,0,0]]
@@ -809,7 +809,7 @@ def eschercoretest():
         t = time.time()
         uio.getEscherPairs(n,k)
         #print("elapsed time: {}".format(time.time()-t))
-        cores = uio.getEschersCores(n,k, verbose=True)
+        cores = uio.getEschersCores(n,k, verbose=False)
         uio.computelkCorrectSequences(n,k)
         truecoef = uio.getCoefficient()
         goods = 0
@@ -818,8 +818,8 @@ def eschercoretest():
             #print(core, isgood)
             if isgood:
                 goods += 1
-        print("uio:", uio_encod, "conjecture coef:", goods, "true coef:", truecoef,"eschers:", len(cores))
         if goods != truecoef:
+            print("uio:", uio_encod, "conjecture coef:", goods, "true coef:", truecoef,"eschers:", len(cores))
             print("diff")
         #print("conjectured coeff:", goods, "true coeff:", truecoef)
 
