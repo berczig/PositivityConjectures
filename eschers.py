@@ -93,7 +93,7 @@ from __future__ import print_function
 from sys import getsizeof, stderr
 from itertools import chain
 from collections import deque
-
+from memory_profiler import profile
 try:
     from reprlib import repr
 except ImportError:
@@ -187,117 +187,25 @@ class UIO:
         for i in range(n):
             for j in range(1, i-1):
                 if i <= """
-        self.lkCorrectSequences = {} # {(l,k):[corseq1, corseq2,...], ... }
-        self.lkCorrectSequences_n = {} # {(l,k):number of (l,k) correct sequences}
 
-        self.eschers = {} # {n:[eschers of length n]}
+        #self.eschers = {} # {n:[eschers of length n]}
+        self.escherpairs = {} # {(n,k,l):[tripple escher pair]}
         self.subeschers = {} # {(escher, length k):all k-subeschers}
 
-        # compute correct sequences
-        self.computeCorrectSequences()
-    
-    ##### CORRECT SEQUENCES ####
 
-    def iscorrect(self, seq):
-        for i in range(1,len(seq)):
-            # not to the left of previos interval
-            if self.comparison_matrix[seq[i], seq[i-1]] == UIO.LESS:
-                return False
-            # intersects with some previous interval
-            intersects = False
-            for j in range(0, i):
-                if self.comparison_matrix[seq[i], seq[j]] in [UIO.LESS, UIO.INCOMPARABLE]:
-                    intersects = True
-                    #break
-            if not intersects:
-                return False
-        return True
-
-    
-    def is_lk_correct(self,seq,l,k):
-        return self.iscorrect(seq[:l]) and self.iscorrect(seq[l:])
-    
-    def computeCorrectSequences(self):
-        self.lkCorrectSequences[(self.n,0)] = [seq for seq in getPermutationsOfN(self.n) if self.iscorrect(seq)]
-        self.lkCorrectSequences_n[(self.n,0)] = len(self.lkCorrectSequences[(self.n,0)])
-    
-    def computelkCorrectSequences(self, l, k):
-        self.lkCorrectSequences[(l,k)] = [seq for seq in getPermutationsOfN(self.n) if self.is_lk_correct(seq,l,k)]
-        self.lkCorrectSequences_n[(l,k)] = len(self.lkCorrectSequences[(l,k)])
-        self.l = l
-        self.k = k
-
-    ##### THE CORE OF CORRECT SEQUENCE ####
-
-    def getmaximalinterval(self, subseq):
-        maximals = []
-        for i in subseq:
-            ismaximal = True
-            for j in subseq:
-                if self.comparison_matrix[j, i] == UIO.GREATER: # one very redundant comparison: i==j, but whatever
-                    # i can't be maximal
-                    ismaximal = False
-                    break
-            if ismaximal:
-                maximals.append(i)
-        print(max(maximals) == np.argmax(maximals))
-        return np.argmax(maximals)
-    
-    def getCore(self, seq, p): # step 3 for l,k
-        core = []
-        # take last critical pairs (at most p)
-        pairs = 0 # count number of registered critical pairs
-        for i in range(self.l-1, 0, -1):
-            if self.comparison_matrix[seq[i], seq[i-1]] == UIO.INCOMPARABLE:
-                pairs += 1
-                core.append(seq[i-1])
-                core.append(seq[i])
-                if pairs >= p:
-                    break
-        core.insert(0, pairs)
-
-        # maximal element in first l-1
-        core.append(self.getmaximalinterval(seq[:self.l-1]))
-
-        # last k+1 elements
-        core += seq[-(self.k+1):]
-        return core
-    
-    def computeCores(self, p):
-        # Assumes that computelkCorrectSequences has been called
-        self.cores = []
-        for seq in self.lkCorrectSequences[(self.l, self.k)]:
-            self.cores.append(self.getCore(seq, p))
-
-    #### GRAPH REPRESENTATIONS(TUPLE OF EDGES) OF CORE ####
-
-    def getCoreRepresentations(self):
-        representations = []
-        for core in self.cores:
-            k = len(core)
-            representations.append(tuple([self.comparison_matrix[core[i], core[j]] for i in range(1, k) for j in range(i+1, k)]))
-        return representations
-    
     #### COEFFICIENT ####
 
-    def getCoefficient(self):
-        # assumes that lk correct sequences allready  have been calculated
-        return len(self.lkCorrectSequences[self.l, self.k]) - len(self.lkCorrectSequences[self.n, 0])
-
-    def getCoeffientByEscher(self):
-        return 
-
+    def getCoeffientByEscher(self, n,k,l=0):
+        if l == 0:
+            return len(self.getEscherPairs(n,k)) - len(self.getEscherPairs(n+k))
+        return 2*len(self.getEscherPairs(n+k+l)) + len(self.getEscherPairs(n,k,l)) - len(self.getEscherPairs(n+l,k)) - len(self.getEscherPairs(n+k,l)) - len(self.getEscherPairs(l+k,n))
     #################### ESCHERS ###################
 
     def isescher(self, seq):
         for i in range(len(seq)-1):
-            if self.comparison_matrix[seq[i], seq[i+1]] == UIO.GREATER:
+            if self.isarrow(seq, i, i+1) == False:
                 return False
-        return self.comparison_matrix[seq[-1], seq[0]] != UIO.GREATER
-
-    def computeeschers(self, n):
-        #print("compute eschers for length", n)
-        self.eschers[n] = [seq for seq in getPermutationsOfN(n) if self.isescher(seq)]
+        return self.isarrow(seq, -1, 0)
     
     def computevalidsubeschers(self, escher, k): # k > 0 
         subeschers = []
@@ -360,13 +268,28 @@ class UIO:
                 points.append(i)
         #print("found {} insertion points between {} and {}".format(len(points),u,v))
         return points
+    
+    def getEscherPairs(self, n,k=0,l=0): # speedup
+        #print("getEscherPairs:", n,k,l)
+        if (n,k,l) in self.escherpairs:
+            return self.escherpairs[(n,k,l)]
 
-    def getEscherPairs(self, n,k):
-        self.pairs = []
-        for seq in getPermutationsOfN(n+k):
-            if self.isescher(seq[:n]) and self.isescher(seq[n:]):
-                self.pairs.append((seq[:n], seq[n:]))
-        #print("escher pairs:", len(self.pairs))
+        pairs = []
+        if l == 0 and k == 0:
+            pairs = [seq for seq in getPermutationsOfN(n) if self.isescher(seq)]
+            self.escherpairs[(n,0,0)] = pairs
+            return self.escherpairs[(n,0,0)]
+        if l == 0:
+            for seq in getPermutationsOfN(n+k):
+                if self.isescher(seq[:n]) and self.isescher(seq[n:]):
+                    pairs.append((seq[:n], seq[n:]))
+            self.escherpairs[(n,k,0)] = pairs
+            return self.escherpairs[(n,k,0)]
+        for seq in getPermutationsOfN(n+k+l):
+            if self.isescher(seq[:n]) and self.isescher(seq[n:n+k]) and self.isescher(seq[n+k:]):
+                pairs.append((seq[:n], seq[n:n+k], seq[n+k:]))
+        self.escherpairs[(n,k,l)] = pairs
+        return self.escherpairs[(n,k,l)]
 
     def cyclicslice(self, tuple, start, end): # end exclusive
         #print("tuple:", tuple, start, end)
@@ -404,19 +327,110 @@ class UIO:
         return (insertions, subeschers)
         #return (self.getInsertionPoints(u, v, lcm), self.getvalidsubescherstartingpoints(uu, k))
 
-    def getEschersCores(self, n, k, verbose=False):
+    def getsnake(self, u, v, insertionpoint, headlength):
+        n = len(u)
+        k = len(v)
+        lcm = np.lcm(n,k)
+        if n >= k:
+            top = v
+            bot = u
+        else:
+            top = u
+            bot = v
+
+        botbot = bot*(lcm//len(bot))
+        snakehead = self.cyclicslice(top,insertionpoint+1,insertionpoint+1+headlength)
+        return botbot[:insertionpoint+1]+snakehead
+
+    def concat(self, first, second, insertionpoint):
+        return first[:insertionpoint]
+
+
+    def getEscherRGCore(self, u, v):
+        n = len(u)
+        k = len(v)
+        lcm = np.lcm(n, k)
+        
+        insertions = self.getInsertionPoints(u,v,lcm)
+        if len(insertions) == 0:
+            return (-1, -1)
+        G = insertions[0]
+        
+        snake = self.getsnake(u,v,G,1)
+        #print("snake:", G, snake, u, v)
+
+        for i in range(1, G): # box starts at i and ends at i+k-1 (inclusive
+            if self.isarrow(snake, i-1, (i+k)%(G+2)) and self.isarrow(snake, (i+k-1)%(G+2), i):
+                R = i+k-1
+                return (R,G)
+
+        return (-1, G)
+
+    def getEscherTrippleCore(self, u,v,w):
+        R1,G1 = self.getEscherRGCore(u,v)
+        R2,G2 = self.getEscherRGCore(u,w)
+        R3,G3 = self.getEscherRGCore(v,w)
+
+        if G1 != -1:
+            S1 = self.getsnake(u,v,G1,len(u)+len(v)-G1)
+            R1S, G1S = self.getEscherCore(S1, w)
+        
+        if G2 != -1:
+            S2 = self.getsnake(u,w,G2,len(u)+len(w)-G2)
+            R2S, G2S = self.getEscherCore(S2, v)
+        
+        if G3 != -1:
+            S3 = self.getsnake(v,w,G1,len(v)+len(w)-G3)
+            R3S, G3S = self.getEscherCore(S2, u)
+        return (R1,G1,R2,G2,R3,G3,R)
+        return (*R1, *self.getEscherRGCore(u,w), *self.getEscherRGCore(v,w))
+
+    def TrippleRGcoreIsGood(self, core):
+        return self.RGcoreIsGood(core[:2]) and self.RGcoreIsGood(core[2:4]) and self.RGcoreIsGood(core[4:])
+    
+    def getTripplEscherCores(self, n, k, l, verbose=False):
         cores = []
-        for v in [n,k]:
-            if v not in self.eschers:
-                self.computeeschers(v)
-        for u,v in self.pairs:
+        goods = 0
+        pairs = self.getEscherPairs(n,k,l)
+        for u,v,w in pairs:
+            core = self.getEscherTrippleCore(u,v,w)
+            isgood = self.TrippleRGcoreIsGood(core)
+            if isgood:
+                goods += 1
+            if verbose:
+                print(u,v,w, isgood, core)
+            cores.append(core)
+        return cores, goods
+
+    def getEscherCores(self, n, k, verbose=False):
+        cores = []
+        pairs = self.getEscherPairs(n,k,0)
+        for u,v in pairs:
         #for u in self.eschers[n]:
             #for v in self.eschers[k]:
             core = self.getEscherCore(u,v)
             if verbose:
                 print(u,v, self.coreIsGood(core, n, k, np.lcm(n,k)), core)
             cores.append(core)
-        return cores            
+        return cores          
+
+    
+    def getEscherRGCores(self, n, k, verbose=False):
+        cores = []
+        pairs = self.getEscherPairs(n,k,0)
+        for u,v in pairs:
+            core = self.getEscherRGCore(u,v)
+            if verbose:
+                print(u,v, self.RGcoreIsGood(core), core)
+            cores.append(core)
+        return cores        
+
+    def RGcoreIsGood(self, core):
+        if core[1] == -1:
+            return True
+        if core[0] == -1:
+            return False
+        return core[0] <= core[1]
 
     def coreIsGood(self, core, n, k, lcm):
         # G_i i'th insertion points, Y1 = n, Y2 = n+k, R = right endpoint of left most subescher ( indexing starting at 1)
@@ -469,11 +483,6 @@ class UIO:
             #if escherstartpoints[0] + k > insertions[0] and insertions[1] > n+k-1:
                 #return True 
         return False
-    
-    def getColorPoints(self, core):
-        insertions, escherstartpoints = core
-        red = insertions
-        
 
 class UIODataExtractor:
     """
@@ -834,8 +843,12 @@ def eschercoretest():
     #A = [[0,0,0,1, 2]]
     Primer7 = [[0,0,1,2,3]]
     Nonbubbler = [[0,0,1,1,3]]
-    wrongy = [[0, 0, 1, 2, 2, 3, 5]]
-    #A = wrongy
+    wrongy = [[0,0,0,1,1,4]]
+    #A = wrongy2 = [[0,0,1,1,2,3,4,6]] # 5,3 breaker
+    #A = [[0, 0, 1, 2, 2, 3, 5]]
+    #A = [[0, 0, 1, 2, 3, 3]]
+    #A = wrongy2
+    #A = [[0,0,1,1,2,3,3,5,6]]
     #A = wrongy
     #A = [[0,0,1,1,3,3,3]]
     #A = [[0,0,0,0,0,0]]
@@ -843,23 +856,41 @@ def eschercoretest():
     for uio_encod in A:
         uio = UIO(uio_encod)
         t = time.time()
-        uio.getEscherPairs(n,k)
         #print("elapsed time: {}".format(time.time()-t))
-        cores = uio.getEschersCores(n,k, verbose=False)
-        uio.computelkCorrectSequences(n,k)
-        truecoef = uio.getCoefficient()
+        cores = uio.getEscherRGCores(n,k, verbose=False)
+        cores_ = uio.getEscherCores(n,k, verbose=False)
+        truecoef = uio.getCoeffientByEscher(n,k,0)
         goods = 0
-        for core in cores:
-            isgood = uio.coreIsGood(core, n, k, lcm)
-            #print(core, isgood)
+        goods2 = 0
+        for i, core in enumerate(cores):
+            isgood = uio.RGcoreIsGood(core)
+            core_ = cores_[i]
+            #print(uio.coreIsGood(core_, n, k,lcm), isgood, core_, core)
             if isgood:
                 goods += 1
+            if uio.coreIsGood(core_, n, k, lcm):
+                goods2 += 1
+        #print("conjecture:", goods, goods2, "true:", truecoef,"eschers:", len(cores), uio_encod, core)
         if goods != truecoef:
-            print("uio:", uio_encod, "conjecture coef:", goods, "true coef:", truecoef,"eschers:", len(cores))
+            print("conjecture:", goods, goods2, "true:", truecoef,"eschers:", len(cores), uio_encod, core) 
             print("diff")
-            print("conjecture:", goods, "true:", truecoef,"eschers:", len(cores), uio_encod)
+            #print("conjecture:", goods, "true:", truecoef,"eschers:", len(cores), uio_encod)
         
         #print("conjectured coeff:", goods, "true coeff:", truecoef)
+
+def trippleescher(): # and check 4,4,2
+    n = 4
+    k = 2
+    l = 2
+    N = n+k+l
+    A = generate_all_uios(N)
+    for encod in A:
+        uio = UIO(encod)
+        truecoeff =  uio.getCoeffientByEscher(n,k,l)
+        cores, goods = uio.getTripplEscherCores(n,k,l)
+        print(encod, truecoeff, "vs", goods)
+        if goods != encod:
+            print("diff")
 
 if __name__ == "__main__":
     #testsave()
@@ -868,3 +899,4 @@ if __name__ == "__main__":
     #inspectStatesFromFile("best_species_txt_763.txt", 15, 7)
     #checkThmConditionMatrix()
     eschercoretest()
+    #trippleescher()
