@@ -93,7 +93,6 @@ from __future__ import print_function
 from sys import getsizeof, stderr
 from itertools import chain
 from collections import deque
-from memory_profiler import profile
 try:
     from reprlib import repr
 except ImportError:
@@ -844,6 +843,7 @@ def eschercoretest():
     Primer7 = [[0,0,1,2,3]]
     Nonbubbler = [[0,0,1,1,3]]
     wrongy = [[0,0,0,1,1,4]]
+    A = [[0, 0, 1, 1, 2, 3, 4, 6]]
     #A = wrongy2 = [[0,0,1,1,2,3,4,6]] # 5,3 breaker
     #A = [[0, 0, 1, 2, 2, 3, 5]]
     #A = [[0, 0, 1, 2, 3, 3]]
@@ -858,7 +858,7 @@ def eschercoretest():
         t = time.time()
         #print("elapsed time: {}".format(time.time()-t))
         cores = uio.getEscherRGCores(n,k, verbose=False)
-        cores_ = uio.getEscherCores(n,k, verbose=False)
+        cores_ = uio.getEscherCores(n,k, verbose=True)
         truecoef = uio.getCoeffientByEscher(n,k,0)
         goods = 0
         goods2 = 0
