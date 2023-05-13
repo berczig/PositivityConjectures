@@ -192,7 +192,7 @@ class UIO:
         #print("found {} insertion points between {} and {}".format(len(points),u,v))
         return points
 
-    def getFirstInsertionPoint(self, u,v,lcm=0):
+    def getFirstInsertionPoint(self, u,v,lcm=0): # the returned G can be bigger than len(u) and len(v)
         n = len(u)
         k = len(v)
         if lcm == 0:
@@ -273,8 +273,8 @@ class UIO:
         snakehead = self.cyclicslice(top,insertionpoint+1,insertionpoint+1+headlength)
         return botbot[:insertionpoint+1]+snakehead
 
-    def concat(self, first, second, insertionpoint):
-        return first[:insertionpoint+1]+self.cyclicslice(second, insertionpoint+1, insertionpoint)+first[insertionpoint+1:]
+    def concat(self, first, second, insertionpoint): # assume insertionpoint < len(first)
+        return first[:insertionpoint+1]+self.cyclicslice(second, insertionpoint+1, insertionpoint+1)+first[insertionpoint+1:]
 
 
     def getEscherRGCore(self, u, v):
@@ -421,7 +421,7 @@ class UIO:
     ###### MAP P_{n+k} -> P_{n,k} ################
     def phi(self, u):
         # compute L, the point before the valid k-subescher
-        for L in range(-1, n+k-1):
+        for L in range(0, n+k): # starts at 0, 0 indexing in the paper for "5. the proof"
             if self.isarrow(u, L%npk, (L+k+1)%npk) and self.isarrow(u, (L+k)%npk, (L+1)%npk):
                 break
 
@@ -463,8 +463,12 @@ class UIO:
         if G == -1:
             return None
         w = self.concat(u,v, G)
-        if G < n-1:
-            w = self.rewindescher(w, -n-n)
+        if G >= n:
+            v_n = v[n%k]
+            print("index:", n%k)
+            print("v_n:", v_n)
+            while w[0] != v_n:
+                w = self.rewindescher(w, 1)
         return w
         #if G < n-1:
             #return self.concat(u,v,G)
@@ -531,16 +535,29 @@ def maptest():
     #A = [[0,0,0,2,3,4,4]]
     #A = [[0,0,1,1,2,3,3,5,6]]
     #A= [[0,0,0,0,1,3,5,6,6,8]]
+    #A = generate_all_uios(n+k)
+    #random.shuffle(A)
+    A = [[0, 0, 1, 1, 2, 3, 5]]
+    #A = [[0,0,1,1,2,3,3,5,7]] # 5,4 breaker 1   12.05 11:17
     for encod in A:
         uio = UIO(encod)
         P_npk = uio.getEscherPairs(n+k,0,0)
         P_n_k = uio.getEscherPairs(n,k,0)
-        print("n={}+k={} eschers: {}".format(n,k,len(P_npk)))
-        print("n+k={} eschers: {}".format(n+k,len(P_n_k)))
+        print("n={}+k={} eschers: {}".format(n,k,len(P_n_k)))
+        print("n+k={} eschers: {}".format(n+k,len(P_npk)))
+        phiimage = []
         for v in P_npk:
             nescher, kescher = uio.phi(v)
             #u,w = uio.phi(v)
-            print(v, "-->", (nescher, kescher), "-->", uio.psi(nescher, kescher))
+            back = uio.psi(nescher, kescher)
+            phiimage.append((nescher, kescher))
+            print(v, "-->", (nescher, kescher), "-->", back)
+            if v != back:
+                print(20*"diff!", encod)
+                #print(v, "-->", (nescher, kescher), "-->", back)
+        im = len(set(phiimage))
+        print("phi's image contains {} elements and phi's domain contains {} elements.".format(im,  len(P_npk)), "phi injective:", im == len(P_npk))
+            
 
 def trippleescher(): # and check 4,4,2
     A = generate_all_uios(n+k+l)
@@ -560,12 +577,12 @@ def trippleescher(): # and check 4,4,2
 
 if __name__ == "__main__":
     global n,k,l,lcm
-    n = 5
-    k = 4
+    n = 4
+    k = 3
     npk = n+k
     l = 2
     lcm = np.lcm(n,k)
-    eschercoretest()
+    #eschercoretest()
     #trippleescher()
-    #maptest()
+    maptest()
     #compareJAoutput("Joutput.txt", "Aoutput.txt")
