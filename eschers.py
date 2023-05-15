@@ -93,13 +93,13 @@ class UIO:
     RELATIONTEXT = {LESS:"<", EQUAL:"=", GREATER:">"}
 
     def __init__(self, uio_encoding):
-        self.n = len(uio_encoding)
+        self.N = len(uio_encoding)
         self.encoding = uio_encoding
 
         # decode encoding to get comparison matrix
-        self.comparison_matrix = np.zeros((self.n,self.n)) + self.EQUAL # (i,j)'th index says how i is in relation to j
-        for i in range(self.n):
-            for j in range(i+1, self.n):
+        self.comparison_matrix = np.zeros((self.N,self.N)) + self.EQUAL # (i,j)'th index says how i is in relation to j
+        for i in range(self.N):
+            for j in range(i+1, self.N):
                 if uio_encoding[j] <= i:
                     self.comparison_matrix[i,j] = self.INCOMPARABLE
                     self.comparison_matrix[j,i] = self.INCOMPARABLE
@@ -124,6 +124,16 @@ class UIO:
         return 2*len(self.getEscherPairs(n+k+l)) + len(self.getEscherPairs(n,k,l)) - len(self.getEscherPairs(n+l,k)) - len(self.getEscherPairs(n+k,l)) - len(self.getEscherPairs(l+k,n))
     #################### ESCHERS ###################
 
+    def setnlk(self, n_, k_, l_, verbose=False):
+        global n,k,l, npk, lcm
+        n = n_
+        k = k_
+        l = l_
+        npk = n+k
+        if verbose:
+            print("setnlk", n_, k_, l_, npk)
+        lcm = np.lcm(n,k)
+
     def isescher(self, seq):
         for i in range(len(seq)-1):
             if self.isarrow(seq, i, i+1) == False:
@@ -136,17 +146,14 @@ class UIO:
         h = len(escher)
         for m in range(h): # m can be 0
             #print("m:", m)
-            #print("indices:", (m+k)%self.n, (m+1)%self.n)
             cond1 = self.comparison_matrix[escher[(m+k)%h], escher[(m+1)%h]] != UIO.GREATER # EQUAL also intersects
             #print("cond1:", cond1)
-            #print("indices:", m, (m+k+1)%self.n)
             cond2 = self.comparison_matrix[escher[m], escher[(m+k+1)%h]] != UIO.GREATER
             #print("cond2:", cond2)
             if cond1 and cond2:
                 lastindex = m+k+1
                 if lastindex > h:
                     subeschers.append(escher[m+1:]+escher[:lastindex%h])
-                    # subeschers.append(list(range(m+1,self.n))+list(range(lastindex-self.n)))
                 else:
                     # subeschers.append(list(range(m+1,lastindex)))
                     subeschers.append(escher[m+1:lastindex])
@@ -154,7 +161,11 @@ class UIO:
         self.subeschers[(escher,k)] = subeschers
 
     def isarrow(self, escher, i,j):
-        return self.comparison_matrix[escher[i], escher[j]] != UIO.GREATER # EQUAL also intersects
+        try:
+            w = self.comparison_matrix[escher[i], escher[j]] != UIO.GREATER
+        except:
+            print("error, isarrow:", escher, i, j)
+        return w # EQUAL also intersects
 
     def getpseudosubescherstartingpoints(self, escher, k): # k > 0, pretends the input is an escher and finds valid k-subescher 
         subeschersstartingpoint = [] # start of the box
@@ -274,7 +285,11 @@ class UIO:
         return botbot[:insertionpoint+1]+snakehead
 
     def concat(self, first, second, insertionpoint): # assume insertionpoint < len(first)
-        return first[:insertionpoint+1]+self.cyclicslice(second, insertionpoint+1, insertionpoint+1)+first[insertionpoint+1:]
+        # v0     vL vL+1
+        # u0 ... uL uL+1
+        #print("concat:", first, insertionpoint, first[:insertionpoint%n+1], self.cyclicslice(second, insertionpoint+1, insertionpoint+k+1), first[insertionpoint%n+1:])
+        # (insertionpoint+1)+(k-1)+1 = insertionpoint+k+1
+        return first[:insertionpoint%n+1]+self.cyclicslice(second, insertionpoint+1, insertionpoint+k+1)+first[insertionpoint%n+1:]
 
 
     def getEscherRGCore(self, u, v):
@@ -352,19 +367,27 @@ class UIO:
     def getEscherRGCores(self, n, k, verbose=False):
         cores = []
         pairs = self.getEscherPairs(n,k,0)
+        goods = 0
         for u,v in pairs:
             core = self.getEscherRGCore(u,v)
+            isgood = self.RGcoreIsGood(core)
+            if isgood:
+                goods += 1
             if verbose:
-                print(u,v, self.RGcoreIsGood(core), core)
+                print(u,v, isgood, core)
             cores.append(core)
-        return cores        
+        return cores, goods        
 
     def RGcoreIsGood(self, core):
+        #print(core)
         if core[1] == -1:
             return True
-        if core[0] == -1:
+        if core[0] == -1 and n > core[1]:
             return False
-        return (core[0] <= core[1]) or (n < core[1] +1)
+        
+        #if core[1] >= n:
+            #print("exp")
+        return (core[0] <= core[1]) or (n <= core[1])
 
     def coreIsGood(self, core, n, k, lcm):
         # G_i i'th insertion points, Y1 = n, Y2 = n+k, R = right endpoint of left most subescher ( indexing starting at 1)
@@ -380,6 +403,7 @@ class UIO:
             return True
         if len(escherstartpoints) == 0:
             return False
+        
         #print(len(escherstartpoints)) 
         #print("escherstartpoints:", escherstartpoints)
         for escherstartpoint in escherstartpoints:
@@ -435,8 +459,8 @@ class UIO:
         
         v = self.rewindescher(v, L+1)
         w = self.rewindescher(w, L+1)
-        print("L:", L)
-        return (w, v)
+        #print("L:", L)
+        return (w, v) #(1, 0, 3, 6, 5, 4, 2)
         """
         # Find k-multiple in [L+1:L+k]
         for qk in range(L+1, L+k+1):
@@ -459,14 +483,16 @@ class UIO:
         """
 
     def psi(self, u, v):
+        #u - n-escher
+        #v - k-escher
         G = self.getFirstInsertionPoint(u,v)
+        print("G:", G)
         if G == -1:
             return None
         w = self.concat(u,v, G)
         if G >= n:
+            #print(12*"EXP")
             v_n = v[n%k]
-            print("index:", n%k)
-            print("v_n:", v_n)
             while w[0] != v_n:
                 w = self.rewindescher(w, 1)
         return w
@@ -489,6 +515,7 @@ def eschercoretest():
     wrongy = [[0,0,0,1,1,4]]
     A = [[0,0,0,2,3,4,4]]
     A = [[0,0,1,1,2,3,3,5,7]] # 5,4 breaker 1   12.05 11:17
+    #A = [[0, 0, 1, 1, 2, 3, 5]]
     #A = [[0,0,1,1,2,3,3,5,6]] # 5,4 breaker 2   12.05.11:17
     #A = [[0, 0, 1, 1, 2, 3, 4, 6]]
     #A = wrongy2 = [[0,0,1,1,2,3,4,6]] # 5,3 breaker
@@ -504,22 +531,12 @@ def eschercoretest():
         uio = UIO(uio_encod)
         t = time.time()
         #print("elapsed time: {}".format(time.time()-t))
-        cores = uio.getEscherRGCores(n,k, verbose=False)
-        cores_ = uio.getEscherCores(n,k, verbose=True)
+        cores, goods = uio.getEscherRGCores(n,k, verbose=True)
+        cores_ = uio.getEscherCores(n,k, verbose=False)
         truecoef = uio.getCoeffientByEscher(n,k,0)
-        goods = 0
-        goods2 = 0
-        for i, core in enumerate(cores):
-            isgood = uio.RGcoreIsGood(core)
-            core_ = cores_[i]
-            #print(uio.coreIsGood(core_, n, k,lcm), isgood, core_, core)
-            if isgood:
-                goods += 1
-            if uio.coreIsGood(core_, n, k, lcm):
-                goods2 += 1
-        print("conjecture:", goods, goods2, "true:", truecoef,"eschers:", len(cores), uio_encod, core)
+        print("conjecture:", goods,  "true:", truecoef,"eschers:", len(cores), uio_encod)
         if goods != truecoef:
-            print("conjecture:", goods, goods2, "true:", truecoef,"eschers:", len(cores), uio_encod, core) 
+            print("conjecture:", goods,  "true:", truecoef,"eschers:", len(cores), uio_encod)
             print("diff")
             #print("conjecture:", goods, "true:", truecoef,"eschers:", len(cores), uio_encod)
         
@@ -530,6 +547,47 @@ def injection():
     # M_a,b is complement of image(phi_a,b) aka (a,b) cant come from a a+b escher by breaking it (not the same as impossible to concat them to an escher, try to find an example?)
     M_npk_l = 4
 
+def tripplemaptest():
+    # n+k, l
+    A = generate_all_uios(n+k+l)
+    totaluio = len(A)
+    options = [(n,k,l),(k,l,n),(l,n,k)]
+    random.shuffle(A)
+    #A= [[0,0,0,0,1,3,5,6,6,8]]
+    for uioid, encod in enumerate(A):
+        uio = UIO(encod)
+        # n =4, k = 4, l =2 -- > 6,4 and 8,2
+        seen = []
+        images = []
+        for i, (a, b, c) in enumerate(options):
+            if (a+b, c) in seen:
+                continue
+            seen.append((a+b, c))
+            #print("seen:", seen)
+            uio.setnlk(a,b,0)
+            image = []
+            pairs = uio.getEscherPairs(a+b,c)
+            for apbescher, cescher in pairs:
+                aescher,bescher = uio.phi(apbescher)
+                if i == 0:
+                    print("(aescher, bescher, cescher)", (aescher, bescher, cescher))
+                    image.append((aescher, bescher, cescher))
+                elif i == 1:
+                    image.append((bescher, cescher, aescher))
+                elif i == 2:
+                    image.append((cescher, aescher, bescher))
+            images.append(image)
+        
+        ## check if images are disjoint
+        #print("check if images are disjoint...")
+        Set = []
+        for img in images:
+            Set += img
+        x = len(Set)
+        y = len(set(Set))
+        print(x, "vs", y, encod, uioid, "/", totaluio)
+        if x != y:
+            sys.exit(0)
 
 def maptest():
     #A = [[0,0,0,2,3,4,4]]
@@ -537,12 +595,14 @@ def maptest():
     #A= [[0,0,0,0,1,3,5,6,6,8]]
     #A = generate_all_uios(n+k)
     #random.shuffle(A)
-    A = [[0, 0, 1, 1, 2, 3, 5]]
-    #A = [[0,0,1,1,2,3,3,5,7]] # 5,4 breaker 1   12.05 11:17
+    #A = [[0, 0, 1, 1, 2, 3, 5]]
+    #A = [[0, 0, 1, 1, 2, 3, 5]]
+    A = [[0,0,1,1,2,3,3,5,7]] # 5,4 breaker 1   12.05 11:17
     for encod in A:
         uio = UIO(encod)
         P_npk = uio.getEscherPairs(n+k,0,0)
         P_n_k = uio.getEscherPairs(n,k,0)
+        print(encod)
         print("n={}+k={} eschers: {}".format(n,k,len(P_n_k)))
         print("n+k={} eschers: {}".format(n+k,len(P_npk)))
         phiimage = []
@@ -556,33 +616,34 @@ def maptest():
                 print(20*"diff!", encod)
                 #print(v, "-->", (nescher, kescher), "-->", back)
         im = len(set(phiimage))
-        print("phi's image contains {} elements and phi's domain contains {} elements.".format(im,  len(P_npk)), "phi injective:", im == len(P_npk))
+        #print("phi's image contains {} elements and phi's domain contains {} elements.".format(im,  len(P_npk)), "phi injective:", im == len(P_npk))
             
 
 def trippleescher(): # and check 4,4,2
     A = generate_all_uios(n+k+l)
     A = [[0, 0, 0, 1, 2, 2, 5, 6]]
     random.shuffle(A)
-    #A = [[0,2,2,2,3,4,4,5,6,6]]
-    #A= [[0,0,0,0,1,3,5,6,6,8]]
+    A= [[0,0,0,0,1,3,5,6,6,8]]
     for encod in A:
         uio = UIO(encod)
         print("here")
         truecoeff =  uio.getCoeffientByEscher(n,k,l)
         #print("here2")
         cores, goods = uio.getTripplEscherCores(n,k,l, verbose=True)
-        print(encod, truecoeff, "vs", goods)
+        print("true:", truecoeff, "conjectured:", goods, encod)
         if goods != truecoeff:
             print(20*"diff")
 
 if __name__ == "__main__":
-    global n,k,l,lcm
+    global n,k,l,lcm,expo
     n = 4
-    k = 3
+    expo = 0
+    k = 4
     npk = n+k
     l = 2
     lcm = np.lcm(n,k)
     #eschercoretest()
     #trippleescher()
-    maptest()
+    #maptest()
     #compareJAoutput("Joutput.txt", "Aoutput.txt")
+    tripplemaptest()
