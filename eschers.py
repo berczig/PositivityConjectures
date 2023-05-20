@@ -242,6 +242,9 @@ class UIO:
 
 def tripplemaptest():
     # n+k, l
+    n = 1
+    k = 2
+    l= 3
     A = generate_all_uios(n+k+l)
     A = [[0, 0, 1, 1, 2, 4]]
     realn = n
