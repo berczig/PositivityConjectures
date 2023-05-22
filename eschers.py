@@ -52,6 +52,25 @@ def generate_uio_rec(A, uio, n, i):
     for j in range(uio[i-1], i+1):
         generate_uio_rec(A, uio+[j], n, i+1)
 
+def cyclicslice(tuple, start, end): # end exclusive
+        #print("cyclic:", tuple, start, end)
+        n = len(tuple)
+        start = start%n
+        end = end%n
+        if start < end:
+            return tuple[start:end]
+        return tuple[start:]+tuple[:end]
+
+def rewindescher(escher, steps): # moves the escher clockwise: (x,y,z) -> (z,x,y) is 1 step
+        x = len(escher)
+        return cyclicslice(escher, -steps, x-steps)
+
+def setstartpoint(seq, startpoint):
+    # startpoint is an element in seq
+    while seq[0] != startpoint:
+        seq = rewindescher(seq, 1)
+    return seq
+
 
 #####
    
@@ -69,6 +88,7 @@ class UIO:
     def __init__(self, uio_encoding):
         self.N = len(uio_encoding)
         self.encoding = uio_encoding
+        self.repr = str(self.encoding)
 
         # decode encoding to get comparison matrix
         self.comparison_matrix = np.zeros((self.N,self.N)) + self.EQUAL # (i,j)'th index says how i is in relation to j
@@ -88,6 +108,9 @@ class UIO:
         #self.eschers = {} # {n:[eschers of length n]}
         self.escherpairs = {} # {(n,k,l):[tripple escher pair]}
         self.subeschers = {} # {(escher, length k):all k-subeschers}
+
+    def __repr__(self):
+        return self.repr
 
  #################### ESCHERS ###################
 
@@ -140,39 +163,41 @@ class UIO:
             if self.comparison_matrix[u[i%n], v[(i+1)%k]] != UIO.GREATER and self.comparison_matrix[v[i%k], u[(i+1)%n]] != UIO.GREATER:
                 return i
         return -1
+    
+    def concat(self, first, second, insertionpoint): # assume insertionpoint < len(first)
+        # v0     vL vL+1
+        # u0 ... uL uL+1
+        #print("concat:", first, insertionpoint, first[:insertionpoint%n+1], self.cyclicslice(second, insertionpoint+1, insertionpoint+k+1), first[insertionpoint%n+1:])
+        # (insertionpoint+1)+(k-1)+1 = insertionpoint+k+1
+        f = len(first)
+        s = len(second)
+        return first[:insertionpoint%f+1]+cyclicslice(second, insertionpoint+1, insertionpoint+s+1)+first[insertionpoint%f+1:]
 
-    def getEscherPairs(self, n,k=0,l=0, verbose=False): # speedup
+    def getEscherPairs(self, partition, verbose=False): # speedup
         if verbose:
-            print("getEscherPairs:", "n:", n,"k:", k,"l:", l)
-        if (n,k,l) in self.escherpairs:
-            return self.escherpairs[(n,k,l)]
+            print("getEscherPairs:", "partition:", partition)
+
+        if partition in self.escherpairs:
+            return self.escherpairs[partition]
 
         pairs = []
-        if l == 0 and k == 0:
-            pairs = [seq for seq in getPermutationsOfN(n) if self.isescher(seq)]
-            self.escherpairs[(n,0,0)] = pairs
-            return self.escherpairs[(n,0,0)]
-        if l == 0:
+
+        if len(partition) == 1:
+            pairs = [seq for seq in getPermutationsOfN(partition[0]) if self.isescher(seq)]
+        elif len(partition) == 2:
+            n,k = partition
             for seq in getPermutationsOfN(n+k):
                 if self.isescher(seq[:n]) and self.isescher(seq[n:]):
                     pairs.append((seq[:n], seq[n:]))
-            self.escherpairs[(n,k,0)] = pairs
-            return self.escherpairs[(n,k,0)]
-        for seq in getPermutationsOfN(n+k+l):
-            if self.isescher(seq[:n]) and self.isescher(seq[n:n+k]) and self.isescher(seq[n+k:]):
-                pairs.append((seq[:n], seq[n:n+k], seq[n+k:]))
-        self.escherpairs[(n,k,l)] = pairs
-        return self.escherpairs[(n,k,l)]
+        else:
+            n,k,l = partition
+            for seq in getPermutationsOfN(n+k+l):
+                if self.isescher(seq[:n]) and self.isescher(seq[n:n+k]) and self.isescher(seq[n+k:]):
+                    pairs.append((seq[:n], seq[n:n+k], seq[n+k:]))
 
-    def cyclicslice(self, tuple, start, end): # end exclusive
-        #print("cyclic:", tuple, start, end)
-        n = len(tuple)
-        start = start%n
-        end = end%n
-        if start < end:
-            return tuple[start:end]
-        return tuple[start:]+tuple[:end]
-                
+        self.escherpairs[partition] = pairs
+        return self.escherpairs[partition]
+    
     ###### MAP P_{n+k} -> P_{n,k} ################
     def phi(self, u, verbose=False): # n <= k
         # return n-escher, k-escher
@@ -185,14 +210,14 @@ class UIO:
 
         # the k-subescher goes from L+1 to L+n
         # the n-subescher goes from L+n+1 to L+n+k
-        v = self.cyclicslice(u, L+1, L+n+1) # n-escher
-        w = self.cyclicslice(u, L+n+1, L+n+k+1) # k-escher
+        v = cyclicslice(u, L+1, L+n+1) # n-escher
+        w = cyclicslice(u, L+n+1, L+n+k+1) # k-escher
 
         # We found the subeschers, but we have to change the starting point
         # for both subescher the startpoint should be s.t. the the L'th position (L can be 0) is the end of the original subescher
         
-        v = self.rewindescher(v, L+1)
-        w = self.rewindescher(w, L+1)
+        v = rewindescher(v, L+1)
+        w = rewindescher(w, L+1)
         if verbose:
             print("L:", L)
         return (v, w) #(1, 0, 3, 6, 5, 4, 2)
@@ -210,8 +235,8 @@ class UIO:
         
         # k-escher goes from qk to qk+k-1 (inclusive)
         # n-escher goes from qk to qn+n-1 (inclusive)
-        v = self.cyclicslice(u, qk, qk+k)
-        w = self.cyclicslice(u, qn, qn+n)
+        v = cyclicslice(u, qk, qk+k)
+        w = cyclicslice(u, qn, qn+n)
 
         print("L:{}, qk:{}, qn:{}".format(L, qk, qn))
         return (v,w)
@@ -229,16 +254,291 @@ class UIO:
             #print(12*"EXP")
             v_n = v[k%n]
             while w[0] != v_n:
-                w = self.rewindescher(w, 1)
+                w = rewindescher(w, 1)
         return w
         #if G < n-1:
             #return self.concat(u,v,G)
         #return self.concat(v,u,G)
 
-    def rewindescher(self, escher, steps): # moves the escher clockwise
-        x = len(escher)
-        return self.cyclicslice(escher, -steps, x-steps)
+    
+class EscherBreaker:
+
+    def __init__(self, uio:UIO, n, k): # n <= k
+        self.uio = uio
+        self.n = n
+        self.k = k
+        self.lcm = np.lcm(n,k)
+        self.npk = n+k
+        self.image = None
+    
+    """def getFirstInsertionPoint(self, u,v,lcm=0): 
+        # the returned G can be bigger than len(u) and len(v)
+        # doesn't matter if u <= v or v <= u
+        for i in range(self.lcm):
+            if self.comparison_matrix[u[i%self.n], v[(i+1)%self.k]] != UIO.GREATER and self.comparison_matrix[v[i%self.k], u[(i+1)%self.n]] != UIO.GREATER:
+                return i
+        return -1"""
+    
+    def getImage(self, verbose=False):
+        P_npk = self.uio.getEscherPairs((self.n+self.k,))
+        if verbose:
+            print("get image:", self.uio)
+            print("n+k={} eschers: {}".format(self.n+self.k,len(P_npk)))
+        self.image = []
+        for v in P_npk:
+            nescher, kescher = self.map(v)
+            self.image.append((nescher, kescher))
+        return self.image
+    
+    def checkInjective(self):
+        print("checkInjective")
+        if self.image == None:
+            self.getImage()
+        seen = {}
+        duplicates = []
+        pairs = self.uio.getEscherPairs((self.n+self.k,))
+        for (i, escher) in enumerate(self.image):
+            if escher not in seen:
+                seen[escher] = [i]
+            else:
+                duplicates.append(escher)
+                seen[escher].append(i)
+
+        for escher in duplicates:
+            indices = seen[escher]
+            print(15*"-")
+            for i in indices:
+                print(self.uio, pairs[i], "-->", self.map(pairs[i]))
+
+    def checkLeftInverse(self):
+        pairs = self.uio.getEscherPairs((self.n+self.k,))
+        for u in pairs:
+            b = self.map(u)
+            c = self.inversemap(*b)
+            if u != c:
+                print(u, "-->", b, "-->", c, self.uio)
+                sys.exit(0)
+
+    def getcomplement(self, verbose=False):
+        P_n_k = self.uio.getEscherPairs((self.n,self.k))
+        if verbose:
+            print("get complement:", self.uio)
+            print("n={}+k={} eschers: {}".format(self.n,self.k,len(P_n_k)))
+        complement = []
+        phiimage = self.getImage(verbose)
+        for (u,v) in P_n_k:
+            if (u,v) not in phiimage:
+                complement.append((u,v))
+        return complement
+
+
+class MyEscherBreaker(EscherBreaker):
+    def __init__(self, uio, n, k, extra_v_offset=0, extra_w_offset=0):
+        super().__init__(uio, n, k)
+        self.extra_v_offset = extra_v_offset
+        self.extra_w_offset = extra_w_offset
+
+    def map(self, u, verbose = False):
+        # return n-escher, k-escher
+
+        # compute L, the point before the valid k-subescher^
+        if verbose:
+            print("phi", u, "n:", self.n, "k:", self.k)
+        for L in range(0, self.n+self.k): # starts at 0, 0 indexing in the paper for "5. the proof"
+            if self.uio.isarrow(u, L%self.npk, (L+self.n+1)%self.npk, verbose) and self.uio.isarrow(u, (L+self.n)%self.npk, (L+1)%self.npk, verbose):
+                break
+
+        # the k-subescher goes from L+1 to L+n
+        # the n-subescher goes from L+n+1 to L+n+k
+        v = cyclicslice(u, L+1, L+self.n+1) # n-escher
+        w = cyclicslice(u, L+self.n+1, L+self.n+self.k+1) # k-escher
+
+        # We found the subeschers, but we have to change the starting point
+        # for both subescher the startpoint should be s.t. the the L'th position (L can be 0) is the end of the original subescher
         
+        v = rewindescher(v, L+1+self.extra_v_offset) # v = rewindescher(v, L+1+2) vs v = rewindescher(v, L+1) for 1,2,3 on [0, 0, 0, 2, 2, 4]
+        w = rewindescher(w, L+1+self.extra_w_offset)
+        if verbose:
+            print("L:", L)
+        return (v, w) #(1, 0, 3, 6, 5, 4, 2)
+    
+    def inversemap(self, u, v): # n <= k
+        #u - n-escher
+        #v - k-escher
+        G = self.uio.getFirstInsertionPoint(u,v)
+        #print("G:", G)
+        if G == -1:
+            return None
+        w = self.uio.concat(v,u, G)
+        if G >= self.k:
+            w = setstartpoint(w, u[self.k%self.n])
+        return w
+    
+class PaperEscherBreaker(EscherBreaker):
+    def map(self, u, verbose = False):
+        # return n-escher, k-escher
+        ZZ = False
+        # compute L, the point before the valid k-subescher^
+        if verbose:
+            print("phi", u, "n:", self.n, "k:", self.k)
+        for L in range(0, self.n+self.k): # starts at 0, 0 indexing in the paper for "5. the proof"
+            if self.uio.isarrow(u, L%self.npk, (L+self.n+1)%self.npk, verbose) and self.uio.isarrow(u, (L+self.n)%self.npk, (L+1)%self.npk, verbose):
+                break
+
+        # the k-subescher goes from L+1 to L+n
+        # the n-subescher goes from L+n+1 to L+n+k
+        v = cyclicslice(u, L+1, L+self.n+1) # n-escher
+        w = cyclicslice(u, L+self.n+1, L+self.n+self.k+1) # k-escher
+
+        if ZZ:
+            print("v1:", v)
+            print("w1:", w)
+
+        # We found the subeschers, but we have to change the starting point - like in the paper
+        
+        # Find n-multiple in [L+1:L+n]
+        for qn in range(L+1, L+self.n+1):
+            if qn%self.n == 0:
+                break
+
+        # Find k-multiple in [L+n+1:L] = [L+n+1:L+n+k-1] U [0:L]
+        # for qn in range(L+n+1, L+n+k+1):
+        #for qk in list(range(L+self.n+1, L+self.n+self.k)) + list(range(0, L+1)): 
+        for qk in range(L+self.n+1, L+self.n+self.k+1):
+            if qk%self.k == 0:
+                break
+        
+        # k-escher goes from qk to qk+k-1 (inclusive)
+        # n-escher goes from qk to qn+n-1 (inclusive)
+        v = setstartpoint(v, u[qn%self.npk])
+        w = setstartpoint(w, u[qk%self.npk])
+        #v = cyclicslice(u, qn, qn+self.n)
+        #w = cyclicslice(u, qk, qk+self.k)
+
+        if ZZ:
+            print("qn:", qn)
+            print("qk:", qk)
+            print("v2:", v)
+            print("w2:", w)
+
+        if verbose:
+            print("L:", L)
+        return (v, w) 
+    
+    def inversemap(self, u, v): # n <= k
+        #u - n-escher
+        #v - k-escher
+        G = self.uio.getFirstInsertionPoint(u,v)
+        #print("G:", G)
+        if G == -1:
+            return None
+        w = self.uio.concat(v,u, G)
+        if G >= self.k:
+            w = setstartpoint(w, u[self.k%self.n])
+        return w
+    
+
+class AugmentedEscherBreaker:
+    def __init__(self, uio, n, k, l):
+        self.uio = uio
+        self.n =n 
+        self.k = k
+        self.l = l
+
+    def do(self, p11, p12, p21, p22, p31, p32, p41, p42, p51, p52, p61, p62):
+        """ # Always take k-subescher s.t. k is the smallest number, but still not injective
+        n = 2
+        k = 3
+        l = 4
+        graph1 = []
+        phi_2p3_4 = MyEscherBreaker(self.uio, 4, 5,  p11, p12)
+        phi_2_3 = MyEscherBreaker(self.uio, 2,3,  p21, p22)
+        for (w, uv) in phi_2p3_4.getcomplement():
+            u,v = phi_2_3.map(uv)
+            graph1.append(((uv, w), (u,v,w)))
+        
+        graph2 = []
+        phi_3p4_2 = MyEscherBreaker(self.uio, 2,7,  p31, p32)
+        phi_3_4 = MyEscherBreaker(self.uio, 3,4,  p41, p42)
+        for (u, vw) in phi_3p4_2.getcomplement():
+            v,w = phi_3_4.map(vw)
+            graph2.append(((vw, u), (u,v,w)))
+
+        graph3 = []
+        phi_4p2_3 = MyEscherBreaker(self.uio, 3, 6,  p51, p52)
+        phi_4_2 = MyEscherBreaker(self.uio, 2,4,  p61, p62)
+        for (v, uw) in phi_4p2_3.getcomplement():
+            u,w = phi_4_2.map(uw)
+            graph3.append(((uw, v), (u,v,w)))
+        """
+
+        """
+        graph1 = []
+        phi_2p3_4 = MyEscherBreaker(self.uio, 2+3, 4)
+        phi_2_3 = MyEscherBreaker(self.uio, 2,3)
+        for (uv, w) in phi_2p3_4.getcomplement():
+            u,v = phi_2_3.map(uv)
+            graph1.append(((uv, w), (u,v,w)))
+        
+        graph2 = []
+        phi_3p4_2 = MyEscherBreaker(self.uio, 3+4, 2)
+        phi_3_4 = MyEscherBreaker(self.uio, 3,4)
+        for (vw, u) in phi_3p4_2.getcomplement():
+            v,w = phi_3_4.map(vw)
+            graph2.append(((vw, u), (u,v,w)))
+
+        graph3 = []
+        phi_4p2_3 = MyEscherBreaker(self.uio, 4+2, 3)
+        phi_4_2 = MyEscherBreaker(self.uio, 4,2)
+        for (uw, v) in phi_4p2_3.getcomplement():
+            u,w = phi_4_2.map(uw)
+            graph3.append(((uw, v), (u,v,w)))
+        """
+         # maybe good? 3 3 1 1 3 1 0 0 0 0 3 1
+
+        embeddings = []
+        graph1 = []
+        phi_npk_l = MyEscherBreaker(self.uio, self.n+self.k, self.l, p11, p12)
+        phi_n_k = MyEscherBreaker(self.uio, self.n,self.k, p21, p22)
+        for (uv, w) in phi_npk_l.getcomplement():
+            u,v = phi_n_k.map(uv)
+            #graph1.append(((uv, w), (u,v,w)))
+            embeddings.append((u,v,w))
+        
+        graph2 = []
+        phi_kpl_n = MyEscherBreaker(self.uio, self.k+self.l, self.n, p31, p32)
+        phi_k_l = MyEscherBreaker(self.uio, self.k,self.l, p41, p42)
+        for (vw, u) in phi_kpl_n.getcomplement():
+            v,w = phi_k_l.map(vw)
+            #graph2.append(((vw, u), (u,v,w)))
+            embeddings.append((u,v,w))
+
+        graph3 = []
+        phi_lpn_k = MyEscherBreaker(self.uio, self.l+self.n, self.k, p51, p52)
+        phi_l_n = MyEscherBreaker(self.uio, self.l,self.n, p61, p62)
+        for (uw, v) in phi_lpn_k.getcomplement():
+            w,u = phi_l_n.map(uw)
+            #graph3.append(((uw, v), (u,v,w)))
+            embeddings.append((u,v,w))
+        #if len(graph1) > 0 and len(graph2) > 0 and len(graph3) > 0:
+        #    print(graph1[0], graph2[0], graph3[0])
+        print(len(embeddings), len(set(embeddings)))
+        return len(embeddings) == len(set(embeddings))
+
+        return self.compareGraphs(graph1, graph2, graph3)
+
+    def compareGraphs(self, G1, G2, G3):
+        triplets = []
+        for G in [G1,G2,G3]:
+            for x in G:
+                triplets.append(x[1])
+        A = len(triplets)
+        B = len(set(triplets))
+        #print(self.uio, "triplets:", len(triplets), "vs", B)
+
+        return A == B
+
+
 
 def tripplemaptest():
     # n+k, l
@@ -278,7 +578,7 @@ def tripplemaptest():
             image = []
             complement = getcomplement(uio) # complement of M_a+b,c
             uio.setnlk(a,b,0, verbose=True) # to be able to use phi_n,k
-            #pairs = uio.getEscherPairs(a+b,c, verbose=True)
+            #pairs = uio.getEscherPairs((a+b,c), verbose=True)
             for cescher, apbescher in complement:
                 aescher,bescher = uio.phi(apbescher)
                 #image.append((aescher, bescher, cescher))
@@ -297,7 +597,7 @@ def tripplemaptest():
         
         ## check if images are disjoint
         #print("check if images are disjoint...")
-        """pairs = uio.getEscherPairs(n+k,l, verbose=True)
+        """pairs = uio.getEscherPairs((n+k,l), verbose=True)
         nklimage = images[0]
         klnimage = images[1]
         for i in range(len(pairs)):
@@ -320,7 +620,7 @@ def tripplemaptest():
             image = []
             complement = getcomplement(uio, False) # complement of M_a+b,c
             uio.setnlk(a,b,0, verbose=True) # to be able to use phi_n,k
-            #pairs = uio.getEscherPairs(a+b,c, verbose=True)
+            #pairs = uio.getEscherPairs((a+b,c), verbose=True)
             for cescher, apbescher in complement:
                 aescher,bescher = uio.phi(apbescher)
                 #image.append((aescher, bescher, cescher))
@@ -342,8 +642,8 @@ def tripplemaptest():
             sys.exit(0)
 
 def getcomplement(uio:UIO, verbose=False):
-    P_npk = uio.getEscherPairs(n+k,0,0)
-    P_n_k = uio.getEscherPairs(n,k,0, True)
+    P_npk = uio.getEscherPairs((n+k,0,0))
+    P_n_k = uio.getEscherPairs((n,k,0), True)
     if verbose:
         print("get complement:", uio)
         print("n={}+k={} eschers: {}".format(n,k,len(P_n_k)))
@@ -418,8 +718,8 @@ def maptest():
     #A = [[0,0,1,1,2,3,3,5,7]] # 5,4 breaker 1   12.05 11:17
     for uioid, encod in enumerate(A):
         uio = UIO(encod)
-        P_npk = uio.getEscherPairs(n+k,0,0)
-        P_n_k = uio.getEscherPairs(n,k,0)
+        P_npk = uio.getEscherPairs((n+k,0,0))
+        P_n_k = uio.getEscherPairs((n,k,0))
         #print(encod)
         #print("n={}+k={} eschers: {}".format(n,k,len(P_n_k)))
         #print("n+k={} eschers: {}".format(n+k,len(P_npk)))
@@ -435,15 +735,115 @@ def maptest():
                 #print(v, "-->", (nescher, kescher), "-->", back)
         im = len(set(phiimage))
         isinj = im == len(P_npk)
-        print(uioid, "/", total, encod, "phi's image contains {} elements and phi's domain contains {} elements.".format(im,  len(P_npk)), "phi injective:", isinj)
+        print(uioid+1, "/", total, encod, "phi's image contains {} elements and phi's domain contains {} elements.".format(im,  len(P_npk)), "phi injective:", isinj)
         if isinj == False:
             sys.exit(0)
             
+def v2doubletest():
+    k = 3
+    n = 4
+    A = generate_all_uios(n+k)
+    #A = [[0, 0, 0, 0, 0, 1, 1, 4, 5]]
+    random.shuffle(A)
+    #A = [[0,0,0,0,0,0,0]]
+    total = len(A)
+    for uioid, encod in enumerate(A):
+        uio = UIO(encod)
+        phi = MyEscherBreaker(uio, n, k)
+        imagesize = len(set(phi.getImage()))
+        domainsize = len(uio.getEscherPairs((n+k,)))
+        #phi.checkLeftInverse()
+        if imagesize != domainsize:
+            phi.checkInjective()
+        print(uioid+1, "/", total, "image:", imagesize, "domain:", domainsize, uio)
+        if imagesize != domainsize:
+            sys.exit(0)
 
+def v3trippletest():
+    n = 2
+    k = 3
+    l = 4
+    A = generate_all_uios(n+k+l)
+    #A = [[0, 0, 0, 2, 2, 4]]
+    A = [[0, 0, 0, 0, 2, 2, 4, 4, 6]]
+    #A = [[0, 0, 0, 0, 0, 1, 1, 4, 5]]
+    random.shuffle(A)
+    for uioid, encod in enumerate(A):
+        uio = UIO(encod)
+        AEB = AugmentedEscherBreaker(uio, n, k, l)
+        if AEB.do() == False:
+            return
+    print("done it!")
+    sys.exit(0)
+
+def v3trippletestparameters():
+    n = 1
+    k = 2
+    l = 3
+    A = generate_all_uios(n+k+l)
+    random.shuffle(A)
+    uios = []
+    for encod in A:
+        uio = UIO(encod)
+        if len(uio.getEscherPairs((n,k,l))) > 0:
+            uios.append(uio)
+    print(len(uios), "uios with non-zero P_n_k_l. from in total", len(A), "uios")
+    iteration = 0
+    while True:
+        p11 = random.randrange(n+k)
+        p12 = random.randrange(l)
+        p21 = random.randrange(n)
+        p22 = random.randrange(k)
+
+        p31 = random.randrange(k+l)
+        p32 = random.randrange(n)
+        p41 = random.randrange(k)
+        p42 = random.randrange(l)
+
+        p51 = random.randrange(l+n)
+        p52 = random.randrange(k)
+        p61 = random.randrange(l)
+        p62 = random.randrange(n)
+        iteration += 1
+        if iteration > 200:
+            break
+        if iteration > 100:
+            p11 = 0
+            p12 = 0
+            p21 = 0
+            p22 = 0
+            p31 = 0
+            p32 = 0
+            p41 = 0
+            p42 = 0
+            p51 = 0
+            p52 = 0
+            p61 = 0
+            p62 = 0
+        print(iteration, "new para! best:", bestscore)
+        tripplecheckparameters(n,k,l,uios, p11, p12, p21, p22, p31, p32, p41, p42, p51, p52, p61, p62)
+
+def tripplecheckparameters(n,k,l,uios, p11, p12, p21, p22, p31, p32, p41, p42, p51, p52, p61, p62):
+    global bestscore
+    total = len(uios)
+    print(p11, p12, p21, p22, p31, p32, p41, p42, p51, p52, p61, p62)
+    for uioid, uio in enumerate(uios):
+        AEB = AugmentedEscherBreaker(uio, n, k, l)
+        print(uioid, "/", total)
+        if AEB.do(p11, p12, p21, p22, p31, p32, p41, p42, p51, p52, p61, p62) == False:
+            #if bestscore == None or uioid > bestscore[0]:
+            bestscore = (uioid, p11, p12, p21, p22, p31, p32, p41, p42, p51, p52, p61, p62)
+            return
+    print(total, "done it!", p11, p12, p21, p22, p31, p32, p41, p42, p51, p52, p61, p62)
+    sys.exit(0)
 if __name__ == "__main__": # 2 case: n>=k, 3 case: n<=k<=L
+    global bestscore
+    bestscore = None
     #maptest()
-    tripplemaptest()
+    #tripplemaptest()
     #complementtest()
+    #v2doubletest()
+    v3trippletestparameters()
 
 # 16.05 todo: check tipple injective, make proof for injective in double case
 # proof that he coefficient is equal to the difference of thee eschers sets
