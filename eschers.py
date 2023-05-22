@@ -17,7 +17,7 @@ import sys
 import pickle
 import time 
 from extra import Loadable
-
+import pandas as pd
 
 
 
@@ -517,12 +517,12 @@ class AugmentedEscherBreaker:
         phi_lpn_k = MyEscherBreaker(self.uio, self.l+self.n, self.k, p51, p52)
         phi_l_n = MyEscherBreaker(self.uio, self.l,self.n, p61, p62)
         for (uw, v) in phi_lpn_k.getcomplement():
-            w,u = phi_l_n.map(uw)
+            w, u = phi_l_n.map(uw)
             #graph3.append(((uw, v), (u,v,w)))
             embeddings.append((u,v,w))
         #if len(graph1) > 0 and len(graph2) > 0 and len(graph3) > 0:
         #    print(graph1[0], graph2[0], graph3[0])
-        print(len(embeddings), len(set(embeddings)))
+        #print(len(embeddings), len(set(embeddings)))
         return len(embeddings) == len(set(embeddings))
 
         return self.compareGraphs(graph1, graph2, graph3)
@@ -740,10 +740,11 @@ def maptest():
             sys.exit(0)
             
 def v2doubletest():
-    k = 3
-    n = 4
+    k = 4
+    n = 3
     A = generate_all_uios(n+k)
     #A = [[0, 0, 0, 0, 0, 1, 1, 4, 5]]
+    #A = [[0,0,0,0,2,4,5]]
     random.shuffle(A)
     #A = [[0,0,0,0,0,0,0]]
     total = len(A)
@@ -752,7 +753,7 @@ def v2doubletest():
         phi = MyEscherBreaker(uio, n, k)
         imagesize = len(set(phi.getImage()))
         domainsize = len(uio.getEscherPairs((n+k,)))
-        #phi.checkLeftInverse()
+        phi.checkLeftInverse()
         if imagesize != domainsize:
             phi.checkInjective()
         print(uioid+1, "/", total, "image:", imagesize, "domain:", domainsize, uio)
@@ -781,15 +782,41 @@ def v3trippletestparameters():
     k = 2
     l = 3
     A = generate_all_uios(n+k+l)
+    A = [[0, 0, 0, 0, 0, 0]]
+    
     random.shuffle(A)
     uios = []
     for encod in A:
         uio = UIO(encod)
         if len(uio.getEscherPairs((n,k,l))) > 0:
-            uios.append(uio)
+            uios.append(encod)
     print(len(uios), "uios with non-zero P_n_k_l. from in total", len(A), "uios")
     iteration = 0
-    while True:
+    for uio in uios:
+        if checkall(uio,n,k,l) == False:
+            print(uio, "is out")
+        else:
+            print(uio, "is good")
+
+def checkall(uio,n,k,l):
+    #for i in range(4000):
+    for p11 in range(n+k):
+        for p12 in range(l):
+            for p21 in range(n):
+                for p22 in range(k):
+
+                    for p31 in range(k+l):
+                        for p32 in range(n):
+                            for p41 in range(k):
+                                for p42 in range(l):
+
+                                    for p51 in range(l+n):
+                                        for p52 in range(k):
+                                            for p61 in range(l):
+                                                for p62 in range(n):
+                                                    if tripplecheckparameters(n,k,l,[uio], p11, p12, p21, p22, p31, p32, p41, p42, p51, p52, p61, p62) == True:
+                                                        return True
+        """
         p11 = random.randrange(n+k)
         p12 = random.randrange(l)
         p21 = random.randrange(n)
@@ -803,48 +830,74 @@ def v3trippletestparameters():
         p51 = random.randrange(l+n)
         p52 = random.randrange(k)
         p61 = random.randrange(l)
-        p62 = random.randrange(n)
-        iteration += 1
-        if iteration > 200:
-            break
-        if iteration > 100:
-            p11 = 0
-            p12 = 0
-            p21 = 0
-            p22 = 0
-            p31 = 0
-            p32 = 0
-            p41 = 0
-            p42 = 0
-            p51 = 0
-            p52 = 0
-            p61 = 0
-            p62 = 0
-        print(iteration, "new para! best:", bestscore)
-        tripplecheckparameters(n,k,l,uios, p11, p12, p21, p22, p31, p32, p41, p42, p51, p52, p61, p62)
+        p62 = random.randrange(n)"""
+        #p11 = p12 = p31 = p32 = p51 = p52 = 0
+        
+    return False
 
 def tripplecheckparameters(n,k,l,uios, p11, p12, p21, p22, p31, p32, p41, p42, p51, p52, p61, p62):
-    global bestscore
+    global bestscore, count
     total = len(uios)
-    print(p11, p12, p21, p22, p31, p32, p41, p42, p51, p52, p61, p62)
-    for uioid, uio in enumerate(uios):
+    #print(p11, p12, p21, p22, p31, p32, p41, p42, p51, p52, p61, p62)
+    for uioid, encod in enumerate(uios):
+        uio = UIO(encod)
         AEB = AugmentedEscherBreaker(uio, n, k, l)
-        print(uioid, "/", total)
+        #print(uioid, "/", total)
         if AEB.do(p11, p12, p21, p22, p31, p32, p41, p42, p51, p52, p61, p62) == False:
-            #if bestscore == None or uioid > bestscore[0]:
-            bestscore = (uioid, p11, p12, p21, p22, p31, p32, p41, p42, p51, p52, p61, p62)
-            return
+            if bestscore == None or uioid > bestscore[0]:
+                bestscore = (uioid, p11, p12, p21, p22, p31, p32, p41, p42, p51, p52, p61, p62)
+            print("failed at", uioid, count, "params:", p11, p12, p21, p22, p31, p32, p41, p42, p51, p52, p61, p62)
+            count += 1
+            return False
+    return True
     print(total, "done it!", p11, p12, p21, p22, p31, p32, p41, p42, p51, p52, p61, p62)
-    sys.exit(0)
+    #sys.exit(0)
+
+def trippletable():
+    n = 1
+    k = 2
+    l = 3
+    A = generate_all_uios(n+k+l)
+    #A = [[0,0,1,1,1,2,2,2,3]]
+
+    data = []
+    total = len(A)
+    for uioid,encod in enumerate(A):
+        uio = UIO(encod)
+        p_npk_l = MyEscherBreaker(uio, n+k, l)
+        p_kpl_n = MyEscherBreaker(uio, k+l, n)
+        p_lpn_k = MyEscherBreaker(uio, l+n, k)
+        pairs = uio.getEscherPairs((n,k,l))
+        pairs2 = uio.getEscherPairs((n+k+l,))
+
+        data.append([encod, 
+        len(p_npk_l.getcomplement()),
+        len(p_kpl_n.getcomplement()),
+        len(p_lpn_k.getcomplement()),
+        len(pairs2), 
+        len(pairs)])
+        print(uioid+1, "/", total)
+    df = pd.DataFrame(data, columns = ['UIO', 'M_nk_l', 'M_kl_n', 'M_ln_k', 'P_nkl', 'P_n_k_l'])
+    print(df.to_string())
+
+
 if __name__ == "__main__": # 2 case: n>=k, 3 case: n<=k<=L
-    global bestscore
+    global bestscore, count
     bestscore = None
+    count = 0
     #maptest()
     #tripplemaptest()
     #complementtest()
     #v2doubletest()
+    #trippletable()
     v3trippletestparameters()
 
 # 16.05 todo: check tipple injective, make proof for injective in double case
 # proof that he coefficient is equal to the difference of thee eschers sets
 # phi_n,k (paper notation) but where n < k?
+
+# print out table
+# phi maps depending on UIO?
+# injective if use phi_0,0 for Ms?
+# find tough UIO for 1,2,3 - [0,0,1,2,3,4]
+# no shift at all
