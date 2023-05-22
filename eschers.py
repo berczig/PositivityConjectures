@@ -497,6 +497,31 @@ class AugmentedEscherBreaker:
          # maybe good? 3 3 1 1 3 1 0 0 0 0 3 1
 
         embeddings = []
+        """
+        graph1 = []
+        phi_1p2_3 = MyEscherBreaker(self.uio, 1+2, 3, p11, p12)
+        phi_1_2 = MyEscherBreaker(self.uio, 1,2, p21, p22)
+        for (uv, w) in phi_1p2_3.getcomplement():
+            u,v = phi_1_2.map(uv)
+            #graph1.append(((uv, w), (u,v,w)))
+            embeddings.append((u,v,w))
+        
+        graph2 = []
+        phi_2p3_1 = MyEscherBreaker(self.uio, 1, 2+3, p31, p32)
+        phi_2_3 = MyEscherBreaker(self.uio, 2,3, p41, p42)
+        for (u, vw) in phi_2p3_1.getcomplement():
+            v,w = phi_2_3.map(vw)
+            #graph2.append(((vw, u), (u,v,w)))
+            embeddings.append((u,v,w))
+
+        graph3 = []
+        phi_3p1_2 = MyEscherBreaker(self.uio, 2, 3+1, p51, p52)
+        phi_3_1 = MyEscherBreaker(self.uio, 1,3, p61, p62)
+        for (v, uw) in phi_3p1_2.getcomplement():
+            u, w = phi_3_1.map(uw)
+            #graph3.append(((uw, v), (u,v,w)))
+            embeddings.append((u,v,w))"""
+
         graph1 = []
         phi_npk_l = MyEscherBreaker(self.uio, self.n+self.k, self.l, p11, p12)
         phi_n_k = MyEscherBreaker(self.uio, self.n,self.k, p21, p22)
@@ -520,6 +545,7 @@ class AugmentedEscherBreaker:
             w, u = phi_l_n.map(uw)
             #graph3.append(((uw, v), (u,v,w)))
             embeddings.append((u,v,w))
+
         #if len(graph1) > 0 and len(graph2) > 0 and len(graph3) > 0:
         #    print(graph1[0], graph2[0], graph3[0])
         #print(len(embeddings), len(set(embeddings)))
@@ -782,7 +808,8 @@ def v3trippletestparameters():
     k = 2
     l = 3
     A = generate_all_uios(n+k+l)
-    A = [[0, 0, 0, 0, 0, 0]]
+    A = [[0, 0, 0, 1, 2, 3]]
+    A = [[0,0,1,2,3,4]]
     
     random.shuffle(A)
     uios = []
@@ -899,5 +926,5 @@ if __name__ == "__main__": # 2 case: n>=k, 3 case: n<=k<=L
 # print out table
 # phi maps depending on UIO?
 # injective if use phi_0,0 for Ms?
-# find tough UIO for 1,2,3 - [0,0,1,2,3,4]
+# find tough UIO for 1,2,3 - [0,0,1,2,3,4] (find subescher by syntax not by smallest one)
 # no shift at all
