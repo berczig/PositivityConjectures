@@ -232,6 +232,7 @@ class UIO:
         self.escherpairs[partition] = pairs
         return self.escherpairs[partition]
     
+    
     ###### MAP P_{n+k} -> P_{n,k} ################
     def phi(self, u, verbose=False): # n <= k
         # return n-escher, k-escher
@@ -365,6 +366,12 @@ class EscherBreaker:
                 complement.append((u,v))
         return complement
 
+    def getSplittingPoints(self, u, verbose=False):
+        points = []
+        for L in range(0, self.n+self.k): # starts at 0, 0 indexing in the paper for "5. the proof"
+            if self.uio.isarrow(u, L%self.npk, (L+self.n+1)%self.npk, verbose) and self.uio.isarrow(u, (L+self.n)%self.npk, (L+1)%self.npk, verbose):
+                points.append(L)
+        return points
 
 class MyEscherBreaker(EscherBreaker):
     def __init__(self, uio, n, k, extra_v_offset=0, extra_w_offset=0):
@@ -394,12 +401,14 @@ class MyEscherBreaker(EscherBreaker):
         w = rewindescher(w, L+1+self.extra_w_offset)
         if verbose:
             print("L:", L)
+        #print("L:", L, u)
         return (v, w) #(1, 0, 3, 6, 5, 4, 2)
     
-    def inversemap(self, u, v): # n <= k
+    def inversemap(self, u, v, G=None): # n <= k
         #u - n-escher
         #v - k-escher
-        G = self.uio.getFirstInsertionPoint(u,v)
+        if G == None:
+            G = self.uio.getFirstInsertionPoint(u,v)
         #print("G:", G)
         if G == -1:
             return None
@@ -953,6 +962,38 @@ def newconjecturetest():
 
 
 
+def prooftest():
+    n = 3
+    k = 4
+    A = generate_all_uios(n+k)
+    #A = [[0, 0, 0, 1, 1, 4, 5]]
+    A = [[0, 0, 0, 0, 2, 4, 4]]
+    #A = [[0,0,1,1,1,2,2,2,3]]
+    total = len(A)
+    for uioid,encod in enumerate(A):
+        uio = UIO(encod)
+        phi = MyEscherBreaker(uio,n,k)
+        pairs = uio.getEscherPairs((n+k,))
+        complement = phi.getcomplement()
+        image = phi.getImage()
+        #for (u,v) in complement:
+        for (u,v) in image:
+            print("start:", u,v, (u,v) in image)
+            insertion = uio.getInsertionPoints(u,v)
+            print("insertion:", insertion)
+            w = phi.inversemap(u,v, insertion[1])
+            #print(w)
+            splittings = phi.getSplittingPoints(w)
+            print("splitting:", splittings)
+            if (insertion[1] not in splittings) and (insertion[1]-n-k not in splittings):
+                print(50*"#", uio, u, v)
+            #u_, v_ = phi.map(w)
+            #print("back:", u_, v_)
+            #insertion2 = uio.getFirstInsertionPoint(u_,v_)
+            #print("insertion:", insertion2)
+            #if insertion == insertion2:
+            #    print(50*"A")
+            print()
 def trippletable():
     n = 1
     k = 2
@@ -998,8 +1039,7 @@ if __name__ == "__main__": # 2 case: n>=k, 3 case: n<=k<=L
     #v2doubletest()
     #trippletable()
     #v3trippletestparameters()
-    newconjecturetest()
-    #subencodingtest()
+    prooftest()
 
 # 16.05 todo: check tipple injective, make proof for injective in double case
 # proof that he coefficient is equal to the difference of thee eschers sets
