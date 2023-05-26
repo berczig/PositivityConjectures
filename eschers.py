@@ -114,6 +114,40 @@ class UIO:
 
  #################### ESCHERS ###################
 
+    #### COEFFICIENT ####
+
+    def addupto(self, List, element, uptoindex):
+        # adds element to List up to index uptoindex (exclusive)
+        if len(List) == uptoindex:
+            return List
+        A = (uptoindex-len(List))*[element]
+        return List + A
+
+    def subuioencoding(self, seq):
+        #print("seq:", seq)
+        N = len(seq)
+        encod = []
+        for i in range(N):
+            for j in range(i+1, N):
+                #print(i, j, self.comparison_matrix[seq[i], seq[j]])
+                if self.comparison_matrix[seq[i], seq[j]] != self.INCOMPARABLE: # not intersect
+                    #print(i, "s up to (exclusive)", j)
+                    encod = self.addupto(encod, i, j)
+                    break
+                elif j == N-1:
+                    #print(i, "s up to (exclusive)", N, "final")
+                    encod = self.addupto(encod, i, N)
+        if self.comparison_matrix[seq[-1], seq[-2]] != self.INCOMPARABLE:
+            encod.append(N-1)
+        
+        return encod
+
+    def getCoeffientByEscher(self, n,k,l=0):
+        if l == 0:
+            return len(self.getEscherPairs((n,k))) - len(self.getEscherPairs((n+k,)))
+        return 2*len(self.getEscherPairs((n+k+l,))) + len(self.getEscherPairs((n,k,l))) - len(self.getEscherPairs((n+l,k))) - len(self.getEscherPairs((n+k,l))) - len(self.getEscherPairs((l+k,n)))
+    
+
     def setnlk(self, n_, k_, l_, verbose=False):
         global n,k,l, npk, lcm
         n = n_
@@ -880,6 +914,45 @@ def tripplecheckparameters(n,k,l,uios, p11, p12, p21, p22, p31, p32, p41, p42, p
     print(total, "done it!", p11, p12, p21, p22, p31, p32, p41, p42, p51, p52, p61, p62)
     #sys.exit(0)
 
+def newconjecturetest():
+    n = 1
+    k = 2
+    l = 3
+    A = generate_all_uios(n+k+l)
+    A = [[0,0,1,2,3,4]]
+    for encod in A:
+        uio  = UIO(encod)
+        pairs = uio.getEscherPairs((n,k,l))
+        # (210) (4 3) (5)
+
+        counter = 0
+        #for (u,v,w) in pairs:
+        for (u,v,w) in [( (5,), (4,3), (2,1,0) )]:
+            E_uv = uio.subuioencoding(sorted(u+v))
+            E_vw = uio.subuioencoding(sorted(v+w))
+            E_uw = uio.subuioencoding(sorted(u+w))
+            print("encod:", E_uv)
+            print("encod:", E_vw)
+            print("encod:", E_uw)
+            
+            phi_nk = MyEscherBreaker(UIO(E_uv), n, k)
+            phi_kl = MyEscherBreaker(UIO(E_vw), k, l)
+            phi_nl = MyEscherBreaker(UIO(E_uw), n, l)
+            M_nk = phi_nk.getcomplement()
+            M_kl = phi_kl.getcomplement()
+            M_nl = phi_nl.getcomplement()
+            print(M_nk, len(M_nk))
+            print(M_kl, len(M_kl))
+            print(M_nl, len(M_nl))
+
+            print(u,v,w)
+            if (u,v) in M_nk and (u,w) in M_nl and (v,w) in M_kl:
+                print(u,v,w)
+                counter += 1
+        print(uio, counter, uio.getCoeffientByEscher(n,k,l))
+
+
+
 def trippletable():
     n = 1
     k = 2
@@ -907,6 +980,13 @@ def trippletable():
     df = pd.DataFrame(data, columns = ['UIO', 'M_nk_l', 'M_kl_n', 'M_ln_k', 'P_nkl', 'P_n_k_l'])
     print(df.to_string())
 
+def subencodingtest():
+    encod = [0,0,1,2,3]
+    uio = UIO(encod)
+    seq = (0,1,2,3,4) # (1,3,4)
+    subencod = uio.subuioencoding(seq)
+    print(subencod)
+
 
 if __name__ == "__main__": # 2 case: n>=k, 3 case: n<=k<=L
     global bestscore, count
@@ -917,7 +997,9 @@ if __name__ == "__main__": # 2 case: n>=k, 3 case: n<=k<=L
     #complementtest()
     #v2doubletest()
     #trippletable()
-    v3trippletestparameters()
+    #v3trippletestparameters()
+    newconjecturetest()
+    #subencodingtest()
 
 # 16.05 todo: check tipple injective, make proof for injective in double case
 # proof that he coefficient is equal to the difference of thee eschers sets
@@ -928,3 +1010,13 @@ if __name__ == "__main__": # 2 case: n>=k, 3 case: n<=k<=L
 # injective if use phi_0,0 for Ms?
 # find tough UIO for 1,2,3 - [0,0,1,2,3,4] (find subescher by syntax not by smallest one)
 # no shift at all
+
+
+"""
+Put down what you know, easy to get lost in things one still doesn't understand
+a draft asap
+short introduction of the world, setup, some important facts, then describe what I did/present results/workflow
+rephrase papers like the escher one
+later on still time to mention proofs (like number of escher equals number of correct sequence)
+guess the external censors will not look at all the details 100%
+"""
