@@ -123,7 +123,7 @@ class UIO:
         A = (uptoindex-len(List))*[element]
         return List + A
 
-    def subuioencoding(self, seq):
+    def getsubuioencoding(self, seq):
         #print("seq:", seq)
         N = len(seq)
         encod = []
@@ -141,6 +141,9 @@ class UIO:
             encod.append(N-1)
         
         return encod
+    
+    def getsubUIO(self, seq):
+        return SubUIO(self.getsubuioencoding(seq), seq)
 
     def getCoeffientByEscher(self, n,k,l=0):
         if l == 0:
@@ -295,6 +298,15 @@ class UIO:
             #return self.concat(u,v,G)
         #return self.concat(v,u,G)
 
+class SubUIO(UIO):
+
+    def __init__(self, uio_encoding, subseq): # assumes subseq to be ordered smallest to biggest
+        super().__init__(uio_encoding)
+        self.rename = {}
+        for ID, globalID in enumerate(subseq):
+            self.rename[globalID] = ID
+    def to_internal_indexing(self, seq):
+        return tuple([self.rename[w] for w in seq])
     
 class EscherBreaker:
 
@@ -928,37 +940,46 @@ def newconjecturetest():
     k = 2
     l = 3
     A = generate_all_uios(n+k+l)
-    A = [[0,0,1,2,3,4]]
+    A = [[0, 0, 1, 1, 2, 3]]
     for encod in A:
         uio  = UIO(encod)
         pairs = uio.getEscherPairs((n,k,l))
         # (210) (4 3) (5)
 
         counter = 0
-        #for (u,v,w) in pairs:
-        for (u,v,w) in [( (5,), (4,3), (2,1,0) )]:
-            E_uv = uio.subuioencoding(sorted(u+v))
-            E_vw = uio.subuioencoding(sorted(v+w))
-            E_uw = uio.subuioencoding(sorted(u+w))
-            print("encod:", E_uv)
-            print("encod:", E_vw)
-            print("encod:", E_uw)
-            
-            phi_nk = MyEscherBreaker(UIO(E_uv), n, k)
-            phi_kl = MyEscherBreaker(UIO(E_vw), k, l)
-            phi_nl = MyEscherBreaker(UIO(E_uw), n, l)
+        for (u,v,w) in pairs:
+        #for (u,v,w) in [( (5,), (4,3), (2,1,0) )]:
+            uv_sorted = sorted(u+v)
+            vw_sorted = sorted(v+w)
+            uw_sorted = sorted(u+w)
+            uio_uv = uio.getsubUIO(uv_sorted)
+            uio_vw = uio.getsubUIO(vw_sorted)
+            uio_uw = uio.getsubUIO(uw_sorted)
+            #print("encod:", uio_uv)
+            #print("encod:", uio_vw)
+            #print("encod:", uio_uw)
+            phi_nk = MyEscherBreaker(uio_uv, n, k)
+            phi_kl = MyEscherBreaker(uio_vw, k, l)
+            phi_nl = MyEscherBreaker(uio_uw, n, l)
             M_nk = phi_nk.getcomplement()
             M_kl = phi_kl.getcomplement()
             M_nl = phi_nl.getcomplement()
-            print(M_nk, len(M_nk))
-            print(M_kl, len(M_kl))
-            print(M_nl, len(M_nl))
+            #print(M_nk, len(M_nk))
+            #print(M_kl, len(M_kl))
+            #print(M_nl, len(M_nl))
 
-            print(u,v,w)
-            if (u,v) in M_nk and (u,w) in M_nl and (v,w) in M_kl:
-                print(u,v,w)
+            uv_subpair = (uio_uv.to_internal_indexing(u), uio_uv.to_internal_indexing(v))
+            vw_subpair = (uio_vw.to_internal_indexing(v), uio_vw.to_internal_indexing(w))
+            uw_subpair = (uio_uw.to_internal_indexing(u), uio_uw.to_internal_indexing(w))
+
+            #print(u,v,w, (uio_uv.to_internal_indexing(u), uio_uv.to_internal_indexing(v)))
+            if uv_subpair in M_nk and vw_subpair in M_kl and uw_subpair in M_nl:
+                print(u,v,w, "counted")
                 counter += 1
-        print(uio, counter, uio.getCoeffientByEscher(n,k,l))
+        coef = uio.getCoeffientByEscher(n,k,l)
+        print(uio, "counter:", counter, "coef:", uio.getCoeffientByEscher(n,k,l))
+        if counter != coef:
+            print(10*"different")
 
 
 
@@ -1039,7 +1060,8 @@ if __name__ == "__main__": # 2 case: n>=k, 3 case: n<=k<=L
     #v2doubletest()
     #trippletable()
     #v3trippletestparameters()
-    prooftest()
+    #prooftest()
+    newconjecturetest()
 
 # 16.05 todo: check tipple injective, make proof for injective in double case
 # proof that he coefficient is equal to the difference of thee eschers sets
