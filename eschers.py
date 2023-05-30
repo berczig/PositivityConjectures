@@ -938,9 +938,9 @@ def tripplecheckparameters(n,k,l,uios, p11, p12, p21, p22, p31, p32, p41, p42, p
 def newconjecturetest():
     n = 1
     k = 2
-    l = 3
+    l = 4
     A = generate_all_uios(n+k+l)
-    A = [[0, 0, 1, 1, 2, 3]]
+    #A = [[0, 0, 1, 1, 2, 3]]
     for encod in A:
         uio  = UIO(encod)
         pairs = uio.getEscherPairs((n,k,l))
@@ -1018,7 +1018,7 @@ def prooftest():
 def trippletable():
     n = 1
     k = 2
-    l = 3
+    l = 4
     A = generate_all_uios(n+k+l)
     #A = [[0,0,1,1,1,2,2,2,3]]
 
