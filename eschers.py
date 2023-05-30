@@ -1044,7 +1044,7 @@ def newconjecture2test():
             M_k_l = phi_k_l.getcomplement()
             print("M_k_l:", M_k_l)
             if (uio_vw.to_internal_indexing(v),uio_vw.to_internal_indexing(w)) not in M_k_l:
-                print(v,w, "not in M_k_l", uio)
+                print(v,w, "(in sub):", uio_vw.to_internal_indexing(v),uio_vw.to_internal_indexing(w), "not in M_k_l", uio)
                 print("uv, w from M_nk_l:", uv, w)
             print()
 
