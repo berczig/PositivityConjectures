@@ -385,6 +385,41 @@ class EscherBreaker:
                 points.append(L)
         return points
 
+
+class AllEscherBreaker(EscherBreaker):
+    def __init__(self, uio, n, k, extra_v_offset=0, extra_w_offset=0):
+        super().__init__(uio, n, k)
+        self.extra_v_offset = extra_v_offset
+        self.extra_w_offset = extra_w_offset
+
+    def map(self, u, verbose = False):
+        # return n-escher, k-escher
+
+        # compute L, the point before the valid k-subescher^
+        if verbose:
+            print("phi", u, "n:", self.n, "k:", self.k)
+        breakingpoints = []
+        for L in range(0, self.n+self.k): # starts at 0, 0 indexing in the paper for "5. the proof"
+            if self.uio.isarrow(u, L%self.npk, (L+self.n+1)%self.npk, verbose) and self.uio.isarrow(u, (L+self.n)%self.npk, (L+1)%self.npk, verbose):
+                breakingpoints.append(L)
+
+        validescherpairs = []
+        for L in breakingpoints:
+            # the k-subescher goes from L+1 to L+n
+            # the n-subescher goes from L+n+1 to L+n+k
+            v = cyclicslice(u, L+1, L+self.n+1) # n-escher
+            w = cyclicslice(u, L+self.n+1, L+self.n+self.k+1) # k-escher
+
+            # We found the subeschers, but we have to change the starting point
+            # for both subescher the startpoint should be s.t. the the L'th position (L can be 0) is the end of the original subescher
+            
+            v = rewindescher(v, L+1+self.extra_v_offset) # v = rewindescher(v, L+1+2) vs v = rewindescher(v, L+1) for 1,2,3 on [0, 0, 0, 2, 2, 4]
+            w = rewindescher(w, L+1+self.extra_w_offset)
+            validescherpairs.append((v,w))
+            #print("L:", L, u)
+        return validescherpairs #(1, 0, 3, 6, 5, 4, 2)
+
+
 class MyEscherBreaker(EscherBreaker):
     def __init__(self, uio, n, k, extra_v_offset=0, extra_w_offset=0):
         super().__init__(uio, n, k)
@@ -982,6 +1017,37 @@ def newconjecturetest():
             print(10*"different")
 
 
+def newconjecture2test():
+    n = 1
+    k = 3
+    l = 2
+    A = generate_all_uios(n+k+l)
+    A = [[0, 0, 1, 1, 2, 3]]
+    for encod in A:
+        uio  = UIO(encod)
+        #pairs = uio.getEscherPairs((n,k,l))
+        counter = 0
+
+        phi_nk_l = MyEscherBreaker(uio, n+k, l)
+        #phi_kl_n = MyEscherBreaker(uio, k+l, n)
+        #phi_nl_k = MyEscherBreaker(uio, n+l, k)
+        M_nk_l = phi_nk_l.getcomplement()
+        #M_kl_n = phi_kl_n.getcomplement()
+        #M_nl_k = phi_nl_k.getcomplement()
+        phi_n_k = MyEscherBreaker(uio, n, k)
+
+        for (uv, w) in M_nk_l:
+            u,v = phi_n_k.map(uv)
+            vw_sorted = sorted(v+w)
+            uio_vw = uio.getsubUIO(vw_sorted)
+            phi_k_l = MyEscherBreaker(uio_vw, k, l)
+            M_k_l = phi_k_l.getcomplement()
+            print("M_k_l:", M_k_l)
+            if (uio_vw.to_internal_indexing(v),uio_vw.to_internal_indexing(w)) not in M_k_l:
+                print(v,w, "not in M_k_l", uio)
+                print("uv, w from M_nk_l:", uv, w)
+            print()
+
 
 def prooftest():
     n = 3
@@ -1061,7 +1127,8 @@ if __name__ == "__main__": # 2 case: n>=k, 3 case: n<=k<=L
     #trippletable()
     #v3trippletestparameters()
     #prooftest()
-    newconjecturetest()
+    #newconjecturetest()
+    newconjecture2test()
 
 # 16.05 todo: check tipple injective, make proof for injective in double case
 # proof that he coefficient is equal to the difference of thee eschers sets
