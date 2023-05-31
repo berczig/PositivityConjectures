@@ -1042,12 +1042,53 @@ def newconjecture2test():
             uio_vw = uio.getsubUIO(vw_sorted)
             phi_k_l = MyEscherBreaker(uio_vw, k, l)
             M_k_l = phi_k_l.getcomplement()
-            print("M_k_l:", M_k_l)
+            #print("M_k_l:", M_k_l)
             if (uio_vw.to_internal_indexing(v),uio_vw.to_internal_indexing(w)) not in M_k_l:
-                print(v,w, "(in sub):", uio_vw.to_internal_indexing(v),uio_vw.to_internal_indexing(w), "not in M_k_l", uio)
                 print("uv, w from M_nk_l:", uv, w)
+                print(v,w,"not in M_k_l")
+                print("re-indexing of u+w", uio_vw.to_internal_indexing(v),uio_vw.to_internal_indexing(w), )
+                print("Element of M_k_l:", M_k_l)
             print()
 
+def newconjecture3test():
+    n = 2
+    k = 3
+    l = 2
+    A = generate_all_uios(n+k+l)
+    #A = [[0, 0, 1, 1, 2, 3]]
+    for encod in A:
+        uio  = UIO(encod)
+        print("I study the following UIO:",uio)
+        #pairs = uio.getEscherPairs((n,k,l))
+        counter = 0
+
+        phi_nk_l = MyEscherBreaker(uio, n+k, l)
+        #phi_kl_n = MyEscherBreaker(uio, k+l, n)
+        #phi_nl_k = MyEscherBreaker(uio, n+l, k)
+        M_nk_l = phi_nk_l.getcomplement()
+        #M_kl_n = phi_kl_n.getcomplement()
+        #M_nl_k = phi_nl_k.getcomplement()
+        phi_n_k = AllEscherBreaker(uio, n, k)
+        isittruebig = True
+        for (uv, w) in M_nk_l:
+            isittrue = False
+            for (u,v) in phi_n_k.map(uv):
+                #u,v = phi_n_k.map(uv)
+                vw_sorted = sorted(v+w)
+                uio_vw = uio.getsubUIO(vw_sorted)
+                phi_k_l = MyEscherBreaker(uio_vw, k, l)
+                M_k_l = phi_k_l.getcomplement()
+                #print("uv, w from M_nk_l:", uv, w,"I try to remove:",u)
+                if (uio_vw.to_internal_indexing(v),uio_vw.to_internal_indexing(w)) in M_k_l:
+                    isittrue = True
+                    #print("Hurray!!", v,w,"is in M_k_l")
+                    #print("re-indexed u+w:", uio_vw.to_internal_indexing(v),uio_vw.to_internal_indexing(w), )
+                    #print("Elements of M_k_l:", M_k_l)
+            if isittrue == False:
+                isittruebig = False 
+                print(":-( the map does not work work")
+        if isittruebig == True:
+            print("Hurray!Checked")
 
 def prooftest():
     n = 3
@@ -1128,7 +1169,7 @@ if __name__ == "__main__": # 2 case: n>=k, 3 case: n<=k<=L
     #v3trippletestparameters()
     #prooftest()
     #newconjecturetest()
-    newconjecture2test()
+    newconjecture3test()
 
 # 16.05 todo: check tipple injective, make proof for injective in double case
 # proof that he coefficient is equal to the difference of thee eschers sets
