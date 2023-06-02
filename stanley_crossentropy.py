@@ -38,9 +38,9 @@ from datetime import datetime
 
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE" # fix to omp: error #15 on my laptop
 
-l = 6
-k = 3
-p = 2
+l = 4
+k = 2
+p = 1
 # k+2+2*p
 NumCritIntervals = k+2+2*p   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
 NUMBER_OF_ORS = 2
@@ -72,9 +72,9 @@ len_game = EDGES
 state_dim = (observation_space,)
 
 load_cores_file = "saves/coreTypes_l={}_k={}_p={}_ignore=100.bin".format(l,k,p)
-load_model_file = "" #"saves/170uio2ORs" # "saves/190uio" # "saves/150"
-save_model_file = "saves/170uio2ORs"
-reduce_uio = 170
+load_model_file = "Master42example" #"saves/170uio2ORs" # "saves/190uio" # "saves/150"
+save_model_file = "Master42example"#"saves/170uio2ORs"
+reduce_uio = 0
 
 # got  150 uios down to score=0 in 2 steps (300 graphs, 0.1 learning rate)
 # got  80 uios down to score=0 in 4 steps 
@@ -83,7 +83,7 @@ if load_model_file != "":
 	load_model_file += "[l={}k={}p={}]".format(l,k,p)
 if save_model_file != "":
 	save_model_file += "[l={}k={}p={}]".format(l,k,p)
-saving_frequency = 600 # how many seconds to wait between each save
+saving_frequency = 30 # how many seconds to wait between each save
 INF = 1000000
 
 def convertStateToConditionMatrix(state):
@@ -94,7 +94,11 @@ def convertStateToConditionMatrix(state):
 		if actionvector[0] == 0: # if 1 in 0'th index then do nothing (UIO.INCOMPARABLE)
 			row = 0
 			edge = np.argmax(actionvector) # 100,101,102,103
+			if edge == 0: # actionvector all zeros
+				continue
 			row = (edge-1)//3
+			if row != 0:
+				edge -= 3*row
 			graph[row][step] = edge + UIO.INCOMPARABLE
 	return graph
 
@@ -105,7 +109,7 @@ def calcScore(state):
 	if key_state in all_scores:
 		return all_scores[key_state]
 	else:
-		new_score = CE.evaluate(convertStateToConditionMatrix(state))
+		new_score = CE.evaluate(convertStateToConditionMatrix(state), False)
 		all_scores[key_state] = new_score
 		return new_score
 
@@ -153,6 +157,7 @@ def generate_session(agent, n_sessions, verbose = 1):
 
 		#print("first prob:", prob[0])
 		for i in range(n_sessions):
+			#print("i:", step, i)
 			#t0 = time.time()
 			if i in over_conditioned_graphs: # even doing nothing is represented by a non-zero vector(1 hot encoding)
 				actions[i][step-1][0] = 1 # [1,0,0,0] is do nothing, encoding  as in calcScore
@@ -190,7 +195,6 @@ def generate_session(agent, n_sessions, verbose = 1):
 			elif not terminal:
 				state_next[i][MYN + step] = 1
 				states[i,:,step] = state_next[i]	# update graph with policy from network
-
 			recordsess_time += time.time()-tic
 			#t2 = time.time()-t0
 			#if t2 != 0:
