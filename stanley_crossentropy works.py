@@ -43,10 +43,10 @@ k = 2
 p = 1
 # k+2+2*p
 NumCritIntervals = k+2+2*p   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
-ConditionComponents = 2
+NUMBER_OF_ORS = 2
 MAX_EXPECTED_EDGES = 2*k
-ALPHABET_SIZE = 1+3
-EDGES = int(NumCritIntervals*(NumCritIntervals-1)/2)*ConditionComponents
+ALPHABET_SIZE = 1+NUMBER_OF_ORS*3
+EDGES = int(NumCritIntervals*(NumCritIntervals-1)/2)
 MYN = ALPHABET_SIZE*EDGES  #The length of the word we are generating. Here we are generating a graph, so we create a 0-1 word of length (N choose 2)
 
 LEARNING_RATE = 0.1 #Increase this to make convergence faster, decrease if the algorithm gets stuck in local optima too often.
@@ -72,8 +72,8 @@ len_game = EDGES
 state_dim = (observation_space,)
 
 load_cores_file = "saves/coreTypes_l={}_k={}_p={}_ignore=100.bin".format(l,k,p)
-load_model_file = ""#"Master42example" #"saves/170uio2ORs" # "saves/190uio" # "saves/150"
-save_model_file = "Master42Componentsexample"#"saves/170uio2ORs"
+load_model_file = "Master42example" #"saves/170uio2ORs" # "saves/190uio" # "saves/150"
+save_model_file = "Master42example"#"saves/170uio2ORs"
 reduce_uio = 0
 
 # got  150 uios down to score=0 in 2 steps (300 graphs, 0.1 learning rate)
@@ -88,18 +88,18 @@ INF = 1000000
 
 def convertStateToConditionMatrix(state):
 	# state is of length MYN
-	SingleComp= EDGES//ConditionComponents
-	graph = np.ones((ConditionComponents, SingleComp))*UIO.INCOMPARABLE
-	for row in range(ConditionComponents):
-		for step in range(SingleComp):
-			actionvector = state[ALPHABET_SIZE*SingleComp*row + ALPHABET_SIZE*step : ALPHABET_SIZE*SingleComp*row + ALPHABET_SIZE*(step+1)]
-			if actionvector[0] == 0: # if 1 in 0'th index then do nothing (UIO.INCOMPARABLE)
-				edge = np.argmax(actionvector) # 100,101,102,103
-				if edge == 0: # actionvector all zeros
-					continue
-				#print(edge + UIO.INCOMPARABLE)
-				graph[row][step] = edge + UIO.INCOMPARABLE
-	#print(graph)
+	graph = np.ones((NUMBER_OF_ORS, EDGES))*UIO.INCOMPARABLE
+	for step in range(EDGES):
+		actionvector = state[ALPHABET_SIZE*step:ALPHABET_SIZE*(step+1)]
+		if actionvector[0] == 0: # if 1 in 0'th index then do nothing (UIO.INCOMPARABLE)
+			row = 0
+			edge = np.argmax(actionvector) # 100,101,102,103
+			if edge == 0: # actionvector all zeros
+				continue
+			row = (edge-1)//3
+			if row != 0:
+				edge -= 3*row
+			graph[row][step] = edge + UIO.INCOMPARABLE
 	return graph
 
 def calcScore(state):
