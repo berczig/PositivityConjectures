@@ -72,8 +72,9 @@ len_game = EDGES
 state_dim = (observation_space,)
 
 load_cores_file = "saves/coreTypes_l={}_k={}_p={}_ignore=100.bin".format(l,k,p)
-load_model_file = ""#"Master42example" #"saves/170uio2ORs" # "saves/190uio" # "saves/150"
-save_model_file = "Master42Componentsexample"#"saves/170uio2ORs"
+#load_model_file = "saves/Masterfulluio2Components6_3_2"
+load_model_file = "saves/Masterfulluio2ComponentsBETA"#"saves/Masterfulluio2Components"#"Master42example" #"saves/170uio2ORs" # "saves/190uio" # "saves/150"
+save_model_file = "" # "saves/Masterfulluio2Components6_3_2"
 reduce_uio = 0
 
 # got  150 uios down to score=0 in 2 steps (300 graphs, 0.1 learning rate)
@@ -83,7 +84,7 @@ if load_model_file != "":
 	load_model_file += "[l={}k={}p={}]".format(l,k,p)
 if save_model_file != "":
 	save_model_file += "[l={}k={}p={}]".format(l,k,p)
-saving_frequency = 30 # how many seconds to wait between each save
+saving_frequency = 2700 # how many seconds to wait between each save
 INF = 1000000
 
 def convertStateToConditionMatrix(state):
@@ -309,18 +310,30 @@ class DataSaver(PartiallyLoadable):
 	def make_plots(self):
 		n = len(self.bestscore_history)
 		times = list(range(n))
-		plt.title("best score ("+str(self.bestscore_history[-1])+")")
-		plt.plot(times, self.bestscore_history)
+	
+		#plt.title("x |-> sign(x)log(|x|) on best scores ("+str(self.bestscore_history[-1])+")")
+		plt.title("best scores ("+str(self.bestscore_history[-1])+")")
+		plt.xlabel("iterations")
+		values = self.bestscore_history
+		#plt.plot(times, np.sign(values) * np.log( np.abs(values) ))
+		plt.plot(times, values)
 		plt.show()
-		plt.title("mean score ("+str(self.meanscore_history[-1])+")")
+
+		plt.title("mean scores ("+str(self.meanscore_history[-1])+")")
+		plt.xlabel("iterations")
 		plt.plot(times, self.meanscore_history)
 		plt.show()
+
 		plt.title("number of different conditions checked")
+		plt.xlabel("iterations")
 		plt.plot(times, self.numgraph_history)
 		plt.show()
-		plt.title("computation time of the i'th step")
+
+		plt.title("computation time(in seconds) of the i'th step")
+		plt.xlabel("iterations")
 		plt.plot(times, self.calculationtime_history)
 		plt.show()
+		
 
 		print("looking for best score...")
 		bestscore = -99999999999
@@ -330,8 +343,11 @@ class DataSaver(PartiallyLoadable):
 				bestscore = self.all_scores[state]
 				beststate = state
 		condmat = convertStateToConditionMatrix(beststate)
+		CEx = ConditionEvaluator(l=4, k=2, p=1, ignoreEdge=100, uiodataextractor = UIODataExtractor(4,2,1))
+		#CEx.load("saves/coreTypes_l=4_k=2_p=1_ignore=100.bin")
 		conditiontext = self.CE.convertConditionMatrixToText(condmat)
-		print(conditiontext, "\nhas a score of ", self.CE.evaluate(condmat))
+		CE.drawConditionMatrixAsGraph(condmat)
+		print(conditiontext, "\nhas a score of ", self.CE.evaluate(condmat), CEx.evaluate(condmat))
 	
 if __name__ == "__main__":
 	#CE = ConditionEvaluator(l=l, k=k, p=p, ignoreEdge=UIO.INCOMPARABLE)

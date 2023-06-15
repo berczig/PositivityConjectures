@@ -103,7 +103,7 @@ from itertools import permutations
 from math import factorial as fac
 import numpy as np
 import random
-#import networkx as nx
+import networkx as nx
 import matplotlib.pyplot as plt 
 import sys
 import pickle
@@ -200,7 +200,7 @@ class UIO:
 
     def iscorrect(self, seq):
         for i in range(1,len(seq)):
-            # not to the left of previos interval
+            # not to the left of previous interval
             if self.comparison_matrix[seq[i], seq[i-1]] == UIO.LESS:
                 return False
             # intersects with some previous interval
@@ -220,12 +220,14 @@ class UIO:
     def computeCorrectSequences(self):
         self.lkCorrectSequences[(self.n,0)] = [seq for seq in getPermutationsOfN(self.n) if self.iscorrect(seq)]
         self.lkCorrectSequences_n[(self.n,0)] = len(self.lkCorrectSequences[(self.n,0)])
+       
     
     def computelkCorrectSequences(self, l, k):
         self.lkCorrectSequences[(l,k)] = [seq for seq in getPermutationsOfN(self.n) if self.is_lk_correct(seq,l,k)]
         self.lkCorrectSequences_n[(l,k)] = len(self.lkCorrectSequences[(l,k)])
         self.l = l
         self.k = k
+       
 
     ##### THE CORE OF CORRECT SEQUENCE ####
 
@@ -240,8 +242,7 @@ class UIO:
                     break
             if ismaximal:
                 maximals.append(i)
-        print(max(maximals) == np.argmax(maximals))
-        return np.argmax(maximals)
+        return np.max(maximals)
     
     def getCore(self, seq, p): # step 3 for l,k
         core = []
@@ -254,6 +255,7 @@ class UIO:
                 core.append(seq[i])
                 if pairs >= p:
                     break
+        #assert pairs==p, "pairs not {p} but {pairs}"
         core.insert(0, pairs)
 
         # maximal element in first l-1
@@ -572,6 +574,7 @@ class ConditionEvaluator(Loadable):
         self.l = l
         self.k = k
         self.p = p
+        self.corelength = 2 + 2*p +k
         self.ignoreEdge = ignoreEdge        
 
         # Compute UIO length
@@ -633,14 +636,15 @@ class ConditionEvaluator(Loadable):
         return -sum(difference)
     
     def convertConditionMatrixToText(self, Condition_matrix):
+        print("shape:", Condition_matrix.shape)
         rows, columns = Condition_matrix.shape
         rowtexts = []
         for row in range(rows):
             index = 0
             rowtext = []
             aORD = ord("a")
-            for i in range(self.n):
-                for j in range(i+1, self.n):
+            for i in range(self.corelength):
+                for j in range(i+1, self.corelength):
                     edge = int(Condition_matrix[row][index])
 
                     if edge != self.ignoreEdge:
@@ -649,6 +653,44 @@ class ConditionEvaluator(Loadable):
             if rowtext:
                 rowtexts.append(" AND ".join(rowtext))
         return " OR \n".join(rowtexts)
+
+    def matrix_to_graphs(self, Condition_matrix):
+        edges = Condition_matrix.shape[1]
+        vertices = int((1 + (1 + 8*edges)**0.5 )//2)
+        graphs = []
+        for row in Condition_matrix:
+            G = nx.DiGraph()
+            edgeindex = 0
+            edge_labels = {}
+            edgemaths = ["smaller", "equal", "greater"]
+            labels = {}
+            for i in range(vertices):
+                labels[i]=chr(ord("a")+i)
+                G.add_node(i)
+                for j in range(i+1, vertices):
+                    edge = int(row[edgeindex]) - UIO.INCOMPARABLE
+                    if edge != 0:
+                        G.add_edge(i, j)
+                        edge_labels[(i,j)] = edgemaths[edge-1]
+                    edgeindex += 1
+            graphs.append((G, edge_labels, labels))
+        return graphs
+#
+
+    def drawConditionMatrixAsGraph(self, Condition_matrix):
+        graphs = self.matrix_to_graphs(Condition_matrix)
+
+        fig, axes = plt.subplots(1, len(graphs))
+        i = 0
+        pos = nx.circular_layout(graphs[0][0])
+        for G, edge_labels_, labels_ in graphs:
+            ax = axes[i]
+            nx.draw(G, pos, labels=labels_, ax=ax, node_size=1600, arrowsize=50, font_size=25)
+            nx.draw_networkx_edge_labels(G, pos,
+            edge_labels=edge_labels_,font_color='red', ax=ax, font_size=22)
+            i += 1
+        fig.show()
+        plt.show()
     
     def narrowCoreTypeSelection(self, random_uios):
         # only use a portion of the coreTypes corresponding to n_uios random uios when evaluating a conditionMatrix
@@ -729,8 +771,9 @@ def checkThmConditionMatrix():
     # Set UIO parameters
     tstart = time.time()
     #CE = ConditionEvaluator(l=4, k=2, p=1, ignoreEdge=0, uiodataextractor=UIODataExtractor(l=4,k=2,p=1))
-    CE = ConditionEvaluator(l=4, k=2, p=1, ignoreEdge=100)
-    CE.load("saves/coreTypes_l=4_k=2_p=1_ignore=100.bin")
+    CE = ConditionEvaluator(l=6, k=2, p=1, ignoreEdge=100, uiodataextractor=UIODataExtractor(6,2,1))
+    #CE = ConditionEvaluator(l=4, k=2, p=1, ignoreEdge=100)
+    #CE.load("saves/coreTypes_l=4_k=2_p=1_ignore=100.bin")
 
     # The thm needs c<e and d<f  OR  a>e and b > f  that translates to 
     ThmConditionFilter = np.ones((2,15))*UIO.INCOMPARABLE
@@ -745,6 +788,8 @@ def checkThmConditionMatrix():
     print("score:", CE.evaluate(ThmConditionFilter))
     print("checking:", time.time()-tnow)
     print("all.", time.time()-tstart)
+
+    CE.drawConditionMatrixAsGraph(ThmConditionFilter)
 
 def inspectStatesFromFile(file, edges, edgetypes):
     print("Reading file ", file)
@@ -773,13 +818,13 @@ def testCountCategories():
 
 def testsave():
     t = time.time()
-    l = 4
-    k = 2
-    p = 1
+    l = 6
+    k = 3
+    p = 2
     ignore = UIO.INCOMPARABLE
     DE = UIODataExtractor(l,k,p)
     CE = ConditionEvaluator(l,k,p,ignore,DE)
-    CE.save("coreTypes_l={}_k={}_p={}_ignore={}.bin".format(l,k,p, ignore))
+    CE.save("ptestcoreTypes_l={}_k={}_p={}_ignore={}.bin".format(l,k,p, ignore))
     print("testsave elapsed:", time.time()-t)
 
 def testload():
@@ -866,5 +911,5 @@ if __name__ == "__main__":
     #testload()
     #testCountCategories()
     #inspectStatesFromFile("best_species_txt_763.txt", 15, 7)
-    #checkThmConditionMatrix()
-    eschercoretest()
+    checkThmConditionMatrix()
+    #eschercoretest()
