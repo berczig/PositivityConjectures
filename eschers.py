@@ -1159,6 +1159,8 @@ def describecomplementofimagetest2():
     n = 4
     k = 5
     A = generate_all_uios(n+k)
+    #A = [[0, 0, 0, 0, 1, 2, 2, 4, 6]]
+    #A = [ [0, 0, 0, 1, 3, 3, 5, 5, 7]]
     random.shuffle(A)
     N = len(A)
     for uioid, encod in enumerate(A):
@@ -1171,23 +1173,40 @@ def describecomplementofimagetest2():
 
         for (u,v) in pairs:
             insertion = uio.getFirstInsertionPoint(u,v)
-            if insertion == -1:
-                alsocomplement.append((u,v))
-                continue
             w = phi.inversemap(u,v)
             splitting = uio.getFirstSubEscher(w, n)
+            if insertion == -1 or insertion >= n+k:
+                alsocomplement.append((u,v))
+                #continue
+            #if insertion == k:
+                #print("insertion is k", k, uio)
+                #print(u,v)
+                #print(w)
+                #print(phi.map(w))
+                #if (u,v) in complement:
+                    #print("ALARM!")
+                    #sys.exit(0)
+            
             if insertion < k and splitting < insertion:
                 alsocomplement.append((u,v))
+                if phi.map(w) == (u,v):
+                    print("ALARM", uio)
+                    print("insertion:", insertion)
+                    print("splitting:", splitting)
+                    print((u,v))
+                    print(w)
+                    print(phi.map(w))
+                    sys.exit(0)
                 continue
-            elif insertion > k and splitting < insertion-k:
-                alsocomplement.append((u,v))
-                continue
-        if sorted(complement) != sorted(alsocomplement):
-            print("NOT EQUAL")
-            print("image:", complement)
-            print()
-            print("alsoimage:", alsocomplement)
-            sys.exit(0)
+            #elif insertion > k and splitting == 0:
+                #alsocomplement.append((u,v))
+                #continue
+        #if sorted(complement) != sorted(alsocomplement):
+            #print("NOT EQUAL")
+            #print("complement:", complement)
+            #print()
+            #print("alsocomplement:", alsocomplement)
+            #sys.exit(0)
 
 def describecomplementofimagetest():
     n = 4
@@ -1283,3 +1302,6 @@ rephrase papers like the escher one
 later on still time to mention proofs (like number of escher equals number of correct sequence)
 guess the external censors will not look at all the details 100%
 """
+
+
+# 26.6 defence, not before 3
