@@ -176,6 +176,16 @@ class UIO:
         if (escher, k) not in self.subeschers:
             self.computevalidsubeschers(escher, k)
         return self.subeschers[(escher, k)]
+    
+    def getMyCore(self, u, v):
+        # u > v
+        insertion = self.getFirstInsertionPoint(u)
+        if insertion == -1:
+            pass
+        elif insertion < len(u):
+            pass
+        elif insertion > len(u):
+            pass
 
     def getInsertionPoints(self, u, v, lcm = 0): # u of length n > k
         n = len(u)
@@ -200,6 +210,27 @@ class UIO:
             if self.comparison_matrix[u[i%n], v[(i+1)%k]] != UIO.GREATER and self.comparison_matrix[v[i%k], u[(i+1)%n]] != UIO.GREATER:
                 return i
         return -1
+    
+    def getFirstSubEscher(self, u, k):
+        n = len(u)
+        for i in range(n):
+            if self.isarrow(u, i,(i+k+1)%n) and self.isarrow(u, (i+k)%n, (i+1)%n):
+                return i
+    
+    def getsnake(self, u, v, insertionpoint, headlength): # u,v order doesn't matter
+        n = len(u)
+        k = len(v)
+        lcm = np.lcm(n,k)
+        if n >= k:
+            top = v
+            bot = u
+        else:
+            top = u
+            bot = v
+
+        botbot = bot*(lcm//len(bot))
+        snakehead = self.cyclicslice(top,insertionpoint+1,insertionpoint+1+headlength)
+        return botbot[:insertionpoint+1]+snakehead
     
     def concat(self, first, second, insertionpoint): # assume insertionpoint < len(first)
         # v0     vL vL+1
@@ -384,6 +415,7 @@ class EscherBreaker:
             if self.uio.isarrow(u, L%self.npk, (L+self.n+1)%self.npk, verbose) and self.uio.isarrow(u, (L+self.n)%self.npk, (L+1)%self.npk, verbose):
                 points.append(L)
         return points
+    
 
 
 class AllEscherBreaker(EscherBreaker):
@@ -1122,6 +1154,66 @@ def prooftest():
             #if insertion == insertion2:
             #    print(50*"A")
             print()
+
+def describecomplementofimagetest2():
+    n = 4
+    k = 5
+    A = generate_all_uios(n+k)
+    random.shuffle(A)
+    N = len(A)
+    for uioid, encod in enumerate(A):
+        print(uioid, "/", N)
+        uio = UIO(encod)
+        phi = MyEscherBreaker(uio,n,k)
+        pairs = uio.getEscherPairs((n,k))
+        complement = phi.getcomplement()
+        alsocomplement = []
+
+        for (u,v) in pairs:
+            insertion = uio.getFirstInsertionPoint(u,v)
+            if insertion == -1:
+                alsocomplement.append((u,v))
+                continue
+            w = phi.inversemap(u,v)
+            splitting = uio.getFirstSubEscher(w, n)
+            if insertion < k and splitting < insertion:
+                alsocomplement.append((u,v))
+                continue
+            elif insertion > k and splitting < insertion-k:
+                alsocomplement.append((u,v))
+                continue
+        if sorted(complement) != sorted(alsocomplement):
+            print("NOT EQUAL")
+            print("image:", complement)
+            print()
+            print("alsoimage:", alsocomplement)
+            sys.exit(0)
+
+def describecomplementofimagetest():
+    n = 4
+    k = 5
+    A = generate_all_uios(n+k)
+    random.shuffle(A)
+    N = len(A)
+    for uioid, encod in enumerate(A):
+        print(uioid, "/", N)
+        uio = UIO(encod)
+        phi = MyEscherBreaker(uio,n,k)
+        pairs = uio.getEscherPairs((n,k))
+        image = phi.getImage()
+        alsoimage = []
+        for (u,v) in pairs:
+            w = phi.inversemap(u,v)
+            if w != None:
+                u_, v_ = phi.map(w)
+                if (u,v) == (u_,v_):
+                    alsoimage.append((u,v))
+        if sorted(image) != sorted(alsoimage):
+            print("NOT EQUAL")
+            print("image:", image)
+            print("alsoimage:", alsoimage)
+            sys.exit(0)
+
 def trippletable():
     n = 1
     k = 2
@@ -1169,7 +1261,8 @@ if __name__ == "__main__": # 2 case: n>=k, 3 case: n<=k<=L
     #v3trippletestparameters()
     #prooftest()
     #newconjecturetest()
-    newconjecture3test()
+    #newconjecture3test()
+    describecomplementofimagetest2()
 
 # 16.05 todo: check tipple injective, make proof for injective in double case
 # proof that he coefficient is equal to the difference of thee eschers sets
