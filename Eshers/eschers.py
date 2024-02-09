@@ -21,7 +21,7 @@ import pandas as pd
 
 
 
-# COMBINATORIC FUNCTIONS
+# COMBINATORICS FUNCTIONS
 permutations_n = {}
 def getPermutationsOfN(n):
     # calculate all permutations of 1,..,n once - used multiple times
@@ -144,6 +144,9 @@ class UIO:
     
     def getsubUIO(self, seq):
         return SubUIO(self.getsubuioencoding(seq), seq)
+
+# Formulae we can use: C_n_k=P_n_k-P_nk
+#                      C_n_k_l=P_n * M_k_l - M_nk,l - M_nl_k
 
     def getCoeffientByEscher(self, n,k,l=0):
         if l == 0:
@@ -1005,7 +1008,7 @@ def tripplecheckparameters(n,k,l,uios, p11, p12, p21, p22, p31, p32, p41, p42, p
 def newconjecturetest():
     n = 1
     k = 2
-    l = 4
+    l = 3
     A = generate_all_uios(n+k+l)
     #A = [[0, 0, 1, 1, 2, 3]]
     for encod in A:
@@ -1079,7 +1082,7 @@ def newconjecture2test():
                 print("uv, w from M_nk_l:", uv, w)
                 print(v,w,"not in M_k_l")
                 print("re-indexing of u+w", uio_vw.to_internal_indexing(v),uio_vw.to_internal_indexing(w), )
-                print("Element of M_k_l:", M_k_l)
+                print("Elements of M_k_l:", M_k_l)
             print()
 
 def newconjecture3test():
@@ -1236,7 +1239,7 @@ def describecomplementofimagetest():
 def trippletable():
     n = 1
     k = 2
-    l = 4
+    l = 2
     A = generate_all_uios(n+k+l)
     #A = [[0,0,1,1,1,2,2,2,3]]
 
@@ -1254,10 +1257,11 @@ def trippletable():
         len(p_npk_l.getcomplement()),
         len(p_kpl_n.getcomplement()),
         len(p_lpn_k.getcomplement()),
-        len(pairs2), 
-        len(pairs)])
+        len(pairs2),
+        len(pairs),
+        UIO.getCoeffientByEscher(uio,n,k,l)])
         print(uioid+1, "/", total)
-    df = pd.DataFrame(data, columns = ['UIO', 'M_nk_l', 'M_kl_n', 'M_ln_k', 'P_nkl', 'P_n_k_l'])
+    df = pd.DataFrame(data, columns = ['UIO', 'M_nk_l', 'M_kl_n', 'M_ln_k', 'P_nkl', 'P_n_k_l','Coeff'])
     print(df.to_string())
 
 def subencodingtest():
@@ -1279,9 +1283,11 @@ if __name__ == "__main__": # 2 case: n>=k, 3 case: n<=k<=L
     #trippletable()
     #v3trippletestparameters()
     #prooftest()
-    #newconjecturetest()
+    newconjecturetest()
     #newconjecture3test()
-    describecomplementofimagetest2()
+    #describecomplementofimagetest2()
+    #print(generate_all_uios(6))
+    #trippletable()
 
 # 16.05 todo: check tipple injective, make proof for injective in double case
 # proof that he coefficient is equal to the difference of thee eschers sets
