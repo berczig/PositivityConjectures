@@ -3,6 +3,7 @@ import os
 import torch.nn as nn
 from torch.nn import functional as F
 from UIODataGenerator import getUIOTrainingVectors
+import random
 
 # hyperparameters
 batch_size = 16 # how many independent sequences will we processed in parallel?
@@ -10,7 +11,7 @@ block_size = 6 # length of the UIO
 vocab_size = 6 # number of possible values for each element of the UIO 
 max_iters = 2000
 eval_interval = 100
-learning_rate = 1e-3
+learning_rate = 1e-2
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 eval_iters = 100
 n_embd = 64
@@ -37,8 +38,14 @@ torch.manual_seed(1337)
 
 # Train and test splits: UIO=[unit interval order,Stanley coeff]  
 UIOin, UIOout = getUIOTrainingVectors(block_size)
-#print(UIOin.shape,UIOout.shape)
 n = int(0.9*len(UIOin)) # first 90% will be train, rest val
+#Random shuffle
+# Pair the elements of the two lists
+paired = list(zip(UIOin, UIOout))
+# Shuffle the pairs
+random.shuffle(paired)
+# Unzip the pairs
+UIOin, UIOout = zip(*paired)
 UIOintrain_data = UIOin[:n]
 UIOouttrain_data = UIOout[:n]
 UIOinval_data = UIOin[n:]
@@ -181,7 +188,6 @@ class GPTStanleywithEmbed(nn.Module):
         else:
             mse_loss = nn.MSELoss()
             loss = mse_loss(logitsfinal, targets.float()) #both logitsfinal and targets tensors of size (B,1)
-            #print(loss)
         return logitsfinal, loss
 
     
@@ -245,7 +251,20 @@ for iter in range(max_iters):
     loss.backward()
     optimizer.step()
 
+#Print model parameters
 
-# generate from the model
-#context = torch.zeros((1, 1), dtype=torch.long, device=device)
-# print(decode(m.generate(context, max_new_tokens=2000)[0].tolist()))
+#for name, param in model.named_parameters():
+#    print(name, param)
+
+# Print predicted (1,2,3) coefficients
+
+model.eval()  # Set the model to evaluation mode
+with torch.no_grad():  # Disable gradient calculation
+    #for i in range(len(UIOinval_data)-batch_size):
+    #    xb = torch.stack(UIOinval_data[i:i+batch_size])
+    #    yb = torch.stack(UIOoutval_data[i:i+batch_size])  
+    xb, yb = get_batch('val')       
+    logits, loss = model(xb,yb)  # Get the model's predictions
+    paired = list(zip(logits.tolist(),yb.tolist()))
+    for pair in paired:
+        print('Predicted:', pair[0], 'Real value:', pair[1])
