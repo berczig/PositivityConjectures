@@ -6,21 +6,17 @@
 #     input: a UIO X as a length n sorted integer vector 
 #     output: an integer Y, the lambda-coefficient. 
 
-from eshers import generate_all_uios
-from eshers import UIO
+from eschers import UIO
+from eschers import generate_all_uios
 import torch
 
 def getUIOTrainingVectors(n):
     coeffs = []
-    A = generate_all_uios(n)
-    print(A)
-    Xuio = torch.stack(A)
-    print(Xuio.size)
-    for encod in A:
+    Xuio = torch.tensor(generate_all_uios(n))
+    for encod in Xuio:
         uio = UIO(encod) 
-        coeffs.append(uio.getCoeffientByEscher(n,n-3,0)) 
-    Yuio = torch.stack(coeffs)
-    print(Yuio.size)
+        coeffs.append(uio.getCoeffientByEscher(n-2,2,0)) 
+    Yuio = torch.tensor(coeffs).unsqueeze(1)
     return Xuio, Yuio
 
 
@@ -36,8 +32,8 @@ def getUIOTrainingVectors(n):
         Xuio = torch.stack(A)
         for encod in A:
             uio = UIO(encod) 
-            coeffs.append(uio.getCoeffientByEscher(n,n-3,0)) 
+            coeffs.append(uio.getCoeffientByEscher(n-3,2,1)) 
         Yuio = torch.stack(coeffs)
         return Xuio, Yuio
 
-getUIOTrainingVectors(4)
+#getUIOTrainingVectors(6)

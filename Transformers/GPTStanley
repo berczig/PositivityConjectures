@@ -2,16 +2,17 @@ import torch
 import os 
 import torch.nn as nn
 from torch.nn import functional as F
+from UIODataGenerator import getUIOTrainingVectors
 
 # hyperparameters
 batch_size = 16 # how many independent sequences will we processed in parallel?
-block_size = 10 # length of the UIO
-vocab_size = 10 # number of possible values for each element of the UIO 
-max_iters = 1000
+block_size = 6 # length of the UIO
+vocab_size = 6 # number of possible values for each element of the UIO 
+max_iters = 2000
 eval_interval = 100
 learning_rate = 1e-3
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-eval_iters = 200
+eval_iters = 100
 n_embd = 64
 n_head = 4
 n_layer = 4
@@ -23,28 +24,39 @@ torch.manual_seed(1337)
 
 # Data generation
 
-def generate_vectors(n_vectors,length_vectors, start, end):
-    vectors = []
-    for _ in range(n_vectors):
-        vector = torch.sort(torch.randint(start, end+1, (length_vectors,)))[0]
-        vectors.append(vector)
-    return torch.stack(vectors)
+#def generate_vectors(n_vectors,length_vectors, start, end):
+#    vectors = []
+#    for _ in range(n_vectors):
+#        vector = torch.sort(torch.randint(start, end+1, (length_vectors,)))[0]
+#        vectors.append(vector)
+#    return torch.stack(vectors)
+
+
 
 
 
 # Train and test splits: UIO=[unit interval order,Stanley coeff]  
-UIOs = generate_vectors(1000, 11, 1, 10)
-n = int(0.9*len(UIOs)) # first 90% will be train, rest val
-UIOtrain_data = UIOs[:n]
-UIOval_data = UIOs[n:]
+UIOin, UIOout = getUIOTrainingVectors(block_size)
+#print(UIOin.shape,UIOout.shape)
+n = int(0.9*len(UIOin)) # first 90% will be train, rest val
+UIOintrain_data = UIOin[:n]
+UIOouttrain_data = UIOout[:n]
+UIOinval_data = UIOin[n:]
+UIOoutval_data = UIOout[n:]
 
-# data loading
+
+# data loading 
 def get_batch(split):
     # generate a small batch of data of inputs x and targets y
-    data = UIOtrain_data if split == 'train' else UIOval_data
-    ix = torch.randint(len(data), (batch_size,))
-    x = torch.stack([data[i][:-1] for i in ix])
-    y = torch.stack([data[i][:-1] for i in ix])
+    if split == 'train':
+        datain = UIOintrain_data 
+        dataout = UIOouttrain_data  
+    else:
+        datain = UIOinval_data 
+        dataout = UIOoutval_data
+    batch_indexes = torch.randint(len(datain), (batch_size,))
+    x = torch.stack([datain[i] for i in batch_indexes])
+    y = torch.stack([dataout[i] for i in batch_indexes])
     x, y = x.to(device), y.to(device)
     return x, y
 
@@ -56,6 +68,7 @@ def estimate_loss():
         losses = torch.zeros(eval_iters)
         for k in range(eval_iters):
             X, Y = get_batch(split)
+            #print(X.shape,Y.shape)
             logits, loss = model(X, Y)
             losses[k] = loss.item()
         out[split] = losses.mean()
@@ -150,11 +163,11 @@ class GPTStanleywithEmbed(nn.Module):
         self.blocks = nn.Sequential(*[Block(n_embd, n_head=n_head) for _ in range(n_layer)])
         self.ln_f = nn.LayerNorm(n_embd) # final layer norm
         self.lm_head = nn.Linear(n_embd, 1)
-        self.lm_head2 = nn.linear(block_size,1)
+        self.lm_head2 = nn.Linear(block_size,1)
 
     def forward(self, idx, targets=None): 
-        B, T = idx.shape 
-        # idx is (B,T) tensor of integers, targets is (B) tensor of integers.
+        B, T = idx.shape
+        # idx is (B,T) tensor of integers, targets is (B,1) tensor of integers.
         tok_emb = self.token_embedding_table(idx) # (B,T,C)
         pos_emb = self.position_embedding_table(torch.arange(T, device=device)) # (T,C)
         x = tok_emb + pos_emb # (B,T,C)
@@ -166,11 +179,9 @@ class GPTStanleywithEmbed(nn.Module):
         if targets is None:
             loss = None
         else:
-            logitsfinal = logitsfinal.squeeze(-1) # (B)
             mse_loss = nn.MSELoss()
-            loss = mse_loss(logitsfinal, targets)
-            
-
+            loss = mse_loss(logitsfinal, targets.float()) #both logitsfinal and targets tensors of size (B,1)
+            #print(loss)
         return logitsfinal, loss
 
     
@@ -191,7 +202,6 @@ class GPTStanleywithEmbed2(nn.Module):
 
     def forward(self, idx, targets=None):
         B, T = idx.shape
-                
         # idx and targets are both (B,T) tensor of integers
         tok_emb = self.token_embedding_table(idx) # (B,T,C)
         pos_emb = self.position_embedding_table(torch.arange(T, device=device)) # (T,C)
@@ -222,7 +232,6 @@ print(sum(p.numel() for p in m.parameters())/1e6, 'M parameters')
 optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 
 for iter in range(max_iters):
-
     # every once in a while evaluate the loss on train and val sets
     if iter % eval_interval == 0 or iter == max_iters - 1:
         losses = estimate_loss()
@@ -230,7 +239,6 @@ for iter in range(max_iters):
 
     # sample a batch of data
     xb, yb = get_batch('train')
-
     # evaluate the loss
     logits, loss = model(xb, yb)
     optimizer.zero_grad(set_to_none=True)
