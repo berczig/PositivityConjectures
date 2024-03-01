@@ -410,13 +410,23 @@ class UIO:
         for v in [n,k]:
             if v not in self.eschers:
                 self.computeeschers(v)
+        points = [n,n+k]
         for u,v in self.pairs:
         #for u in self.eschers[n]:
             #for v in self.eschers[k]:
             core = self.getEscherCore(u,v)
-            if verbose:
-                print(u,v, self.coreIsGood(core, n, k, np.lcm(n,k)), core)
-            cores.append(core)
+            insertions, escherstartpoints = core
+            points.append(escherstartpoints[0]+k-1)
+            if len(insertions) == 0:
+                points.extend([n+k+1,n+k+1])
+            else:
+                if len(insertions) == 1:
+                    points.extend([insertions[0],n+k+1])
+                else:
+                    points.extend([insertions[0],insertions[1]])
+            #if verbose:
+            #    print(u,v, self.coreIsGood(core, n, k, np.lcm(n,k)), core)
+            cores.append(points)
         return cores            
 
     def coreIsGood(self, core, n, k, lcm):
@@ -484,7 +494,7 @@ class UIO:
             comparison_matrix = np.zeros((k,k)) + self.EQUAL # (i,j)'th index says how i is in relation to j
             for i in range(k):
                 for j in range(i+1,k):
-                    if uio_encoding[j] <= i:
+                    if core[j] == core[i]:
                         comparison_matrix[i,j] = self.INCOMPARABLE
                         comparison_matrix[j,i] = self.INCOMPARABLE
                     else:
@@ -496,7 +506,7 @@ class UIO:
     ### COEFFICIENT BY ESCHER ####
 
     def getCoeffientByEscher(self):
-        return len(self.getEscherPairs((n,k))) - len(self.getEscherPairs((n+k,)))
+        return len(self.getEscherPairs((self.l,self.k))) - len(self.getEscherPairs((self.n,0)))
 
 
 class UIODataExtractor:
@@ -628,10 +638,10 @@ class UIODataExtractorEscher:
             if i%printvalue == 0:
                 print(i+1, "/", self.uios_n)
             # step 2 - compute l,k correct sequences
-            uio.getEscherPairs(l,k)
+            uio.getEscherPairs(self.l,self.k)
 
             # step 3 - compute the cores
-            uio.getEschersCores(l,k)
+            uio.getEschersCores(self.l,self.k)
 
             # step 4.1 - generate the coreTypes from the cores (The core is independent of the comparison matrix from its UIO) 
             self.coreTypesRaw.append(uio.getCoreRepresentationsEscher())
@@ -683,13 +693,16 @@ class UIODataExtractorEscher:
         print("Found",columns, "categories")
         #print("size:", total_size(counter))
 
-class ConditionEvaluator(Loadable):
+class ConditionEvaluator(Loadable): #CE for both correct sequences and eschers
 
     def __init__(self, l, k, p, ignoreEdge, uiodataextractor:UIODataExtractor=None):
         self.l = l
         self.k = k
         self.p = p
-        self.corelength = 2 + 2*p +k
+        if uiodataextractor == UIODataExtractor:
+            self.corelength = 2 + 2*p +k
+        if uiodataextractor == UIODataExtractorEscher:
+            self.corelength = 6
         self.ignoreEdge = ignoreEdge        
 
         # Compute UIO length
