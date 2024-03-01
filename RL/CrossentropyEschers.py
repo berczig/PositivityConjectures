@@ -27,9 +27,9 @@ p = 1
 NumCritPoints = 3+3+2  #pairwise insertion points, pairwise splitting points, n=l+k+p and n+l+k+p. 
                         #This is the number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
 NUMBER_OF_ORS = 2 #The possible edge types, i.e possible relations of the critical points. It is < or > so their number is 2.
-MAX_EXPECTED_EDGES = 3
-ALPHABET_SIZE = 1+NUMBER_OF_ORS*3
+MAX_EXPECTED_EDGES = 3 #The maximum number of edges we expect to have in the graph. 
 EDGES = int(NumCritPoints*(NumCritPoints-1)/2)
+ALPHABET_SIZE = 1+NUMBER_OF_ORS*3 #The size of the alphabet. We have 1 for the empty word, and 3 for each edge type (>,<,=).
 MYN = ALPHABET_SIZE*EDGES  #The length of the word we are generating. Here we are generating a graph, so we create a 0-1 word of length (N choose 2)
 
 LEARNING_RATE = 0.1 #Increase this to make convergence faster, decrease if the algorithm gets stuck in local optima too often.
@@ -92,6 +92,6 @@ def calcScore(state):
 	if key_state in all_scores:
 		return all_scores[key_state]
 	else:
-		new_score = CE.evaluate(convertStateToConditionMatrix(state), False)
+		new_score = CE.evaluate(convertStateToConditionMatrix(state), False) #Change this to Esher evaluation
 		all_scores[key_state] = new_score
 		return new_score

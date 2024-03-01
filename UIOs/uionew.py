@@ -273,12 +273,13 @@ class UIO:
 
     #### GRAPH REPRESENTATIONS(TUPLE OF EDGES) OF CORE ####
 
-    def getCoreRepresentations(self):
+    def getCoreRepresentations(self): #Cores are critical intervals in the correct sequences
         representations = []
         for core in self.cores:
             k = len(core)
             representations.append(tuple([self.comparison_matrix[core[i], core[j]] for i in range(1, k) for j in range(i+1, k)]))
         return representations
+    
     
     #### COEFFICIENT ####
 
@@ -286,9 +287,7 @@ class UIO:
         # assumes that lk correct sequences allready  have been calculated
         return len(self.lkCorrectSequences[self.l, self.k]) - len(self.lkCorrectSequences[self.n, 0])
 
-    def getCoeffientByEscher(self):
-        return 
-
+    
     #################### ESCHERS ###################
 
     def isescher(self, seq):
@@ -475,7 +474,30 @@ class UIO:
     def getColorPoints(self, core):
         insertions, escherstartpoints = core
         red = insertions
+
+    ### GRAPH REPRESENTATIONS(TUPLE OF EDGES) OF ESCHER CORE ####    
         
+    def getCoreRepresentationsEscher(self): #Cores are insertion and splitting points of Escher pairs
+        representations = []
+        for core in self.cores:
+            k = len(core)
+            comparison_matrix = np.zeros((k,k)) + self.EQUAL # (i,j)'th index says how i is in relation to j
+            for i in range(k):
+                for j in range(i+1,k):
+                    if uio_encoding[j] <= i:
+                        comparison_matrix[i,j] = self.INCOMPARABLE
+                        comparison_matrix[j,i] = self.INCOMPARABLE
+                    else:
+                        comparison_matrix[i, j] = self.LESS
+                        comparison_matrix[j,i] = self.GREATER
+            representations.append(tuple([comparison_matrix[i,j] for i in range(1, k) for j in range(i+1, k)]))
+        return representations
+
+    ### COEFFICIENT BY ESCHER ####
+
+    def getCoeffientByEscher(self):
+        return len(self.getEscherPairs((n,k))) - len(self.getEscherPairs((n+k,)))
+
 
 class UIODataExtractor:
     """
@@ -523,6 +545,99 @@ class UIODataExtractor:
             self.trueCoefficients.append(uio.getCoefficient())
         self.trueCoefficients = np.array(self.trueCoefficients)
         print("Generated l,k correct sequences:", sum([uio.lkCorrectSequences_n[(self.l, self.k)] for uio in self.uios]))
+
+        # step 4.2 - classify the coreTypes by counting how many different types there are
+        self.countCategories()
+
+        print("Created UIODataExtractor in", round(time.time()-t,3), "seconds")
+
+    def countCategories(self):
+        print("Categorizing core types...")
+        categories = {} # category:ID
+        # knows the representative corereps
+        # how many of them per uio
+        ID = 0
+        counter = {} # categoryID:dict(uioID:occurrences)
+        for uioID, corereps in enumerate(self.coreTypesRaw):
+            for corerep in corereps:
+                # determine category ID
+                if corerep not in categories:
+                    ID = len(categories)
+                    categories[corerep] = ID
+                else:
+                    ID = categories[corerep]
+
+                # count this observed category
+                if ID not in counter:
+                    counter[ID] = {uioID:1}
+                else:
+                    categoryOccurrencer = counter[ID]
+                    if uioID not in categoryOccurrencer:
+                        categoryOccurrencer[uioID] = 1
+                    else:
+                        categoryOccurrencer[uioID] += 1
+
+        # Turn collected category-count data into a matrix
+        for cat in categories:
+            #print("cat:", cat)
+            counted = np.zeros(self.uios_n)
+            ID = categories[cat]
+            #for uioID in counter[ID]:
+                #counted[uioID] = counter[ID][uioID]
+            self.coreTypes[cat] = counter[ID]
+
+        columns = len(categories)
+        print("Found",columns, "categories")
+        #print("size:", total_size(counter))
+
+class UIODataExtractorEscher:
+    """
+    UIODataExtractorEscher Creates all uio and computes (l,k) Eschers and the cores and counts the core types. Needs to be 
+    extended to (l,k,p) Eschers! For now we try first with length 2 coeffs.
+
+    """
+    def __init__(self, l, k, p):
+        self.l = l
+        self.k = k
+        self.p = p
+        self.coreTypesRaw = [] # list of all coreTypes
+        self.coreTypes = {} # coreType(int):occurrences(dict), key i in occurrences is how often that type appeared in i'th uio
+        self.trueCoefficients = [] # i'th entry is the coefficient c_{l,k} of the i'th uio's CSF
+
+        # Compute UIO length
+        self.n = l+k+p
+
+        print("Create UIODataExtractorEscher with l =", l, "k =", k, "p =", p)
+        t = time.time()
+
+        # step 1 - Generate UIOs
+        self.uios = []
+        uio_encodings = generate_all_uios(self.n)
+        self.uios_n = len(uio_encodings)
+        printvalue = self.uios_n//16
+
+        print("Generating uios...(print every", str(printvalue)+")")
+        for i, uio_encoding in enumerate(uio_encodings):
+            if i%printvalue == 0:
+                print(i+1, "/", self.uios_n)
+            self.uios.append(UIO(uio_encoding))
+        #print("Generated correct sequences:", sum([uio.lkCorrectSequences_n[(self.n, 0)] for uio in self.uios]))
+
+        print("Computing uio (l.k.p) Eschers and cores...")
+        for i,uio in enumerate(self.uios):
+            if i%printvalue == 0:
+                print(i+1, "/", self.uios_n)
+            # step 2 - compute l,k correct sequences
+            uio.getEscherPairs(l,k)
+
+            # step 3 - compute the cores
+            uio.getEschersCores(l,k)
+
+            # step 4.1 - generate the coreTypes from the cores (The core is independent of the comparison matrix from its UIO) 
+            self.coreTypesRaw.append(uio.getCoreRepresentationsEscher())
+            self.trueCoefficients.append(uio.getCoefficientbyEscher())
+        self.trueCoefficients = np.array(self.trueCoefficients)
+        #print("Generated (l,k) Escher pairs :", sum([uio.lkCorrectSequences_n[(self.l, self.k)] for uio in self.uios]))
 
         # step 4.2 - classify the coreTypes by counting how many different types there are
         self.countCategories()
