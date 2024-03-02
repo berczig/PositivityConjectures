@@ -13,7 +13,7 @@ import math
 import os
 import matplotlib.pyplot as plt
 import sys
-from uio import UIO, ConditionEvaluator, UIODataExtractor
+from SPC.UIOs.uionew import UIO, ConditionEvaluator, UIODataExtractor
 from extra import PartiallyLoadable
 from datetime import datetime
 

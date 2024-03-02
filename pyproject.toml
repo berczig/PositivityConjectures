@@ -1,0 +1,8 @@
+[project]
+name = "SPC"
+version = "1.0.0"
+description = "Machine learning to solve Stanley's Positivity Conjecture"
+
+[build-system]
+build-backend = "flit_core.buildapi"
+requires = ["flit_core >=3.2,<4"]
