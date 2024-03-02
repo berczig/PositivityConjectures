@@ -9,10 +9,11 @@ import random
 batch_size = 16 # how many independent sequences will we processed in parallel?
 block_size = 6 # length of the UIO
 vocab_size = 6 # number of possible values for each element of the UIO 
-max_iters = 2000
+max_iters = 4000
 eval_interval = 100
-learning_rate = 1e-2
+learning_rate = 1e-3
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
+print("device:", device)
 eval_iters = 100
 n_embd = 64
 n_head = 4
