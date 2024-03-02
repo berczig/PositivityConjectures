@@ -3,3 +3,4 @@ best_*.txt
 saves/*
 *.txt
 .idea/*
+*.DS_Store
