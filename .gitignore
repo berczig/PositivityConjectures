@@ -1,6 +1,5 @@
-__pycache__/*
+__pycache__/
 best_*.txt
 saves/*
 *.txt
 .idea/*
-
