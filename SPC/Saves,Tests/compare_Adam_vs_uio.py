@@ -1,5 +1,5 @@
-import Adam
-import uio
+import SPC.CorrectSeq.AdamGurobi
+import SPC.UIOs.uionew
 import numpy as np
 from itertools import permutations, combinations
 

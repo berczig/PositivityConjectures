@@ -19,7 +19,6 @@ import numpy as np
 import matplotlib.pyplot as plt 
 import sys
 import time 
-import stanley_crossentropy
 
 INCOMPARABLE = 0
 LE = 1
