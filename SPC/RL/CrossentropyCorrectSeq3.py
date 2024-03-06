@@ -71,9 +71,9 @@ observation_space = MYN + EDGES #Leave this at 2*MYN. The input vector will have
 len_game = EDGES 
 state_dim = (observation_space,)
 
-load_cores_file = "saves/coreTypes_l={}_k={}_p={}_ignore=100.bin".format(l,k,p)
-load_model_file = "Master42example" #"saves/170uio2ORs" # "saves/190uio" # "saves/150"
-save_model_file = "Master42example"#"saves/170uio2ORs"
+load_cores_file = "" #"saves/coreTypes_l={}_k={}_p={}_ignore=100.bin".format(l,k,p)
+load_model_file = "" # "Master42example" #"saves/170uio2ORs" # "saves/190uio" # "saves/150"
+save_model_file = "" # "Master42example"#"saves/170uio2ORs"
 reduce_uio = 0
 
 # got  150 uios down to score=0 in 2 steps (300 graphs, 0.1 learning rate)

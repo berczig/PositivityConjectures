@@ -426,7 +426,6 @@ class UIO:
                     points.extend([insertions[0],insertions[1]])
             #if verbose:
             #    print(u,v, self.coreIsGood(core, n, k, np.lcm(n,k)), core)
-            #print(points)
             cores.append(points)
         return cores            
 
@@ -747,8 +746,6 @@ class ConditionEvaluator(Loadable): #CE for both correct sequences and eschers
             print("evaluate Condition_matrix:", Condition_matrix)
         score = 0 # bigger is better, negative
 
-        print("Condition_matrix:", Condition_matrix, Condition_matrix.shape)
-
         # Condition_matrix is not so straight to the point when one wants to check the conditions, so let's prune it a bit so it's easier to do the checking
         Conditions = [[(i, edgecondition) for i, edgecondition in enumerate(conditionrow) if edgecondition != self.ignoreEdge] 
                     for conditionrow in Condition_matrix]
@@ -1000,8 +997,8 @@ def eschertest():
         
 
 def eschercoretest():
-    n = 3
-    k = 2
+    n = 5
+    k = 3
     N = n+k
     lcm = np.lcm(n,k)
     A = generate_all_uios(N)
@@ -1024,22 +1021,23 @@ def eschercoretest():
         cores = uio.getEschersCores(n,k, verbose=False)
         uio.computelkCorrectSequences(n,k)
         truecoef = uio.getCoefficient()
-        #goods = 0
-        #for core in cores:
-        #    isgood = uio.coreIsGood(core, n, k, lcm)
-        #    #print(core, isgood)
-        #    if isgood:
-        #        goods += 1
-        #if goods != truecoef:
-        #    print("uio:", uio_encod, "conjecture coef:", goods, "true coef:", truecoef,"eschers:", len(cores))
-        #    print("diff")
-        #    print("conjecture:", goods, "true:", truecoef,"eschers:", len(cores), uio_encod)
-        print("Cores:", cores, "true coeff:", truecoef)
+        goods = 0
+        for core in cores:
+            isgood = uio.coreIsGood(core, n, k, lcm)
+            #print(core, isgood)
+            if isgood:
+                goods += 1
+        if goods != truecoef:
+            print("uio:", uio_encod, "conjecture coef:", goods, "true coef:", truecoef,"eschers:", len(cores))
+            print("diff")
+            print("conjecture:", goods, "true:", truecoef,"eschers:", len(cores), uio_encod)
+        
+        #print("conjectured coeff:", goods, "true coeff:", truecoef)
 
 if __name__ == "__main__":
     #testsave()
     #testload()
     #testCountCategories()
     #inspectStatesFromFile("best_species_txt_763.txt", 15, 7)
-    #checkThmConditionMatrix()
-    eschercoretest()
+    checkThmConditionMatrix()
+    #eschercoretest()
