@@ -746,6 +746,8 @@ class ConditionEvaluator(Loadable): #CE for both correct sequences and eschers
             print("evaluate Condition_matrix:", Condition_matrix)
         score = 0 # bigger is better, negative
 
+        print("Condition_matrix:", Condition_matrix, Condition_matrix.shape)
+
         # Condition_matrix is not so straight to the point when one wants to check the conditions, so let's prune it a bit so it's easier to do the checking
         Conditions = [[(i, edgecondition) for i, edgecondition in enumerate(conditionrow) if edgecondition != self.ignoreEdge] 
                     for conditionrow in Condition_matrix]

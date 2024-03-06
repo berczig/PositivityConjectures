@@ -21,7 +21,7 @@ from datetime import datetime
 #This file is a modification of the CrossentropyCorrectSeq.py file. 
 #We use a graph crossentropy RL method to learn condition graphs for (l,k,p) Eschers.
 #The count of Escher triples satisfying the conditions encoded by this graph is the Stanley coefficient (l,k,p)
-l = 3
+l = 4
 k = 2
 p = 1
 NumCritPoints = 3+3+2  #pairwise insertion points, pairwise splitting points, n=l+k+p and n+l+k+p. 
@@ -54,9 +54,9 @@ observation_space = MYN + EDGES #Leave this at 2*MYN. The input vector will have
 len_game = EDGES 
 state_dim = (observation_space,)
 
-load_cores_file = "saves/coreTypes_l={}_k={}_p={}_ignore=100.bin".format(l,k,p)
-load_model_file = "Master42example" #"saves/170uio2ORs" # "saves/190uio" # "saves/150"
-save_model_file = "Master42example"#"saves/170uio2ORs"
+load_cores_file = "" # "spc/Saves,Tests/coreTypes_l={}_k={}_p={}_ignore=100.bin".format(l,k,p)
+load_model_file = "" # "spc/Saves,Tests/Master42example" #"saves/170uio2ORs" # "saves/190uio" # "saves/150"
+save_model_file = "spc/Saves,Tests/NewStructureFirstTest"#"saves/170uio2ORs"
 reduce_uio = 0
 
 # got  150 uios down to score=0 in 2 steps (300 graphs, 0.1 learning rate)
@@ -71,6 +71,7 @@ INF = 1000000
 
 def convertStateToConditionMatrix(state):
 	# state is of length MYN
+	print("state:", state.shape)
 	graph = np.ones((NUMBER_OF_ORS, EDGES))*UIO.INCOMPARABLE
 	for step in range(EDGES):
 		actionvector = state[ALPHABET_SIZE*step:ALPHABET_SIZE*(step+1)]
@@ -83,6 +84,7 @@ def convertStateToConditionMatrix(state):
 			if row != 0:
 				edge -= 3*row
 			graph[row][step] = edge + UIO.INCOMPARABLE
+	print("graph:", graph.shape)
 	return graph
 
 def calcScore(state):
@@ -92,7 +94,7 @@ def calcScore(state):
 	if key_state in all_scores:
 		return all_scores[key_state]
 	else:
-		new_score = CE.evaluateEscher(convertStateToConditionMatrix(state), False) 
+		new_score = CE.evaluate(convertStateToConditionMatrix(state), False) 
 		all_scores[key_state] = new_score
 		return new_score
 
