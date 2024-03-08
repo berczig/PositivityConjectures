@@ -935,8 +935,8 @@ def inspectStatesFromFile(file, edges, edgetypes):
                 vectoraction = eval(line.replace(" ", ",")) #convert black spaces to commas. Evaluate this string as python list
                 state += vectoraction
             print(15*"-")
-            import stanley_crossentropy # pickle problem mixed with circular problem
-            condmat = stanley_crossentropy.convertStateToConditionMatrix(state)
+            import SPC.RL.CrossentropyCorrectSeq3 # pickle problem mixed with circular problem
+            condmat = SPC.RL.CrossentropyCorrectSeq3.convertStateToConditionMatrix(state)
             conditiontext = CE.convertConditionMatrixToText(condmat)
             print(conditiontext, "\nhas a score of ", CE.evaluate(condmat))
             
