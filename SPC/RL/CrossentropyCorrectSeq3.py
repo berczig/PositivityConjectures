@@ -33,7 +33,7 @@ import os
 import matplotlib.pyplot as plt
 import sys
 from SPC.UIOs.uionew import UIO, ConditionEvaluator, UIODataExtractor
-from SPC.Transformers.extra import PartiallyLoadable
+from SPC.misc.extra import PartiallyLoadable
 from datetime import datetime
 
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE" # fix to omp: error #15 on my laptop
