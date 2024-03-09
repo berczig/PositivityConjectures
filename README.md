@@ -5,4 +5,5 @@ To support sibling imports the project should be installed as a package. To inst
 ```
 pip install -e .
 ```
-[pyproject.toml](classes.png)
+
+![alt text](https://github.com/berczig/PositivityConjectures/blob/main/classes.png?raw=true)
