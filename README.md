@@ -5,3 +5,4 @@ To support sibling imports the project should be installed as a package. To inst
 ```
 pip install -e .
 ```
+[pyproject.toml](pyprojecta.toml) and run
