@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="m4iZLZSd3TawRkGSkgre" name="Page-1">
-        <mxGraphModel dx="3467" dy="2340" grid="0" gridSize="31" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#737373" math="0" shadow="0">
+        <mxGraphModel dx="1224" dy="826" grid="0" gridSize="31" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#737373" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -173,7 +173,7 @@
                 <mxCell id="171" value="CoreFilter2" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=none;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;html=1;fontFamily=Verdana;fontSize=20;" vertex="1" parent="45">
                     <mxGeometry x="403" y="655" width="218" height="70" as="geometry"/>
                 </mxCell>
-                <mxCell id="172" value="&lt;font style=&quot;font-size: 12px;&quot;&gt;First idea to filter a core&lt;br&gt;&lt;/font&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Verdana;fontSize=20;" vertex="1" parent="171">
+                <mxCell id="172" value="&lt;font style=&quot;font-size: 12px;&quot;&gt;Second idea to filter a core&lt;br&gt;&lt;/font&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontFamily=Verdana;fontSize=20;" vertex="1" parent="171">
                     <mxGeometry y="26" width="218" height="44" as="geometry"/>
                 </mxCell>
                 <mxCell id="173" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;fontSize=12;" edge="1" parent="45" source="164" target="157">
