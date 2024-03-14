@@ -405,12 +405,13 @@ class UIO:
         return (insertions, subeschers)
         #return (self.getInsertionPoints(u, v, lcm), self.getvalidsubescherstartingpoints(uu, k))
 
-    def getEschersCores(self, n, k, verbose=False):
-        cores = []
+    def getEschersCores(self, n, k, verbose=False): #The cores based on the Szenes-Rok paper are the insertion and splitting points of Escher pairs
+        self.cores = []
         for v in [n,k]:
             if v not in self.eschers:
                 self.computeeschers(v)
         points = [n,n+k]
+        self.getEscherPairs(n,k)
         for u,v in self.pairs:
         #for u in self.eschers[n]:
             #for v in self.eschers[k]:
@@ -418,7 +419,7 @@ class UIO:
             insertions, escherstartpoints = core
             points.append(escherstartpoints[0]+k-1)
             if len(insertions) == 0:
-                points.extend([n+k+1,n+k+1])
+                points.extend([n+k+1])
             else:
                 if len(insertions) == 1:
                     points.extend([insertions[0],n+k+1])
@@ -426,8 +427,8 @@ class UIO:
                     points.extend([insertions[0],insertions[1]])
             #if verbose:
             #    print(u,v, self.coreIsGood(core, n, k, np.lcm(n,k)), core)
-            cores.append(points)
-        return cores            
+            self.cores.append(points)
+                  
 
     def coreIsGood(self, core, n, k, lcm):
         # G_i i'th insertion points, Y1 = n, Y2 = n+k, R = right endpoint of left most subescher ( indexing starting at 1)
@@ -996,8 +997,8 @@ def eschertest():
             print("#"*200, dif)"""
         
 
-def eschercoretest():
-    n = 5
+def eschercoretest1():
+    n = 4
     k = 3
     N = n+k
     lcm = np.lcm(n,k)
@@ -1033,11 +1034,24 @@ def eschercoretest():
             print("conjecture:", goods, "true:", truecoef,"eschers:", len(cores), uio_encod)
         
         #print("conjectured coeff:", goods, "true coeff:", truecoef)
+def eschercoretest2():
+    n = 2
+    k = 1
+    N = n+k
+    lcm = np.lcm(n,k)
+    A = generate_all_uios(N)
+    for uio_encod in A:
+        uio = UIO(uio_encod)
+        t = time.time()
+        uio.getEschersCores(n,k)
+        print(uio_encod, ":",uio.cores,"\n")
+        #cores = uio.getEschersCores(n,k, verbose=False)
+        
 
 if __name__ == "__main__":
     #testsave()
     #testload()
     #testCountCategories()
     #inspectStatesFromFile("best_species_txt_763.txt", 15, 7)
-    checkThmConditionMatrix()
-    #eschercoretest()
+    #checkThmConditionMatrix()
+    eschercoretest2()
