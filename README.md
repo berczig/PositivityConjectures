@@ -9,3 +9,6 @@ Make sure you have flit installed.
 
 Overview of the classes:
 ![alt text](https://github.com/berczig/PositivityConjectures/blob/main/classes.png?raw=true)
+
+Overview:
+![alt text](https://github.com/berczig/PositivityConjectures/blob/main/overview.png?raw=true)
