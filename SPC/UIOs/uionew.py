@@ -407,17 +407,21 @@ class UIO:
 
     def getEschersCores(self, n, k, verbose=False): #The cores based on the Szenes-Rok paper are the insertion and splitting points of Escher pairs
         self.cores = []
-        for v in [n,k]:
-            if v not in self.eschers:
-                self.computeeschers(v)
-        points = [n,n+k]
+        #for v in [n,k]:
+        #    if v not in self.eschers:
+        #        self.computeeschers(v)
         self.getEscherPairs(n,k)
         for u,v in self.pairs:
-        #for u in self.eschers[n]:
+            points = [n,n+k]
+            #for u in self.eschers[n]:
             #for v in self.eschers[k]:
             core = self.getEscherCore(u,v)
             insertions, escherstartpoints = core
+            if escherstartpoints == []:
+                print("Problem with core:",self.encoding,u,v,core)
+            #print(u,v, "insertions:", insertions, "escherstartpoints:", escherstartpoints)
             points.append(escherstartpoints[0]+k-1)
+            #print(points)
             if len(insertions) == 0:
                 points.extend([n+k+1])
             else:
@@ -425,9 +429,11 @@ class UIO:
                     points.extend([insertions[0],n+k+1])
                 else:
                     points.extend([insertions[0],insertions[1]])
+            #print(points)
             #if verbose:
             #    print(u,v, self.coreIsGood(core, n, k, np.lcm(n,k)), core)
-            self.cores.append(points)
+            if points not in self.cores:
+                self.cores.append(points)
                   
 
     def coreIsGood(self, core, n, k, lcm):
@@ -1035,14 +1041,15 @@ def eschercoretest1():
         
         #print("conjectured coeff:", goods, "true coeff:", truecoef)
 def eschercoretest2():
-    n = 2
-    k = 1
+    n = 4
+    k = 2
     N = n+k
     lcm = np.lcm(n,k)
     A = generate_all_uios(N)
     for uio_encod in A:
         uio = UIO(uio_encod)
         t = time.time()
+        uio_to_graph(uio_encod)
         uio.getEschersCores(n,k)
         print(uio_encod, ":",uio.cores,"\n")
         #cores = uio.getEschersCores(n,k, verbose=False)
