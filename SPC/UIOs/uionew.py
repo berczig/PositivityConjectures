@@ -410,10 +410,11 @@ class UIO:
         #for v in [n,k]:
         #    if v not in self.eschers:
         #        self.computeeschers(v)
+        points = [n,n+k]
         self.getEscherPairs(n,k)
         for u,v in self.pairs:
             points = [n,n+k]
-            #for u in self.eschers[n]:
+        #for u in self.eschers[n]:
             #for v in self.eschers[k]:
             core = self.getEscherCore(u,v)
             insertions, escherstartpoints = core
@@ -1040,15 +1041,14 @@ def eschercoretest1():
         
         #print("conjectured coeff:", goods, "true coeff:", truecoef)
 def eschercoretest2():
-    n = 4
-    k = 2
+    n = 2
+    k = 1
     N = n+k
     lcm = np.lcm(n,k)
     A = generate_all_uios(N)
     for uio_encod in A:
         uio = UIO(uio_encod)
         t = time.time()
-        uio_to_graph(uio_encod)
         uio.getEschersCores(n,k)
         print(uio_encod, ":",uio.cores,"\n")
         #cores = uio.getEschersCores(n,k, verbose=False)
