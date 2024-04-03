@@ -29,7 +29,7 @@ class UIODataExtractor:
     def getCorrectSequenceCores(self, partition):
         if len(partition) == 2:
             GEN = CorrectSequenceCoreGenerator(self.uio, partition)
-            return [GEN.generateCore(corseq) for corseq in self.CorrectSequences[partition]]
+            return [GEN.generateCore(corseq) for corseq in self.getCorrectSequences(partition)]
         
     @lru_cache(maxsize=None)
     def getCorrectSequenceCoreRepresentations(self, partition):
