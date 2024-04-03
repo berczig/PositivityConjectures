@@ -62,6 +62,10 @@ class UIO:
     
     def intervalIsToTheRight(self, i, j):
         return self.comparison_matrix[i, j] == UIO.GREATER
+    
+    def toPosetData(self, seq):
+        k = len(seq)
+        return tuple([self.comparison_matrix[seq[i], seq[j]] for i in range(1, k) for j in range(i+1, k)])
 
     ### SUB-UIO ###
 

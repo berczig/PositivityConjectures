@@ -30,6 +30,12 @@ class UIODataExtractor:
         if len(partition) == 2:
             GEN = CorrectSequenceCoreGenerator(self.uio, partition)
             return [GEN.generateCore(corseq) for corseq in self.CorrectSequences[partition]]
+        
+    @lru_cache(maxsize=None)
+    def getCorrectSequenceCoreRepresentations(self, partition):
+        if len(partition) == 2:
+            return [self.uio.toPosetData(core) for core in self.getCorrectSequenceCores(partition)]
+
 
     @lru_cache(maxsize=None)
     def getEschers(self, partition):
