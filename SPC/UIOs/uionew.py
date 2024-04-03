@@ -429,7 +429,6 @@ class UIO:
                     points.extend([insertions[0],n+k+1])
                 else:
                     points.extend([insertions[0],insertions[1]])
-            #print(points)
             #if verbose:
             #    print(u,v, self.coreIsGood(core, n, k, np.lcm(n,k)), core)
             if points not in self.cores:
