@@ -55,8 +55,8 @@ class UIODataExtractor:
 
     def getCoefficient(self, partition):
         if len(partition) == 1:
-            return len(self.getCorrectSequences[partition])
+            return len(self.getCorrectSequences(partition))
 
         elif len(partition) == 2:
-            return len(self.getCorrectSequences[partition]) - len(self.getCorrectSequences[(self.uio.N,)])
+            return len(self.getCorrectSequences(partition)) - len(self.getCorrectSequences((self.uio.N,)))
 
