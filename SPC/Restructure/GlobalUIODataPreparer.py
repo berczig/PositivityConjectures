@@ -1,15 +1,20 @@
 from SPC.Restructure.UIODataExtractor import UIODataExtractor
 from SPC.Restructure.UIO import UIO
+from SPC.misc.extra import PartiallyLoadable
 
-class GlobalUIODataPreparer:
+class GlobalUIODataPreparer(PartiallyLoadable):
 
     def __init__(self, n):
+        super().__init__(["coreRepresentationsCategorizer", "coefficients"])
         self.n = n
         self.coreRepresentationsCategorizer = {} # {coreRepresentation1:{UIOID1:occurences_in_UIOID1, UIOID2:occurences_in_UIOID2}}
-        encodings = self.generate_all_uio_encodings(n)
+        self.coefficients = [] # list of all coefficients (for the partition given to getTrainingData)
+
+    def initUIOs(self):
+        encodings = self.generate_all_uio_encodings(self.n)
         self.extractors = [UIODataExtractor(UIO(enc)) for enc in encodings]
 
-    def getTrainingData(self, partition:tuple) -> tuple:
+    def computeTrainingData(self, partition:tuple) -> tuple:
         """
         :return: (X,y) the training data. Where X is a dict with the keys being coreRepresentations, and 
         the values being a dict describing the occurences in each UIO. 
@@ -21,9 +26,21 @@ class GlobalUIODataPreparer:
         
         y is a list with the coefficient of each UIO.
         """
+        # uios initialized?
+        if not hasattr(self, "extractors"):
+            self.initUIOs()
+        # count correps and compute coefficients
         self.countCoreRepresentations(partition)
-        return self.coreRepresentationsCategorizer, [extractor.getCoefficient(partition) for extractor in self.extractors]
-
+        self.coefficients = [extractor.getCoefficient(partition) for extractor in self.extractors]
+        return self.coreRepresentationsCategorizer, self.coefficients
+    
+    def loadTrainingData(self, filepath:str) -> tuple:
+        self.load(filepath)
+        return self.coreRepresentationsCategorizer, self.coefficients
+    
+    def saveTrainingData(self, filepath:str) -> None:
+        self.save(filepath)
+    
     def getAllCorrectSequenceCoreRepresentations(self, partition):
         return [extractor.getCorrectSequenceCoreRepresentations(partition) for extractor in self.extractors]
 
@@ -74,10 +91,12 @@ class GlobalUIODataPreparer:
 
         print("Found",len(self.coreRepresentationsCategorizer), "distinct core representations / categories")
 
-
 if __name__ == "__main__":
-    Predictor = GlobalUIODataPreparer(6)
-    X,y = Predictor.getTrainingData((4,2))
-    for key in X:
-        print(key, Predictor.coreRepresentationsCategorizer[key])
+    Preparer = GlobalUIODataPreparer(6)
+    print("here")
+    # X,y = Preparer.computeTrainingData((4,2))
+    X,y = Preparer.loadTrainingData("SPC/Saves,Tests/Preparersavetest.bin")
+    #for key in X:
+        #print(key, Preparer.coreRepresentationsCategorizer[key])
     print(y)
+    Preparer.saveTrainingData("SPC/Saves,Tests/Preparersavetest.bin")
