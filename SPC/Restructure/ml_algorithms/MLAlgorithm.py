@@ -1,7 +1,7 @@
 class MLAlgorithm:
     def setTrainingData(self,X,y):
         pass
-    def train(self, iterations):
+    def train(self, model, iterations):
         pass
-    def predict(self, input):
+    def predict(self, model, input):
         pass

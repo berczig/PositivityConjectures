@@ -32,10 +32,11 @@ class GlobalUIODataPreparer(PartiallyLoadable):
         # count correps and compute coefficients
         self.countCoreRepresentations(partition)
         self.coefficients = [extractor.getCoefficient(partition) for extractor in self.extractors]
-        return self.coreRepresentationsCategorizer, self.coefficients
     
     def loadTrainingData(self, filepath:str) -> tuple:
         self.load(filepath)
+
+    def getTrainingData(self):
         return self.coreRepresentationsCategorizer, self.coefficients
     
     def saveTrainingData(self, filepath:str) -> None:
