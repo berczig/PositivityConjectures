@@ -1,5 +1,5 @@
-from SPC.Restructure.CorrectSequenceCoreGenerator import CorrectSequenceCoreGenerator
-from SPC.Restructure.EscherCoreGenerator import EscherCoreGenerator
+from SPC.Restructure.cores.CorrectSequenceCoreGenerator import CorrectSequenceCoreGenerator
+from SPC.Restructure.cores.EscherCoreGenerator import EscherCoreGenerator
 from SPC.Restructure.UIO import UIO
 from SPC.misc.misc import *
 

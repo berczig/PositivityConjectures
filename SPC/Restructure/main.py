@@ -1,6 +1,10 @@
+import importlib
 from SPC.Restructure.GlobalUIODataPreparer import GlobalUIODataPreparer
 from SPC.Restructure.ModelLogger import ModelLogger
-from SPC.Restructure.MLAlgorithm import MLAlgorithm
+from SPC.Restructure.ml_algorithms.MLAlgorithm import MLAlgorithm
+from SPC.Restructure.ml_algorithms.RLAlgorithm import RLAlgorithm
+from SPC.Restructure.ml_models.MLModel import MLModel
+from SPC.Restructure.ml_models.RLNNModel import RLNNModel
 
 
 if __name__ == "__main__":
@@ -19,6 +23,7 @@ if __name__ == "__main__":
 
 
     # 1) get Training Data
+    print("main - step 1 - get data")
     Preparer = GlobalUIODataPreparer(uio_length)
     if training_data_load_path != "":
         Preparer.loadTrainingData(training_data_load_path)
@@ -31,23 +36,29 @@ if __name__ == "__main__":
 
 
     # 2) get Model
+    print("main - step 2 - get model")
     modelLogger = ModelLogger()
+    model : MLModel
     if model_load_path != "":
         modelLogger.load_model_logger(model_load_path)
         model = modelLogger.get_model()
     else:
-        model = exec(ml_model_type+"()")
+        class_ = getattr(importlib.import_module("SPC.Restructure.ml_models."+ml_model_type), ml_model_type)
+        model = class_()
         modelLogger.set_model(model)
 
 
     # 3) train
+    print("main - step 3 - train")
     algorithm : MLAlgorithm
-    algorithm = exec(ml_training_algorithm_type+"()")
-    algorithm.setTrainingData(Preparer.getTrainingData())
-    algorithm.train(model, iteration_steps)
+    class_ = getattr(importlib.import_module("SPC.Restructure.ml_algorithms."+ml_training_algorithm_type), ml_training_algorithm_type)
+    algorithm = class_(modelLogger)
+    algorithm.setTrainingData(*Preparer.getTrainingData())
+    algorithm.train(iteration_steps)
 
 
     # 4) save model
+    print("main - step 4 - save model")
     if model_save_path != "":
         modelLogger.save_model_logger(model_save_path)
 
