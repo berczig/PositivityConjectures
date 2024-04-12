@@ -362,11 +362,12 @@ class UIO:
         #print("found {} insertion points between {} and {}".format(len(points),u,v))
         return points
 
-    def getEscherPairs(self, n,k):
+    def getEscherPairs(self,n,k):
         self.pairs = []
         for seq in getPermutationsOfN(n+k):
             if self.isescher(seq[:n]) and self.isescher(seq[n:]):
                 self.pairs.append((seq[:n], seq[n:]))
+        return self.pairs
         #print("escher pairs:", len(self.pairs))
 
     def cyclicslice(self, tuple, start, end): # end exclusive
@@ -380,7 +381,7 @@ class UIO:
             return tuple
         return tuple[start:]+tuple[:end]
                 
-    def getEscherCore(self, u, v): # u is length n
+    def getInsertionsSubeshers(self, u, v): # u is length n, v is length k
         n = len(u)
         k = len(v)
         lcm = np.lcm(n, k)
@@ -407,32 +408,32 @@ class UIO:
 
     def getEschersCores(self, n, k, verbose=False): #The cores based on the Szenes-Rok paper are the insertion and splitting points of Escher pairs
         self.cores = []
+        self.insertionfreepairs = []
         #for v in [n,k]:
         #    if v not in self.eschers:
         #        self.computeeschers(v)
-        points = [n,n+k]
         self.getEscherPairs(n,k)
         for u,v in self.pairs:
-            points = [n,n+k]
-        #for u in self.eschers[n]:
-            #for v in self.eschers[k]:
-            core = self.getEscherCore(u,v)
+            core = self.getInsertionsSubeshers(u,v)
             insertions, escherstartpoints = core
-            if escherstartpoints == []:
-                print("Problem with core:",self.encoding,u,v,core)
-            #print(u,v, "insertions:", insertions, "escherstartpoints:", escherstartpoints)
-            points.append(escherstartpoints[0]+k-1)
-            #print(points)
             if len(insertions) == 0:
-                points.extend([n+k+1])
+                self.insertionfreepairs.append([u,v])
+                points = []
+            #if escherstartpoints == []:
+            #    print("Problem with core:",self.encoding,u,v,core)
+            #print(u,v, "insertions:", insertions, "escherstartpoints:", escherstartpoints)
+            #print(points)
             else:
-                if len(insertions) == 1:
-                    points.extend([insertions[0],n+k+1])
+                points = [n,n+k]
+                if len(escherstartpoints) == 0:
+                    points.append(-1)
                 else:
-                    points.extend([insertions[0],insertions[1]])
-            #if verbose:
-            #    print(u,v, self.coreIsGood(core, n, k, np.lcm(n,k)), core)
-            if points not in self.cores:
+                    points.append(escherstartpoints[0]+k-1)
+                if len(insertions) == 1:
+                    points.extend([insertions[0]+0.5,2*(n+k)]) # here 2(n+k)>n+k, but any such number will be fine
+                else:
+                    points.extend([insertions[0]+0.5,insertions[1]+0.5])
+            if points != [] and points not in self.cores:
                 self.cores.append(points)
                   
 
@@ -494,7 +495,7 @@ class UIO:
 
     ### GRAPH REPRESENTATIONS(TUPLE OF EDGES) OF ESCHER CORE ####    
         
-    def getCoreRepresentationsEscher(self): #Cores are insertion and splitting points of Escher pairs
+    def getCoreRepresentationsEscher(self): #Cores are length 5 vectors: (n,n+k,subescherendingpoint,insertion1,insertion2) 
         representations = []
         for core in self.cores:
             k = len(core)
@@ -512,8 +513,8 @@ class UIO:
 
     ### COEFFICIENT BY ESCHER ####
 
-    def getCoeffientByEscher(self):
-        return len(self.getEscherPairs((self.l,self.k))) - len(self.getEscherPairs((self.n,0)))
+    def getCoefficientByEscher(self,l,k):
+        return len(self.getEscherPairs(l,k)) - len(self.getEscherPairs(l+k,0))
 
 
 class UIODataExtractor:
@@ -652,7 +653,8 @@ class UIODataExtractorEscher:
 
             # step 4.1 - generate the coreTypes from the cores (The core is independent of the comparison matrix from its UIO) 
             self.coreTypesRaw.append(uio.getCoreRepresentationsEscher())
-            self.trueCoefficients.append(uio.getCoefficientbyEscher())
+            uio.computelkCorrectSequences(self.l,self.k)
+            self.trueCoefficients.append(uio.getCoefficient())
         self.trueCoefficients = np.array(self.trueCoefficients)
         #print("Generated (l,k) Escher pairs :", sum([uio.lkCorrectSequences_n[(self.l, self.k)] for uio in self.uios]))
 
@@ -709,7 +711,7 @@ class ConditionEvaluator(Loadable): #CE for both correct sequences and eschers
         if uiodataextractor == UIODataExtractor:
             self.corelength = 2 + 2*p +k
         if uiodataextractor == UIODataExtractorEscher:
-            self.corelength = 6
+            self.corelength = 5
         self.ignoreEdge = ignoreEdge        
 
         # Compute UIO length
@@ -1041,8 +1043,8 @@ def eschercoretest1():
         
         #print("conjectured coeff:", goods, "true coeff:", truecoef)
 def eschercoretest2():
-    n = 2
-    k = 1
+    n = 4
+    k = 3
     N = n+k
     lcm = np.lcm(n,k)
     A = generate_all_uios(N)
@@ -1050,7 +1052,8 @@ def eschercoretest2():
         uio = UIO(uio_encod)
         t = time.time()
         uio.getEschersCores(n,k)
-        print(uio_encod, ":",uio.cores,"\n")
+        print("UIO:",uio_encod,"\n","Number of escher pairs:",len(uio.pairs),"\n:Cores ",uio.cores,"\n")
+        print("Insertion free pairs:", uio.insertionfreepairs)
         #cores = uio.getEschersCores(n,k, verbose=False)
         
 

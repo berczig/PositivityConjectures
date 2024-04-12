@@ -3,13 +3,14 @@ import os
 import torch.nn as nn
 from torch.nn import functional as F
 from UIODataGenerator import getUIOTrainingVectors
+import matplotlib.pyplot as plt
 import random
 
 # hyperparameters
 batch_size = 16 # how many independent sequences will we processed in parallel?
 block_size = 6 # length of the UIO
 vocab_size = 6 # number of possible values for each element of the UIO 
-max_iters = 4000
+max_iters = 2000
 eval_interval = 100
 learning_rate = 1e-3
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -267,5 +268,19 @@ with torch.no_grad():  # Disable gradient calculation
     xb, yb = get_batch('val')       
     logits, loss = model(xb,yb)  # Get the model's predictions
     paired = list(zip(logits.tolist(),yb.tolist()))
+
+    x_coords = []
+    y_coords = []
+
     for pair in paired:
         print('Predicted:', pair[0], 'Real value:', pair[1])
+        x_coords.append(pair[0])
+        y_coords.append(pair[1])
+
+    # Plot the points
+    plt.scatter(x_coords, y_coords)
+    plt.xlabel('Predicted')
+    plt.ylabel('Real value')
+    plt.show()
+    #for pair in paired:
+    #    print('Predicted:', pair[0], 'Real value:', pair[1])
