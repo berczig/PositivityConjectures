@@ -1,9 +1,21 @@
+from SPC.Restructure.ModelLogger import ModelLogger
+
 class MLAlgorithm:
-    def __init__(self, model_logger):
+
+    def __init__(self, model_logger:ModelLogger):
         self.model_logger = model_logger
+
     def setTrainingData(self,X,y):
+        self.trainingdata_input = X
+        self.trainingdata_output = y
+
+    def train(self, iterations, model_save_path="", model_save_time=0):
         pass
-    def train(self, iterations):
-        pass
+
     def predict(self, input):
         pass
+
+    # Changes from previous version before restructure:
+    # DataSaver class -> ModelLogger class
+    # ConditionEvaluator class ->   { FilterEvaluator class (evaluation features)
+    #                               { GlobalUIODataPreparere class (collecting cores)

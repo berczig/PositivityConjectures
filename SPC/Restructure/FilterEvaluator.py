@@ -1,9 +1,13 @@
 import numpy as np
+from SPC.Restructure.UIO import UIO
 
 class FilterEvaluator: 
 
-    def __init__(self, coreRepresentationsCategorizer, true_coefficients):
-        self.coreRepresentationsCategorizer = coreRepresentationsCategorizer
+    def __init__(self, coreRepresentationsCategorizer:dict, true_coefficients):
+        """
+        coreRepresentationsCategorizer: {coreRepresentation1:{UIOID1:occurences_in_UIOID1, UIOID2:occurences_in_UIOID2}, ...}
+        """
+        self.coreRepresentationsCategorizer = coreRepresentationsCategorizer # {coreRepresentation1:{UIOID1:occurences_in_UIOID1, UIOID2:occurences_in_UIOID2}}
         self.true_coefficients = true_coefficients
 
     def coreFitsConditions(self, correp, Conditions): # ANDs conditions in row together
@@ -42,7 +46,7 @@ class FilterEvaluator:
                 return -np.inf
         return -sum(difference)
     
-    def convertConditionMatrixToText(self, Condition_matrix):
+    def convertConditionMatrixToText(self, ignoreEdge, Condition_matrix):
         print("shape:", Condition_matrix.shape)
         rows, columns = Condition_matrix.shape
         rowtexts = []

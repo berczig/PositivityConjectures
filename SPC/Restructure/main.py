@@ -15,52 +15,61 @@ if __name__ == "__main__":
     training_data_load_path = ""
     training_data_save_path = ""
     model_load_path = ""
-    model_save_path = ""
+    model_save_path = "testsave.keras"
+    model_save_time = 300 # how many seconds have to have elapsed before saving
     ml_training_algorithm_type = "RLAlgorithm" # exact name of the algorithm python class
     ml_model_type = "RLNNModel" # exact name of the model python class. The model is the component that contains the weights and perform computations, but the algorithm decides how the model is used
-    iteration_steps = 100
+    iteration_steps = 5
 
 
 
     # 1) get Training Data
-    print("main - step 1 - get data")
+    print("[main - step 1 - get data]")
     Preparer = GlobalUIODataPreparer(uio_length)
     if training_data_load_path != "":
+        print("loading training data...")
         Preparer.loadTrainingData(training_data_load_path)
     else:
+        print("computing training data...")
         Preparer.computeTrainingData(partition)
 
     # save Training data?
     if training_data_save_path != "":
+        print("saving training data...")
         Preparer.saveTrainingData(training_data_save_path)
 
 
     # 2) get Model
-    print("main - step 2 - get model")
+    print("[main - step 2 - get model]")
     modelLogger = ModelLogger()
     model : MLModel
     if model_load_path != "":
+        print("loading model...")
         modelLogger.load_model_logger(model_load_path)
         model = modelLogger.get_model()
     else:
+        print("creating new model...")
         class_ = getattr(importlib.import_module("SPC.Restructure.ml_models."+ml_model_type), ml_model_type)
         model = class_()
         modelLogger.set_model(model)
 
 
     # 3) train
-    print("main - step 3 - train")
+    print("[main - step 3 - train]")
     algorithm : MLAlgorithm
     class_ = getattr(importlib.import_module("SPC.Restructure.ml_algorithms."+ml_training_algorithm_type), ml_training_algorithm_type)
     algorithm = class_(modelLogger)
     algorithm.setTrainingData(*Preparer.getTrainingData())
-    algorithm.train(iteration_steps)
+    algorithm.train(iteration_steps, model_save_path, model_save_time)
 
 
     # 4) save model
-    print("main - step 4 - save model")
+    print("[main - step 4 - save model]")
     if model_save_path != "":
+        print("saving model...")
         modelLogger.save_model_logger(model_save_path)
+    else:
+        print("no model save path provided")
 
 
      
