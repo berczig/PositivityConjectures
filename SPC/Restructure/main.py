@@ -12,14 +12,14 @@ if __name__ == "__main__":
      # parameters
     partition = (4,2)
     uio_length = sum(partition)
-    training_data_load_path = "SPC/Saves,Tests/Trainingdata/partition_4_2.bin"
+    training_data_load_path = "" # "SPC/Saves,Tests/Trainingdata/partition_4_2.bin"
     training_data_save_path = "SPC/Saves,Tests/Trainingdata/partition_4_2.bin"
     model_load_path = "" # "SPC/Saves,Tests/models/newmodel.keras"
-    model_save_path = "SPC/Saves,Tests/models/newmodel.keras"
+    model_save_path = "SPC/Saves,Tests/models/my_newmodel.keras"
     model_save_time = 300 # how many seconds have to have elapsed before saving
     ml_training_algorithm_type = "RLAlgorithm" # exact name of the algorithm python class
     ml_model_type = "RLNNModel" # exact name of the model python class. The model is the component that contains the weights and perform computations, but the algorithm decides how the model is used
-    iteration_steps = 1
+    iteration_steps = 20
     plot_after_training = True
 
 
