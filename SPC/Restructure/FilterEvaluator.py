@@ -3,12 +3,15 @@ from SPC.Restructure.UIO import UIO
 
 class FilterEvaluator: 
 
-    def __init__(self, coreRepresentationsCategorizer:dict, true_coefficients):
+    INF = 9999999999
+
+    def __init__(self, coreRepresentationsCategorizer:dict, true_coefficients, ignore_edge:int):
         """
         coreRepresentationsCategorizer: {coreRepresentation1:{UIOID1:occurences_in_UIOID1, UIOID2:occurences_in_UIOID2}, ...}
         """
         self.coreRepresentationsCategorizer = coreRepresentationsCategorizer # {coreRepresentation1:{UIOID1:occurences_in_UIOID1, UIOID2:occurences_in_UIOID2}}
         self.true_coefficients = true_coefficients
+        self.ignore_edge = ignore_edge
 
     def coreFitsConditions(self, correp, Conditions): # ANDs conditions in row together
         for rowcondition in Conditions:
@@ -22,7 +25,7 @@ class FilterEvaluator:
         return False
     
 
-    def evaluate(self, filter, ignoreEdge, verbose=False):
+    def evaluate(self, filter, verbose=False):
         # for each uio of length l+k, check how many of its cores comply  with 
         # the Condition_matrix and compare that amount with the true coefficient c_{l,k}
         if verbose:
@@ -30,23 +33,24 @@ class FilterEvaluator:
         score = 0 # bigger is better, negative
 
         # Condition_matrix is not so straight to the point when one wants to check the conditions, so let's prune it a bit so it's easier to do the checking
-        Conditions = [[(i, edgecondition) for i, edgecondition in enumerate(conditionrow) if edgecondition != ignoreEdge] 
+        Conditions = [[(i, edgecondition) for i, edgecondition in enumerate(conditionrow) if edgecondition != self.ignore_edge] 
                     for conditionrow in filter]
 
-        counted = np.zeros(self.activeuios_n) # the i'th entry is the number of correps associated to the i'th uio that fit the Conditions
-        for primeCoreRep in self.activeCoreTypes:
+        counted = np.zeros(len(self.true_coefficients)) # the i'th entry is the number of correps associated to the i'th uio that fit the Conditions
+        for primeCoreRep in self.coreRepresentationsCategorizer:
             if self.coreFitsConditions(primeCoreRep, Conditions) == True:
-                dict_ = self.activeCoreTypes[primeCoreRep]
+                dict_ = self.coreRepresentationsCategorizer[primeCoreRep]
                 for uioID in dict_:
                     a = dict_[uioID]
                     counted[uioID] += a
-        difference = counted - self.activeTrueCoefficients
+
+        difference = counted - np.array(self.true_coefficients)
         for x in difference:
             if x < 0:
-                return -np.inf
+                return -self.INF
         return -sum(difference)
     
-    def convertConditionMatrixToText(self, ignoreEdge, Condition_matrix):
+    def convertConditionMatrixToText(self, Condition_matrix):
         print("shape:", Condition_matrix.shape)
         rows, columns = Condition_matrix.shape
         rowtexts = []
@@ -58,7 +62,7 @@ class FilterEvaluator:
                 for j in range(i+1, self.corelength):
                     edge = int(Condition_matrix[row][index])
 
-                    if edge != ignoreEdge:
+                    if edge != self.ignore_edge:
                         rowtext.append(chr(aORD+i)+UIO.RELATIONTEXT[edge]+chr(aORD+j))
                     index += 1
             if rowtext:

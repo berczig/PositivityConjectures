@@ -2,8 +2,10 @@ import matplotlib.pyplot as plt
 from SPC.Restructure.FilterEvaluator import FilterEvaluator
 from SPC.misc.extra import PartiallyLoadable
 from SPC.Restructure.ml_models.MLModel import MLModel
+from SPC.Restructure.ml_models.RLNNModel import RLNNModel
 from keras.models import load_model
- 
+from keras.utils import custom_object_scope
+
 class ModelLogger(PartiallyLoadable):
     def __init__(self):
         super().__init__(["step", "all_scores", "bestscore_history", "meanscore_history", "numgraph_history", "calculationtime_history"])
@@ -17,7 +19,7 @@ class ModelLogger(PartiallyLoadable):
 
     def load_model_logger(self, model_path:str):
         assert model_path[len(model_path)-6:] == ".keras", "wrong file format"
-        self.model = load_model(model_path+".keras")
+        self.model = load_model(model_path)
         self.load(model_path[:len(model_path)-6]+".my_meta")
 
     def set_model(self, model):
@@ -30,7 +32,7 @@ class ModelLogger(PartiallyLoadable):
         self.model.save(model_path)
         self.save(model_path[:len(model_path)-6]+".my_meta")
 
-    def make_plots(self, evaluator:FilterEvaluator):
+    def make_plots(self):
         n = len(self.bestscore_history)
         times = list(range(n))
         plt.title("best score ("+str(self.bestscore_history[-1])+")")
@@ -53,7 +55,10 @@ class ModelLogger(PartiallyLoadable):
             if self.all_scores[state] > bestscore:
                 bestscore = self.all_scores[state]
                 beststate = state
-        from SPC.Restructure.ml_algorithms.RLAlgorithm import RLAlgorithm
-        condmat = RLAlgorithm.convertStateToConditionMatrix(beststate)
-        conditiontext = evaluator.convertConditionMatrixToText(condmat)
-        print(conditiontext, "\nhas a score of ", evaluator.evaluate(condmat))
+        print("bestscore:", bestscore, "from", beststate)
+
+        # implement this again(?):
+        #from SPC.Restructure.ml_algorithms.RLAlgorithm import RLAlgorithm
+        #condmat = RLAlgorithm.convertStateToConditionMatrix(beststate)
+        #conditiontext = evaluator.convertConditionMatrixToText(condmat)
+        #print(conditiontext, "\nhas a score of ", evaluator.evaluate(condmat))

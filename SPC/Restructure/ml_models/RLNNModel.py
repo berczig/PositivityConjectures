@@ -2,7 +2,9 @@ from SPC.Restructure.ml_models.MLModel import MLModel
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.optimizers import SGD, Adam
+from keras.utils import register_keras_serializable
 
+@register_keras_serializable()
 class RLNNModel(MLModel):
 
     l = 4
@@ -29,11 +31,14 @@ class RLNNModel(MLModel):
 
     LEARNING_RATE = 0.1 #Increase this to make convergence faster, decrease if the algorithm gets stuck in local optima too often.
 
-    def __init__(self):
+    def __init__(self, name = None):
         super().__init__()
-        self.add(Dense(self.FIRST_LAYER_NEURONS,  activation="relu"))
-        self.add(Dense(self.SECOND_LAYER_NEURONS, activation="relu"))
-        self.add(Dense(self.THIRD_LAYER_NEURONS, activation="relu"))
-        self.add(Dense(self.ALPHABET_SIZE, activation="softmax"))
-        self.build((None, self.observation_space))
-        self.compile(loss="categorical_crossentropy", optimizer=SGD(learning_rate = self.LEARNING_RATE), run_eagerly=True) #Adam optimizer also works well, with lower learning rate
+        if name == None:
+            self.add(Dense(self.FIRST_LAYER_NEURONS,  activation="relu"))
+            self.add(Dense(self.SECOND_LAYER_NEURONS, activation="relu"))
+            self.add(Dense(self.THIRD_LAYER_NEURONS, activation="relu"))
+            self.add(Dense(self.ALPHABET_SIZE, activation="softmax"))
+            self.build((None, self.observation_space))
+            self.compile(loss="categorical_crossentropy", optimizer=SGD(learning_rate = self.LEARNING_RATE), run_eagerly=True) #Adam optimizer also works well, with lower learning rate
+        else:
+            self.name = name

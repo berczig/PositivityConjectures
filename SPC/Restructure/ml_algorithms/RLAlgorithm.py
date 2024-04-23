@@ -31,15 +31,15 @@ class RLAlgorithm(MLAlgorithm):
  
 
     def train(self, iterations, model_save_path="", model_save_time=0):
-        self.FE = FilterEvaluator(self.trainingdata_input, self.trainingdata_output)
+        self.FE = FilterEvaluator(self.trainingdata_input, self.trainingdata_output, UIO.INCOMPARABLE)
 		
         self.model : RLNNModel
         self.model = self.model_logger.get_model()
 
         startstep = self.model_logger.step
+        print("startstep:", startstep)
 
         print("the \"only zero state\" has a reward of", self.calcScore(np.zeros(self.model.observation_space)))
-
 
         super_states =  np.empty((0,self.model.len_game,self.model.observation_space), dtype = int)
         super_actions = np.array([], dtype = int)
@@ -94,6 +94,7 @@ class RLAlgorithm(MLAlgorithm):
             
             tic = time.time()
             
+            print("super_sessions:", len(super_sessions))
             super_states = [super_sessions[i][0] for i in range(len(super_sessions))]
             super_actions = [super_sessions[i][1] for i in range(len(super_sessions))]
             super_rewards = [super_sessions[i][2] for i in range(len(super_sessions))]
@@ -144,6 +145,7 @@ class RLAlgorithm(MLAlgorithm):
                     self.model_logger.save_model_logger(model_save_path)
                     print("done saving at ", datetime.fromtimestamp(time.time()).strftime("%A, %B %d, %Y %I:%M:%S"))
                     next_save_time = time.time() + model_save_time
+        self.model_logger.step += iterations
 
 			
 
@@ -289,6 +291,7 @@ class RLAlgorithm(MLAlgorithm):
         elite_actions = []
         elite_rewards = []
         for i in range(len(states_batch)):
+            #print("i:", i)
             if rewards_batch[i] >= reward_threshold-0.0000001:		
                 if (counter > 0) or (rewards_batch[i] >= reward_threshold+0.0000001):
                     for item in states_batch[i]:

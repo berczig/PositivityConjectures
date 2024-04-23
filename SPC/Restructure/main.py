@@ -12,14 +12,15 @@ if __name__ == "__main__":
      # parameters
     partition = (4,2)
     uio_length = sum(partition)
-    training_data_load_path = ""
-    training_data_save_path = ""
-    model_load_path = ""
-    model_save_path = "testsave.keras"
+    training_data_load_path = "SPC/Saves,Tests/Trainingdata/partition_4_2.bin"
+    training_data_save_path = "SPC/Saves,Tests/Trainingdata/partition_4_2.bin"
+    model_load_path = "" # "SPC/Saves,Tests/models/newmodel.keras"
+    model_save_path = "SPC/Saves,Tests/models/newmodel.keras"
     model_save_time = 300 # how many seconds have to have elapsed before saving
     ml_training_algorithm_type = "RLAlgorithm" # exact name of the algorithm python class
     ml_model_type = "RLNNModel" # exact name of the model python class. The model is the component that contains the weights and perform computations, but the algorithm decides how the model is used
-    iteration_steps = 5
+    iteration_steps = 1
+    plot_after_training = True
 
 
 
@@ -33,10 +34,10 @@ if __name__ == "__main__":
         print("computing training data...")
         Preparer.computeTrainingData(partition)
 
-    # save Training data?
-    if training_data_save_path != "":
-        print("saving training data...")
-        Preparer.saveTrainingData(training_data_save_path)
+        # save Training data?
+        if training_data_save_path != "":
+            print("saving training data...")
+            Preparer.saveTrainingData(training_data_save_path)
 
 
     # 2) get Model
@@ -70,6 +71,10 @@ if __name__ == "__main__":
         modelLogger.save_model_logger(model_save_path)
     else:
         print("no model save path provided")
+
+    # 5) plot
+    if plot_after_training:
+        modelLogger.make_plots()
 
 
      
