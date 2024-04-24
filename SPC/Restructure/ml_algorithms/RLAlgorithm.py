@@ -115,7 +115,7 @@ class RLAlgorithm(MLAlgorithm):
             #uncomment below line to print out how much time each step in this loop takes. 
             print(	"Mean reward: " + str(mean_all_reward) + "\nSessgen: " + str(sessgen_time) + ", other: " + str(randomcomp_time) + ", select1: " + str(select1_time) + ", select2: " + str(select2_time) + ", select3: " + str(select3_time) +  ", fit: " + str(fit_time) + ", score: " + str(score_time)) 
             
-            
+            """
             if (i%20 == 1): #Write all important info to files every 20 iterations
                 with open('best_species_pickle_'+str(myRand)+'.txt', 'wb') as fp:
                     pickle.dump(super_actions, fp)
@@ -135,6 +135,7 @@ class RLAlgorithm(MLAlgorithm):
                 with open('best_species_timeline_txt_'+str(myRand)+'.txt', 'a') as f:
                     f.write(str(super_actions[0]))
                     f.write("\n")
+            """
 
             if model_save_path != "":
                 if time.time() > next_save_time:

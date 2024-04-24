@@ -64,6 +64,7 @@ class GlobalUIODataPreparer(PartiallyLoadable):
         core_rep_categories = {} # coreRepresentation:ID
         counter = {} # corerepID:dict(uioID1:occurrences1, uioID2:occurrences2)
         all_corereps = self.getAllCorrectSequenceCoreRepresentations(partition)
+        print("Found", len(all_corereps), "core representations")
 
         ID = 0
         for uioID, corereps in enumerate(all_corereps):
