@@ -71,7 +71,7 @@ INF = 1000000
 
 def convertStateToConditionMatrix(state):
 	# state is of length MYN
-	print("state:", state.shape)
+	#print("state:", state.shape)
 	graph = np.ones((NUMBER_OF_ORS, EDGES))*UIO.INCOMPARABLE
 	for step in range(EDGES):
 		actionvector = state[ALPHABET_SIZE*step:ALPHABET_SIZE*(step+1)]
@@ -84,7 +84,7 @@ def convertStateToConditionMatrix(state):
 			if row != 0:
 				edge -= 3*row
 			graph[row][step] = edge + UIO.INCOMPARABLE
-	print("graph:", graph.shape)
+	#print("graph:", graph.shape)
 	return graph
 
 def calcScore(state):
@@ -407,7 +407,7 @@ if __name__ == "__main__":
 		DS.calculationtime_history.append(time.time()-tic0)
 		
 		#uncomment below line to print out how much time each step in this loop takes. 
-		print(	"Mean reward: " + str(mean_all_reward) + "\nSessgen: " + str(sessgen_time) + ", other: " + str(randomcomp_time) + ", select1: " + str(select1_time) + ", select2: " + str(select2_time) + ", select3: " + str(select3_time) +  ", fit: " + str(fit_time) + ", score: " + str(score_time)) 
+		#print(	"Mean reward: " + str(mean_all_reward) + "\nSessgen: " + str(sessgen_time) + ", other: " + str(randomcomp_time) + ", select1: " + str(select1_time) + ", select2: " + str(select2_time) + ", select3: " + str(select3_time) +  ", fit: " + str(fit_time) + ", score: " + str(score_time)) 
 		
 		
 		if (i%20 == 1): #Write all important info to files every 20 iterations

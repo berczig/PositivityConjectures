@@ -277,7 +277,7 @@ class UIO:
         representations = []
         for core in self.cores:
             k = len(core)
-            representations.append(tuple([self.comparison_matrix[core[i], core[j]] for i in range(1, k) for j in range(i+1, k)]))
+            representations.append(tuple([self.comparison_matrix[core[i], core[j]] for i in range(k) for j in range(i+1, k)]))
         return representations
     
     
@@ -503,12 +503,16 @@ class UIO:
             for i in range(k):
                 for j in range(i+1,k):
                     if core[j] == core[i]:
-                        comparison_matrix[i,j] = self.INCOMPARABLE
-                        comparison_matrix[j,i] = self.INCOMPARABLE
+                        comparison_matrix[i,j] = self.EQUAL
+                        comparison_matrix[j,i] = self.EQUAL
                     else:
-                        comparison_matrix[i, j] = self.LESS
-                        comparison_matrix[j,i] = self.GREATER
-            representations.append(tuple([comparison_matrix[i,j] for i in range(1, k) for j in range(i+1, k)]))
+                        if core[i] < core[j]:
+                            comparison_matrix[i, j] = self.LESS
+                            comparison_matrix[j,i] = self.GREATER
+                        else:
+                            comparison_matrix[i, j] = self.GREATER
+                            comparison_matrix[j,i] = self.LESS
+            representations.append(tuple([comparison_matrix[i,j] for i in range(k) for j in range(i+1, k)]))
         return representations
 
     ### COEFFICIENT BY ESCHER ####
@@ -654,8 +658,9 @@ class UIODataExtractorEscher:
             # step 4.1 - generate the coreTypes from the cores (The core is independent of the comparison matrix from its UIO) 
             self.coreTypesRaw.append(uio.getCoreRepresentationsEscher())
             uio.computelkCorrectSequences(self.l,self.k)
-            self.trueCoefficients.append(uio.getCoefficient())
+            self.trueCoefficients.append(uio.getCoefficient()-len(uio.insertionfreepairs))
         self.trueCoefficients = np.array(self.trueCoefficients)
+        #print('Data extractor true coeffs:', self.trueCoefficients)
         #print("Generated (l,k) Escher pairs :", sum([uio.lkCorrectSequences_n[(self.l, self.k)] for uio in self.uios]))
 
         # step 4.2 - classify the coreTypes by counting how many different types there are
@@ -758,18 +763,23 @@ class ConditionEvaluator(Loadable): #CE for both correct sequences and eschers
         # Condition_matrix is not so straight to the point when one wants to check the conditions, so let's prune it a bit so it's easier to do the checking
         Conditions = [[(i, edgecondition) for i, edgecondition in enumerate(conditionrow) if edgecondition != self.ignoreEdge] 
                     for conditionrow in Condition_matrix]
+        #print("Conditions:", Conditions)
 
         counted = np.zeros(self.activeuios_n) # the i'th entry is the number of correps associated to the i'th uio that fit the Conditions
         for primeCoreRep in self.activeCoreTypes:
+            #print("primeCoreRep:", primeCoreRep)
+            #print("evaluate Condition_matrix:", Condition_matrix)
             if self.coreFitsConditions(primeCoreRep, Conditions) == True:
                 dict_ = self.activeCoreTypes[primeCoreRep]
                 for uioID in dict_:
                     a = dict_[uioID]
                     counted[uioID] += a
+        #print("counted:", counted)
         difference = counted - self.activeTrueCoefficients
+        #print('Active True Coeff',self.activeTrueCoefficients)
         for x in difference:
             if x < 0:
-                return -np.inf
+                return -100000
         return -sum(difference)
     
     def convertConditionMatrixToText(self, Condition_matrix):
