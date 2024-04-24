@@ -2,5 +2,10 @@ __pycache__/
 best_*.txt
 saves/*
 *.txt
+*.keras
+*.my_meta
+*.mybin
+*.bin
+*.pb
 .idea/*
 *.DS_Store
