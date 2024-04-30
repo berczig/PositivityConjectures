@@ -65,7 +65,7 @@ class UIO:
     
     def toPosetData(self, seq):
         k = len(seq)
-        return tuple([self.comparison_matrix[seq[i], seq[j]] for i in range(1, k) for j in range(i+1, k)])
+        return tuple([self.comparison_matrix[seq[i], seq[j]] for i in range(0, k) for j in range(i+1, k)])
 
     ### SUB-UIO ###
 
