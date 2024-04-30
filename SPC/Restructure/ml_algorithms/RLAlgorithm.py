@@ -253,7 +253,7 @@ class RLAlgorithm(MLAlgorithm):
                 scorecalc_time += time.time()-tic
                 tic = time.time()
                 #print(edges[i])
-                if score == -np.inf or edges[i] > self.model.MAX_EXPECTED_EDGES:
+                if score == -FilterEvaluator.INF or edges[i] > self.model.MAX_EXPECTED_EDGES:
                     total_score[i] = self.calcScore(states[i, :, step-1]) # take score of not over conditioned graph
                     over_conditioned_graphs.append(i)
                 elif not terminal:
