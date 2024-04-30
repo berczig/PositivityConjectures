@@ -8,8 +8,9 @@ from keras.utils import custom_object_scope
 
 class ModelLogger(PartiallyLoadable):
     def __init__(self):
-        super().__init__(["step", "all_scores", "bestscore_history", "meanscore_history", "numgraph_history", "calculationtime_history"])
+        super().__init__(["step", "all_scores", "bestscore_history", "meanscore_history", "numgraph_history", "calculationtime_history", "partition"])
         self.step = 0
+        self.partition = None
         self.all_scores = {} # {filter_as_tuple:score}
         self.bestscore_history = [] # history of best score
         self.meanscore_history = [] # history of mean score
@@ -19,11 +20,13 @@ class ModelLogger(PartiallyLoadable):
 
     def load_model_logger(self, model_path:str):
         assert model_path[len(model_path)-6:] == ".keras", "wrong file format"
-        self.model = load_model(model_path)
         self.load(model_path[:len(model_path)-6]+".my_meta")
+        self.model = load_model(model_path)
+        self.model.setParameters(self.partition)
 
     def set_model(self, model):
         self.model = model
+        self.partition = model.partition
 
     def get_model(self):
         return self.model
