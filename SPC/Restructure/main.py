@@ -13,14 +13,15 @@ if __name__ == "__main__":
     partition = (4,2)
     uio_length = sum(partition)
     training_data_load_path = "" # "SPC/Saves,Tests/Trainingdata/partition_4_2.bin"
-    training_data_save_path = "SPC/Saves,Tests/Trainingdata/partition_4_2.bin"
-    model_load_path = "" # "SPC/Saves,Tests/models/newmodel.keras"
-    model_save_path = "SPC/Saves,Tests/models/my_newmodel.keras"
+    training_data_save_path = "" # "SPC/Saves,Tests/Trainingdata/partition_4_2.bin"
+    model_load_path = "" #"SPC/Saves,Tests/models/my_newmodel.keras"
+    model_save_path = "" # "SPC/Saves,Tests/models/my_newmodel.keras"
     model_save_time = 300 # how many seconds have to have elapsed before saving
     ml_training_algorithm_type = "RLAlgorithm" # exact name of the algorithm python class
-    ml_model_type = "RLNNModel" # exact name of the model python class. The model is the component that contains the weights and perform computations, but the algorithm decides how the model is used
-    iteration_steps = 20
-    plot_after_training = True
+    ml_model_type = "RLNNModel_Escher" # exact name of the model python class. The model is the component that contains the weights and perform computations, but the algorithm decides how the model is used
+    core_data_type = "escher" # escher or correctsequence
+    iteration_steps = 500
+    plot_after_training = False
 
 
 
@@ -32,7 +33,7 @@ if __name__ == "__main__":
         Preparer.loadTrainingData(training_data_load_path)
     else:
         print("computing training data...")
-        Preparer.computeTrainingData(partition)
+        Preparer.computeTrainingData(partition, core_data_type)
 
         # save Training data?
         if training_data_save_path != "":
@@ -52,7 +53,10 @@ if __name__ == "__main__":
         print("creating new model...")
         class_ = getattr(importlib.import_module("SPC.Restructure.ml_models."+ml_model_type), ml_model_type)
         model = class_()
+        model.setParameters(partition)
+        model.build_model()
         modelLogger.set_model(model)
+    assert model.partition == Preparer.partition, "model parition does not match training data partition"
 
 
     # 3) train

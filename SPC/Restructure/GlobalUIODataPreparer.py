@@ -5,16 +5,17 @@ from SPC.misc.extra import PartiallyLoadable
 class GlobalUIODataPreparer(PartiallyLoadable):
 
     def __init__(self, n):
-        super().__init__(["coreRepresentationsCategorizer", "coefficients"])
+        super().__init__(["coreRepresentationsCategorizer", "coefficients", "partition"])
         self.n = n
         self.coreRepresentationsCategorizer = {} # {coreRepresentation1:{UIOID1:occurences_in_UIOID1, UIOID2:occurences_in_UIOID2}}
         self.coefficients = [] # list of all coefficients (for the partition given to getTrainingData)
+        self.core_generators = {"escher":self.getAllEscherCoreRepresentations,"correctsequence":self.getAllCorrectSequenceCoreRepresentations}
 
     def initUIOs(self):
         encodings = self.generate_all_uio_encodings(self.n)
         self.extractors = [UIODataExtractor(UIO(enc)) for enc in encodings]
 
-    def computeTrainingData(self, partition:tuple) -> tuple:
+    def computeTrainingData(self, partition:tuple, core_data_type:str) -> tuple:
         """
         :return: (X,y) the training data. Where X is a dict with the keys being coreRepresentations, and 
         the values being a dict describing the occurences in each UIO. 
@@ -30,7 +31,9 @@ class GlobalUIODataPreparer(PartiallyLoadable):
         if not hasattr(self, "extractors"):
             self.initUIOs()
         # count correps and compute coefficients
-        self.countCoreRepresentations(partition)
+        self.partition = partition # remember what partition was used to calculate the most recent training data
+        assert core_data_type in self.core_generators, "invald core type"
+        self.countCoreRepresentations(partition, core_data_type)
         self.coefficients = [extractor.getCoefficient(partition) for extractor in self.extractors]
     
     def loadTrainingData(self, filepath:str) -> tuple:
@@ -44,6 +47,9 @@ class GlobalUIODataPreparer(PartiallyLoadable):
     
     def getAllCorrectSequenceCoreRepresentations(self, partition):
         return [extractor.getCorrectSequenceCoreRepresentations(partition) for extractor in self.extractors]
+    
+    def getAllEscherCoreRepresentations(self, partition):
+        return [extractor.getEscherCoreRepresentations(partition) for extractor in self.extractors]
 
     def generate_all_uio_encodings(self, n):
 
@@ -59,11 +65,11 @@ class GlobalUIODataPreparer(PartiallyLoadable):
         print("Generated", len(A), "unit order intervals encodings")
         return A
     
-    def countCoreRepresentations(self, partition):
+    def countCoreRepresentations(self, partition, core_data_type:str):
         print("Categorizing core representations...")
         core_rep_categories = {} # coreRepresentation:ID
         counter = {} # corerepID:dict(uioID1:occurrences1, uioID2:occurrences2)
-        all_corereps = self.getAllCorrectSequenceCoreRepresentations(partition)
+        all_corereps = self.core_generators[core_data_type](partition)
         print("Found", len(all_corereps), "core representations")
 
         ID = 0

@@ -37,6 +37,7 @@ class UIODataExtractor:
             return [self.uio.toPosetData(core) for core in self.getCorrectSequenceCores(partition)]
 
 
+
     @lru_cache(maxsize=None)
     def getEschers(self, partition):
         if len(partition) == 1:
@@ -50,7 +51,13 @@ class UIODataExtractor:
     def getEscherCores(self, partition):
         if len(partition) == 2:
             GEN = EscherCoreGenerator(self.uio, partition)
-            return [GEN.generateCore(escherpair) for escherpair in self.Eschers[partition]] 
+            return [GEN.generateCore(escherpair) for escherpair in self.getEschers(partition)] 
+        
+    @lru_cache(maxsize=None)
+    def getEscherCoreRepresentations(self, partition):
+        if len(partition) == 2:
+            return [EscherCoreGenerator.toEscherCoreRepresentation(core) for core in self.getEscherCores(partition)]
+
 
 
     def getCoefficient(self, partition):
