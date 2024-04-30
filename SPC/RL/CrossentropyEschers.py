@@ -279,13 +279,13 @@ class DataSaver(PartiallyLoadable):
 	def save(self, filename):
 		super().save(filename+".mybin")
 		print("saving model:", save_model_file)
-		self.model.save(filename)
+		self.model.save(filename+".keras")
 
 	def load(self, filename):
 		super().load(filename+".mybin")
 		print("step:::::::::::::", self._savehelper.step)
 		print("loading model:", load_model_file)
-		self.model = load_model(filename)
+		self.model = load_model(filename+".keras")
 
 	def make_plots(self):
 		n = len(self.bestscore_history)
