@@ -418,7 +418,7 @@ class UIO:
             insertions, escherstartpoints = core
             if len(insertions) == 0:
                 self.insertionfreepairs.append([u,v])
-                points = []
+                continue
             #if escherstartpoints == []:
             #    print("Problem with core:",self.encoding,u,v,core)
             #print(u,v, "insertions:", insertions, "escherstartpoints:", escherstartpoints)
@@ -433,8 +433,7 @@ class UIO:
                     points.extend([insertions[0]+0.5,2*(n+k)]) # here 2(n+k)>n+k, but any such number will be fine
                 else:
                     points.extend([insertions[0]+0.5,insertions[1]+0.5])
-            if points != [] and points not in self.cores:
-                self.cores.append(points)
+            self.cores.append(points)
                   
 
     def coreIsGood(self, core, n, k, lcm):
