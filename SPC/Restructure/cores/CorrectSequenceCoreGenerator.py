@@ -18,7 +18,7 @@ class CorrectSequenceCoreGenerator(CoreGenerator):
                 if pairs >= self.p:
                     break
         #assert pairs==p, "pairs not {p} but {pairs}"
-        core.insert(0, pairs)
+        #core.insert(0, pairs)
 
         # maximal element in first l-1
         core.append(self.getmaximalinterval(seq[:l-1]))
