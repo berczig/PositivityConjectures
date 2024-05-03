@@ -710,6 +710,8 @@ class UIODataExtractorEscher:
 
 class ConditionEvaluator(Loadable): #CE for both correct sequences and eschers
 
+    INF = 999999999
+    
     def __init__(self, l, k, p, ignoreEdge, uiodataextractor:UIODataExtractor=None):
         self.l = l
         self.k = k
@@ -780,7 +782,7 @@ class ConditionEvaluator(Loadable): #CE for both correct sequences and eschers
         #print('Active True Coeff',self.activeTrueCoefficients)
         for x in difference:
             if x < 0:
-                return -100000
+                return -self.INF
         return -sum(difference)
     
     def convertConditionMatrixToText(self, Condition_matrix):

@@ -169,7 +169,7 @@ def generate_session(agent, n_sessions, verbose = 1):
 			scorecalc_time += time.time()-tic
 			tic = time.time()
 			#print(edges[i])
-			if score == -np.inf or edges[i] > MAX_EXPECTED_EDGES:
+			if score == -ConditionEvaluator.INF or edges[i] > MAX_EXPECTED_EDGES:
 				total_score[i] = calcScore(states[i, :, step-1]) # take score of not over conditioned graph
 				over_conditioned_graphs.append(i)
 			elif not terminal:
