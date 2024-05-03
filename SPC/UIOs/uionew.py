@@ -424,7 +424,8 @@ class UIO:
             #print(u,v, "insertions:", insertions, "escherstartpoints:", escherstartpoints)
             #print(points)
             else:
-                points = [n,n+k]
+                points = [n-1,n+k-1]
+                #points = [n,n+k, 0, n-1,n+k-1]
                 if len(escherstartpoints) == 0:
                     points.append(-1)
                 else:
@@ -433,7 +434,8 @@ class UIO:
                     points.extend([insertions[0]+0.5,2*(n+k)]) # here 2(n+k)>n+k, but any such number will be fine
                 else:
                     points.extend([insertions[0]+0.5,insertions[1]+0.5])
-            self.cores.append(points)
+            self.cores.append(points) # [n-1, k-1, subescher, 1. insert, 2. insert]
+            # n-1 < 2. insert and subescher < 1.insert    OR     k-1 < 1.insert
                   
 
     def coreIsGood(self, core, n, k, lcm):
