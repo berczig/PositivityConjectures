@@ -434,8 +434,10 @@ class UIO:
                     points.extend([insertions[0]+0.5,2*(n+k)]) # here 2(n+k)>n+k, but any such number will be fine
                 else:
                     points.extend([insertions[0]+0.5,insertions[1]+0.5])
-            self.cores.append(points) # [n-1, k-1, subescher, 1. insert, 2. insert]
-            # n-1 < 2. insert and subescher < 1.insert    OR     k-1 < 1.insert
+                points = [points[i] for i in [2,3,4,0,1]]
+            self.cores.append(points) # [n-1, n+k-1, subescher, 1. insert, 2. insert]
+            # Jonas: n-1 < 2. insert and subescher < 1.insert    OR     n+k-1 < 1.insert
+            # Gergely: n-1 > subesher n-1 < 2. insert and subesher < 1.insert or n+k-1 = subescher
                   
 
     def coreIsGood(self, core, n, k, lcm):

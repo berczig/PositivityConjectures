@@ -32,7 +32,7 @@ EDGES = int(NumCritPoints*(NumCritPoints-1)/2)
 ALPHABET_SIZE = 1+NUMBER_OF_ORS*3 #The size of the alphabet. We have 1 for the empty word, and 3 for each edge type (>,<,=).
 MYN = ALPHABET_SIZE*EDGES  #The length of the word we are generating. Here we are generating a graph, so we create a 0-1 word of length (N choose 2)
 
-LEARNING_RATE = 0.1 #Increase this to make convergence faster, decrease if the algorithm gets stuck in local optima too often.
+LEARNING_RATE = 0.01 #Increase this to make convergence faster, decrease if the algorithm gets stuck in local optima too often.
 n_sessions = 300 #number of new sessions per iteration
 percentile = 93 #top 100-X percentile we are learning from
 super_percentile = 94 #top 100-X percentile that survives to next iteration
@@ -411,6 +411,7 @@ if __name__ == "__main__":
 		print("all scores:", len(all_scores))
 		print("\n" + str(i) +  ". Best individuals: " + str(np.flip(np.sort(super_rewards))))
 		print("best state:", convertStateToConditionMatrix(getbeststate()))
+		print(calcScore(getbeststate()))
 		#print("best elite:", convertStateToConditionMatrix(super_states[0]))
 		DS.bestscore_history.append(super_rewards[0])
 		DS.meanscore_history.append(np.mean(super_rewards))
