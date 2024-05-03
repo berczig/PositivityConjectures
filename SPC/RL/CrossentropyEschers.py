@@ -22,10 +22,10 @@ from datetime import datetime
 #We use a graph crossentropy RL method to learn condition graphs for (l,k,p) Eschers.
 #The count of Escher triples satisfying the conditions encoded by this graph is the Stanley coefficient (l,k,p)
 l = 4
-k = 3
+k = 2
 p = 0
 NumCritPoints = 5  #pairwise insertion points, pairwise splitting points, n=l+k+p and n+l+k+p. 
-                        #This is the number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
+						#This is the number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
 NUMBER_OF_ORS = 2 #The number of ORs in the condition. This is the number of rows in the condition matrix.
 MAX_EXPECTED_EDGES = 3 #The maximum number of edges we expect to have in the graph. 
 EDGES = int(NumCritPoints*(NumCritPoints-1)/2)
@@ -66,12 +66,11 @@ if load_model_file != "":
 	load_model_file += "[l={}k={}p={}]".format(l,k,p)
 if save_model_file != "":
 	save_model_file += "[l={}k={}p={}]".format(l,k,p)
-saving_frequency = 30 # how many seconds to wait between each save
+saving_frequency = 300 # how many seconds to wait between each save
 INF = 1000000
 
 def convertStateToConditionMatrix(state):
 	# state is of length MYN
-	#print("state:", state.shape)
 	graph = np.ones((NUMBER_OF_ORS, EDGES))*UIO.INCOMPARABLE
 	for step in range(EDGES):
 		actionvector = state[ALPHABET_SIZE*step:ALPHABET_SIZE*(step+1)]
@@ -314,6 +313,17 @@ class DataSaver(PartiallyLoadable):
 		conditiontext = self.CE.convertConditionMatrixToText(condmat)
 		print(conditiontext, "\nhas a score of ", self.CE.evaluate(condmat))
 	
+def getbeststate():
+	global all_scores
+	bestscore = -99999999999
+	beststate = None
+	for state in all_scores:
+		if all_scores[state] > bestscore:
+			bestscore = all_scores[state]
+			beststate = state
+	return beststate
+
+
 if __name__ == "__main__":
 	#CE = ConditionEvaluator(l=l, k=k, p=p, ignoreEdge=UIO.INCOMPARABLE)
 	CE = None
@@ -392,7 +402,6 @@ if __name__ == "__main__":
 		super_states = [super_sessions[i][0] for i in range(len(super_sessions))]
 		super_actions = [super_sessions[i][1] for i in range(len(super_sessions))]
 		super_rewards = [super_sessions[i][2] for i in range(len(super_sessions))]
-		
 		rewards_batch.sort()
 		mean_all_reward = np.mean(rewards_batch[-100:])	
 		mean_best_reward = np.mean(super_rewards)	
@@ -401,6 +410,8 @@ if __name__ == "__main__":
 		
 		print("all scores:", len(all_scores))
 		print("\n" + str(i) +  ". Best individuals: " + str(np.flip(np.sort(super_rewards))))
+		print("best state:", convertStateToConditionMatrix(getbeststate()))
+		#print("best elite:", convertStateToConditionMatrix(super_states[0]))
 		DS.bestscore_history.append(super_rewards[0])
 		DS.meanscore_history.append(np.mean(super_rewards))
 		DS.numgraph_history.append(len(all_scores))
@@ -409,7 +420,7 @@ if __name__ == "__main__":
 		#uncomment below line to print out how much time each step in this loop takes. 
 		#print(	"Mean reward: " + str(mean_all_reward) + "\nSessgen: " + str(sessgen_time) + ", other: " + str(randomcomp_time) + ", select1: " + str(select1_time) + ", select2: " + str(select2_time) + ", select3: " + str(select3_time) +  ", fit: " + str(fit_time) + ", score: " + str(score_time)) 
 		
-		
+		"""
 		if (i%20 == 1): #Write all important info to files every 20 iterations
 			with open('best_species_pickle_'+str(myRand)+'.txt', 'wb') as fp:
 				pickle.dump(super_actions, fp)
@@ -428,7 +439,7 @@ if __name__ == "__main__":
 		if (i%200==2): # To create a timeline, like in Figure 3
 			with open('best_species_timeline_txt_'+str(myRand)+'.txt', 'a') as f:
 				f.write(str(super_actions[0]))
-				f.write("\n")
+				f.write("\n")"""
 
 		if time.time() > next_save_time:
 			print("#"*500)
@@ -440,3 +451,4 @@ if __name__ == "__main__":
 				#DS.make_plots()
 			print("done saving at ", datetime.fromtimestamp(time.time()).strftime("%A, %B %d, %Y %I:%M:%S"))
 			next_save_time = time.time() + saving_frequency
+			
