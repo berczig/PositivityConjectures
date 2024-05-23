@@ -27,7 +27,7 @@ p = 0
 NumCritPoints = 5  #pairwise insertion points, pairwise splitting points, n=l+k+p and n+l+k+p. 
 						#This is the number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
 NUMBER_OF_ORS = 2 #The number of ORs in the condition. This is the number of rows in the condition matrix.
-MAX_EXPECTED_EDGES = 3 #The maximum number of edges we expect to have in the graph. 
+MAX_EXPECTED_EDGES = 7 #The maximum number of edges we expect to have in the graph. 
 EDGES = int(NumCritPoints*(NumCritPoints-1)/2)
 ALPHABET_SIZE = 1+NUMBER_OF_ORS*3 #The size of the alphabet. We have 1 for the empty word, and 3 for each edge type (>,<,=).
 MYN = ALPHABET_SIZE*EDGES  #The length of the word we are generating. Here we are generating a graph, so we create a 0-1 word of length (N choose 2)
@@ -411,7 +411,8 @@ if __name__ == "__main__":
 		print("all scores:", len(all_scores))
 		print("\n" + str(i) +  ". Best individuals: " + str(np.flip(np.sort(super_rewards))))
 		print("best state:", convertStateToConditionMatrix(getbeststate()))
-		print(calcScore(getbeststate()))
+		print(CE.convertConditionMatrixToText(convertStateToConditionMatrix(getbeststate())))
+		print("score:", calcScore(getbeststate()))
 		#print("best elite:", convertStateToConditionMatrix(super_states[0]))
 		DS.bestscore_history.append(super_rewards[0])
 		DS.meanscore_history.append(np.mean(super_rewards))

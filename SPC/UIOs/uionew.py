@@ -423,6 +423,7 @@ class UIO:
             #    print("Problem with core:",self.encoding,u,v,core)
             #print(u,v, "insertions:", insertions, "escherstartpoints:", escherstartpoints)
             #print(points)
+            # n-1, n+k-1, escherendpoint, 1. insert, 2.insert
             else:
                 points = [n-1,n+k-1]
                 #points = [n,n+k, 0, n-1,n+k-1]
@@ -434,7 +435,7 @@ class UIO:
                     points.extend([insertions[0]+0.5,2*(n+k)]) # here 2(n+k)>n+k, but any such number will be fine
                 else:
                     points.extend([insertions[0]+0.5,insertions[1]+0.5])
-                points = [points[i] for i in [2,3,4,0,1]]
+                #points = [points[i] for i in [2,3,4,0,1]]
             self.cores.append(points) # [n-1, n+k-1, subescher, 1. insert, 2. insert]
             # Jonas: n-1 < 2. insert and subescher < 1.insert    OR     n+k-1 < 1.insert
             # Gergely: n-1 > subesher n-1 < 2. insert and subesher < 1.insert or n+k-1 = subescher
@@ -718,9 +719,9 @@ class ConditionEvaluator(Loadable): #CE for both correct sequences and eschers
         self.l = l
         self.k = k
         self.p = p
-        if uiodataextractor == UIODataExtractor:
+        if isinstance(uiodataextractor, UIODataExtractor):
             self.corelength = 2 + 2*p +k
-        if uiodataextractor == UIODataExtractorEscher:
+        if isinstance(uiodataextractor, UIODataExtractorEscher):
             self.corelength = 5
         self.ignoreEdge = ignoreEdge        
 
@@ -804,7 +805,7 @@ class ConditionEvaluator(Loadable): #CE for both correct sequences and eschers
                     index += 1
             if rowtext:
                 rowtexts.append(" AND ".join(rowtext))
-        return " OR \n".join(rowtexts)
+        return 3*" " + 16*"-" + "\n" + "\nOR\n".join(rowtexts) + "\n"+ 3*" " + 16*"-"
 
     def matrix_to_graphs(self, Condition_matrix):
         edges = Condition_matrix.shape[1]
