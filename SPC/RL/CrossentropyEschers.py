@@ -22,12 +22,12 @@ from datetime import datetime
 #We use a graph crossentropy RL method to learn condition graphs for (l,k,p) Eschers.
 #The count of Escher triples satisfying the conditions encoded by this graph is the Stanley coefficient (l,k,p)
 l = 4
-k = 2
+k = 3
 p = 0
 NumCritPoints = 5  #pairwise insertion points, pairwise splitting points, n=l+k+p and n+l+k+p. 
 						#This is the number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
 NUMBER_OF_ORS = 2 #The number of ORs in the condition. This is the number of rows in the condition matrix.
-MAX_EXPECTED_EDGES = 7 #The maximum number of edges we expect to have in the graph. 
+MAX_EXPECTED_EDGES = 6 #The maximum number of edges we expect to have in the graph. 
 EDGES = int(NumCritPoints*(NumCritPoints-1)/2)
 ALPHABET_SIZE = 1+NUMBER_OF_ORS*3 #The size of the alphabet. We have 1 for the empty word, and 3 for each edge type (>,<,=).
 MYN = ALPHABET_SIZE*EDGES  #The length of the word we are generating. Here we are generating a graph, so we create a 0-1 word of length (N choose 2)
