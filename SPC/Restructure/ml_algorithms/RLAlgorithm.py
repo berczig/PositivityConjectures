@@ -31,10 +31,10 @@ class RLAlgorithm(MLAlgorithm):
  
 
     def train(self, iterations, model_save_path="", model_save_time=0):
-        self.FE = FilterEvaluator(self.trainingdata_input, self.trainingdata_output, FilterEvaluator.DEFAULT_IGNORE_VALUE)
-		
         self.model : RLNNModel
         self.model = self.model_logger.get_model()
+
+        self.FE = FilterEvaluator(self.trainingdata_input, self.trainingdata_output, FilterEvaluator.DEFAULT_IGNORE_VALUE, self.model.CORE_LENGTH)
 
         startstep = self.model_logger.step
         print("startstep:", startstep)
@@ -106,7 +106,9 @@ class RLAlgorithm(MLAlgorithm):
             score_time = time.time()-tic
             
             print("all scores:", len(self.model_logger.all_scores))
+            self.FE.convertConditionMatrixToText
             print("\n" + str(i) +  ". Best individuals: " + str(np.flip(np.sort(super_rewards))))
+            print(self.FE.convertConditionMatrixToText(self.convertStateToConditionMatrix(self.getbeststate())))
             self.model_logger.bestscore_history.append(super_rewards[0])
             self.model_logger.meanscore_history.append(np.mean(super_rewards))
             self.model_logger.numgraph_history.append(len(self.model_logger.all_scores))
@@ -154,17 +156,15 @@ class RLAlgorithm(MLAlgorithm):
     def convertStateToConditionMatrix(self, state):
         # state is of length MYN
         columns = int(self.model.CORE_LENGTH * (self.model.CORE_LENGTH-1) / 2)
-        print("self.FE.ignore_edge.", self.FE.ignore_edge)
         graph = np.ones((self.model.ROWS_IN_CONDITIONMATRIX, columns))*self.FE.ignore_edge
-        n = 0
         for i in range(self.model.ROWS_IN_CONDITIONMATRIX):
             for j in range(columns):
                 actionvector = state[self.model.ALPHABET_SIZE*(i*columns + j) : self.model.ALPHABET_SIZE*(i*columns + j+1)]
-                n += 1
-                if actionvector[0] != 1: # if the 0'th element is 1, then this edge should be ignored
-                    print("actionvector:", actionvector)
-                    graph[i][j] = np.argmax(actionvector) + UIO.LESS - 1
-        print("graph:", graph)
+                argmax = np.argmax(actionvector)
+                # argmax = 0: either because all zero (no edgetype set yet) -> ignore edge ||| or because the first element is 1, meaning the "ignore edge" type was choosen
+                if argmax != 0: 
+                    graph[i][j] = argmax + UIO.LESS - 1
+        #print("graph:", graph)
         return graph
 
     def calcScore(self, state):
@@ -291,12 +291,10 @@ class RLAlgorithm(MLAlgorithm):
         elite_states = []
         elite_actions = []
         elite_rewards = []
-        print("reward_threshold:", reward_threshold)
-        print("states_batch:", len(states_batch))
         for i in range(len(states_batch)):
             #print("i:", i)
-            if rewards_batch[i] >= reward_threshold-0.0000001:		
-                if (counter > 0) or (rewards_batch[i] >= reward_threshold+0.0000001):
+            if rewards_batch[i] >= reward_threshold-0.0001:		
+                if (counter > 0) or (rewards_batch[i] >= reward_threshold+0.0001):
                     #print("yo:", len(states_batch[i]))
                     for item in states_batch[i]:
                         elite_states.append(item.tolist())
@@ -331,3 +329,12 @@ class RLAlgorithm(MLAlgorithm):
         super_actions = np.array(super_actions, dtype = int)
         super_rewards = np.array(super_rewards)
         return super_states, super_actions, super_rewards
+    
+    def getbeststate(self):
+        bestscore = -99999999999
+        beststate = None
+        for state in self.model_logger.all_scores:
+            if self.model_logger.all_scores[state] > bestscore:
+                bestscore = self.model_logger.all_scores[state]
+                beststate = state
+        return beststate
