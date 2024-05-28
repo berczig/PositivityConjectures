@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-from SPC.Restructure.FilterEvaluator import FilterEvaluator
 from SPC.misc.extra import PartiallyLoadable
 from SPC.Restructure.ml_models.MLModel import MLModel
 from SPC.Restructure.ml_models.RLNNModel import RLNNModel
