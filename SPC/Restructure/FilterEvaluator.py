@@ -6,13 +6,14 @@ class FilterEvaluator:
     INF = 9999999999
     DEFAULT_IGNORE_VALUE = -1
 
-    def __init__(self, coreRepresentationsCategorizer:dict, true_coefficients, ignore_edge:int):
+    def __init__(self, coreRepresentationsCategorizer:dict, true_coefficients, ignore_edge:int, core_length:int):
         """
         coreRepresentationsCategorizer: {coreRepresentation1:{UIOID1:occurences_in_UIOID1, UIOID2:occurences_in_UIOID2}, ...}
         """
         self.coreRepresentationsCategorizer = coreRepresentationsCategorizer # {coreRepresentation1:{UIOID1:occurences_in_UIOID1, UIOID2:occurences_in_UIOID2}}
         self.true_coefficients = true_coefficients
         self.ignore_edge = ignore_edge
+        self.core_length = core_length
         self.coreRep2 = {}
         for primerep in coreRepresentationsCategorizer:
             counts = np.zeros(len(true_coefficients))
@@ -82,23 +83,21 @@ class FilterEvaluator:
         return -sum(difference)
     
     def convertConditionMatrixToText(self, Condition_matrix):
-        print("shape:", Condition_matrix.shape)
         rows, columns = Condition_matrix.shape
         rowtexts = []
         for row in range(rows):
             index = 0
             rowtext = []
             aORD = ord("a")
-            for i in range(self.corelength):
-                for j in range(i+1, self.corelength):
+            for i in range(self.core_length):
+                for j in range(i+1, self.core_length):
                     edge = int(Condition_matrix[row][index])
-
                     if edge != self.ignore_edge:
                         rowtext.append(chr(aORD+i)+UIO.RELATIONTEXT[edge]+chr(aORD+j))
                     index += 1
             if rowtext:
                 rowtexts.append(" AND ".join(rowtext))
-        return " OR \n".join(rowtexts)
+        return 3*" " + 16*"-" + "\n" + "\nOR\n".join(rowtexts) + "\n"+ 3*" " + 16*"-"
     
     def narrowCoreTypeSelection(self, random_uios):
         # only use a portion of the coreTypes corresponding to n_uios random uios when evaluating a conditionMatrix
