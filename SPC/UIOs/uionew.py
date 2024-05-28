@@ -625,7 +625,7 @@ class UIODataExtractorEscher:
     def __init__(self, l, k, p):
         self.l = l
         self.k = k
-        self.p = p
+        self.p = 0
         self.coreTypesRaw = [] # list of all coreTypes
         self.coreTypes = {} # coreType(int):occurrences(dict), key i in occurrences is how often that type appeared in i'th uio
         self.trueCoefficients = [] # i'th entry is the coefficient c_{l,k} of the i'th uio's CSF
