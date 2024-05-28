@@ -20,7 +20,7 @@ if __name__ == "__main__":
     ml_training_algorithm_type = "RLAlgorithm" # exact name of the algorithm python class
     ml_model_type = "RLNNModel_Escher" # exact name of the model python class. The model is the component that contains the weights and perform computations, but the algorithm decides how the model is used
     core_data_type = "escher" # escher or correctsequence
-    iteration_steps = 500
+    iteration_steps = 5000
     plot_after_training = False
 
 
@@ -56,6 +56,7 @@ if __name__ == "__main__":
         model.setParameters(partition)
         model.build_model()
         modelLogger.set_model(model)
+    model.summary()
     assert model.partition == Preparer.partition, "model parition does not match training data partition"
 
 

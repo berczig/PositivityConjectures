@@ -70,12 +70,12 @@ class GlobalUIODataPreparer(PartiallyLoadable):
         core_rep_categories = {} # coreRepresentation:ID
         counter = {} # corerepID:dict(uioID1:occurrences1, uioID2:occurrences2)
         all_corereps = self.core_generators[core_data_type](partition)
-        print("Found", len(all_corereps), "core representations")
+        print("Found", sum([len(corereps) for corereps in all_corereps]), "core representations in total")
 
         ID = 0
         for uioID, corereps in enumerate(all_corereps):
             for corerep in corereps:
-
+                #print("b", type(corerep), corerep)
                 # determine corerep ID
                 if corerep not in core_rep_categories:
                     ID = len(core_rep_categories)
@@ -95,8 +95,8 @@ class GlobalUIODataPreparer(PartiallyLoadable):
 
         # change keys from an ID of the coreRepresentation to the coreRepresentation itself
         for cat in core_rep_categories:
+            #print("cat:", cat)
             self.coreRepresentationsCategorizer[cat] = counter[core_rep_categories[cat]]
-
         print("Found",len(self.coreRepresentationsCategorizer), "distinct core representations / categories")
 
 if __name__ == "__main__":

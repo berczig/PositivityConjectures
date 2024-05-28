@@ -31,7 +31,7 @@ class RLAlgorithm(MLAlgorithm):
  
 
     def train(self, iterations, model_save_path="", model_save_time=0):
-        self.FE = FilterEvaluator(self.trainingdata_input, self.trainingdata_output, UIO.INCOMPARABLE)
+        self.FE = FilterEvaluator(self.trainingdata_input, self.trainingdata_output, FilterEvaluator.DEFAULT_IGNORE_VALUE)
 		
         self.model : RLNNModel
         self.model = self.model_logger.get_model()
@@ -153,18 +153,18 @@ class RLAlgorithm(MLAlgorithm):
 
     def convertStateToConditionMatrix(self, state):
         # state is of length MYN
-        graph = np.ones((self.model.NUMBER_OF_ORS, self.model.EDGES))*UIO.INCOMPARABLE
-        for step in range(self.model.EDGES):
-            actionvector = state[self.model.ALPHABET_SIZE*step:self.model.ALPHABET_SIZE*(step+1)]
-            if actionvector[0] == 0: # if 1 in 0'th index then do nothing (UIO.INCOMPARABLE)
-                row = 0
-                edge = np.argmax(actionvector) # 100,101,102,103
-                if edge == 0: # actionvector all zeros
-                    continue
-                row = (edge-1)//3
-                if row != 0:
-                    edge -= 3*row
-                graph[row][step] = edge + UIO.INCOMPARABLE
+        columns = int(self.model.CORE_LENGTH * (self.model.CORE_LENGTH-1) / 2)
+        print("self.FE.ignore_edge.", self.FE.ignore_edge)
+        graph = np.ones((self.model.ROWS_IN_CONDITIONMATRIX, columns))*self.FE.ignore_edge
+        n = 0
+        for i in range(self.model.ROWS_IN_CONDITIONMATRIX):
+            for j in range(columns):
+                actionvector = state[self.model.ALPHABET_SIZE*(i*columns + j) : self.model.ALPHABET_SIZE*(i*columns + j+1)]
+                n += 1
+                if actionvector[0] != 1: # if the 0'th element is 1, then this edge should be ignored
+                    print("actionvector:", actionvector)
+                    graph[i][j] = np.argmax(actionvector) + UIO.LESS - 1
+        print("graph:", graph)
         return graph
 
     def calcScore(self, state):
@@ -291,10 +291,13 @@ class RLAlgorithm(MLAlgorithm):
         elite_states = []
         elite_actions = []
         elite_rewards = []
+        print("reward_threshold:", reward_threshold)
+        print("states_batch:", len(states_batch))
         for i in range(len(states_batch)):
             #print("i:", i)
             if rewards_batch[i] >= reward_threshold-0.0000001:		
                 if (counter > 0) or (rewards_batch[i] >= reward_threshold+0.0000001):
+                    #print("yo:", len(states_batch[i]))
                     for item in states_batch[i]:
                         elite_states.append(item.tolist())
                     for item in actions_batch[i]: #### TODO step size ALPHABET_SIZE ####
@@ -328,75 +331,3 @@ class RLAlgorithm(MLAlgorithm):
         super_actions = np.array(super_actions, dtype = int)
         super_rewards = np.array(super_rewards)
         return super_states, super_actions, super_rewards
-
-"""
-class DataSaver(PartiallyLoadable):
-
-	def __init__(self, save_vars, load_model_file, CE):
-		super().__init__(save_vars) # set saveable variables
-
-		self.step = 0
-		self.bestscore_history = [] # history of best score
-		self.meanscore_history = [] # history of mean score
-		self.numgraph_history = [] # history of number of graphs which we allready have calculated the score of
-		self.calculationtime_history = []
-		self.all_scores = {} # graph:score
-		self.CE = CE
-
-		if load_model_file == "":
-			#Model structure: a sequential network with three hidden layers, sigmoid activation in the output.
-			#I usually used relu activation in the hidden layers but play around to see what activation function and what optimizer works best.
-			#It is important that the loss is binary cross-entropy if alphabet size is 2.
-			self.model = Sequential()
-			self.model.add(Dense(FIRST_LAYER_NEURONS,  activation="relu"))
-			self.model.add(Dense(SECOND_LAYER_NEURONS, activation="relu"))
-			self.model.add(Dense(THIRD_LAYER_NEURONS, activation="relu"))
-			self.model.add(Dense(ALPHABET_SIZE, activation="softmax"))
-			self.model.build((None, observation_space))
-			self.model.compile(loss="categorical_crossentropy", optimizer=SGD(learning_rate = LEARNING_RATE), run_eagerly=True) #Adam optimizer also works well, with lower learning rate
-		else:
-			self.load(load_model_file)
-			self.make_plots()
-
-		print(self.model.summary())
-
-
-	def save(self, filename):
-		super().save(filename+".mybin")
-		print("saving model:", save_model_file)
-		self.model.save(filename)
-
-	def load(self, filename):
-		super().load(filename+".mybin")
-		print("step:::::::::::::", self._savehelper.step)
-		print("loading model:", load_model_file)
-		self.model = load_model(filename)
-
-	def make_plots(self):
-		n = len(self.bestscore_history)
-		times = list(range(n))
-		plt.title("best score ("+str(self.bestscore_history[-1])+")")
-		plt.plot(times, self.bestscore_history)
-		plt.show()
-		plt.title("mean score ("+str(self.meanscore_history[-1])+")")
-		plt.plot(times, self.meanscore_history)
-		plt.show()
-		plt.title("number of different conditions checked")
-		plt.plot(times, self.numgraph_history)
-		plt.show()
-		plt.title("computation time of the i'th step")
-		plt.plot(times, self.calculationtime_history)
-		plt.show()
-
-		print("looking for best score...")
-		bestscore = -99999999999
-		beststate = None
-		for state in self.all_scores:
-			if self.all_scores[state] > bestscore:
-				bestscore = self.all_scores[state]
-				beststate = state
-		condmat = RLAlgorithm.convertStateToConditionMatrix(beststate)
-		conditiontext = self.CE.convertConditionMatrixToText(condmat)
-		print(conditiontext, "\nhas a score of ", self.CE.evaluate(condmat))
-          """
-	

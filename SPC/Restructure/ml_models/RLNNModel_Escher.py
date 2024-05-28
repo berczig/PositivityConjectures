@@ -9,7 +9,7 @@ class RLNNModel_Escher(MLModel):
     """
 
     """
-    p = 1
+
 
     FIRST_LAYER_NEURONS = 128 #Number of neurons in the hidden layers.
     SECOND_LAYER_NEURONS = 64
@@ -23,10 +23,10 @@ class RLNNModel_Escher(MLModel):
 
         self.l,self.k = partition
         # k+2+2*p
-        self.NumCritIntervals = 5   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
-        self.NUMBER_OF_ORS = 2
-        self.ALPHABET_SIZE = 1+self.NUMBER_OF_ORS*3
-        self.EDGES = int(self.NumCritIntervals*(self.NumCritIntervals-1)/2)
+        self.CORE_LENGTH = 5   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
+        self.ROWS_IN_CONDITIONMATRIX = 2
+        self.ALPHABET_SIZE = 4
+        self.EDGES = int(self.CORE_LENGTH*(self.CORE_LENGTH-1)/2) * self.ROWS_IN_CONDITIONMATRIX
         self.MYN = self.ALPHABET_SIZE*self.EDGES  #The length of the word we are generating. Here we are generating a graph, so we create a 0-1 word of length (N choose 2)
         self.observation_space = self.MYN + self.EDGES #Leave this at 2*MYN. The input vector will have size 2*MYN, where the first MYN letters encode our partial word (with zeros on
                                 #the positions we haven't considered yet), and the next MYN bits one-hot encode which letter we are considering now.
@@ -37,6 +37,10 @@ class RLNNModel_Escher(MLModel):
         self.len_game = self.EDGES 
         self.state_dim = (self.observation_space,)
 
+        print("self.ALPHABET_SIZE:", self.ALPHABET_SIZE)
+        print("self.EDGES:", self.EDGES)
+        print("self.MYN:", self.MYN)
+        print("self.observation_space:", self.observation_space)
     def build_model(self):
         self.add(Dense(self.FIRST_LAYER_NEURONS,  activation="relu"))
         self.add(Dense(self.SECOND_LAYER_NEURONS, activation="relu"))

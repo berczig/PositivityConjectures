@@ -9,13 +9,13 @@ class EscherCoreGenerator(CoreGenerator):
         core = self.getInsertionsSubeshers(u,v)
         insertions, escherstartpoints = core
         if len(insertions) == 0:
-            return [0,0,0,0,0]
+            return []
         #if escherstartpoints == []:
         #    print("Problem with core:",self.encoding,u,v,core)
         #print(u,v, "insertions:", insertions, "escherstartpoints:", escherstartpoints)
         #print(points)
         else:
-            points = [n, n+k]
+            points = [n-1, n+k-1]
             if len(escherstartpoints) == 0:
                 points.append(-1)
             else:
@@ -26,8 +26,11 @@ class EscherCoreGenerator(CoreGenerator):
                 points.extend([insertions[0]+0.5,insertions[1]+0.5])
         return points
     
+    
     def toEscherCoreRepresentation(core):
         k = len(core)
+        if k == 0:
+            return ()
         comparison_matrix = np.zeros((k,k)) + UIO.EQUAL # (i,j)'th index says how i is in relation to j
         for i in range(k):
             for j in range(i+1,k):
