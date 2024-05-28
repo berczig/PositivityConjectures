@@ -650,6 +650,7 @@ class UIODataExtractorEscher:
         #print("Generated correct sequences:", sum([uio.lkCorrectSequences_n[(self.n, 0)] for uio in self.uios]))
 
         print("Computing uio (l.k.p) Eschers and cores...")
+        without_insertions = 0
         for i,uio in enumerate(self.uios):
             if i%printvalue == 0:
                 print(i+1, "/", self.uios_n)
@@ -662,7 +663,9 @@ class UIODataExtractorEscher:
             # step 4.1 - generate the coreTypes from the cores (The core is independent of the comparison matrix from its UIO) 
             self.coreTypesRaw.append(uio.getCoreRepresentationsEscher())
             uio.computelkCorrectSequences(self.l,self.k)
+            without_insertions += len(uio.insertionfreepairs)
             self.trueCoefficients.append(uio.getCoefficient()-len(uio.insertionfreepairs))
+        print("Found", without_insertions, "cores without insetions")
         self.trueCoefficients = np.array(self.trueCoefficients)
         #print('Data extractor true coeffs:', self.trueCoefficients)
         #print("Generated (l,k) Escher pairs :", sum([uio.lkCorrectSequences_n[(self.l, self.k)] for uio in self.uios]))
@@ -679,6 +682,7 @@ class UIODataExtractorEscher:
         # how many of them per uio
         ID = 0
         counter = {} # categoryID:dict(uioID:occurrences)
+        print("Found", sum([len(corereps) for corereps in self.coreTypesRaw]), "total corereps")
         for uioID, corereps in enumerate(self.coreTypesRaw):
             for corerep in corereps:
                 # determine category ID
