@@ -7,7 +7,7 @@ class GlobalUIODataPreparer(PartiallyLoadable):
     def __init__(self, n):
         super().__init__(["coreRepresentationsCategorizer", "coefficients", "partition"])
         self.n = n
-        self.coreRepresentationsCategorizer = {} # {coreRepresentation1:{UIOID1:occurences_in_UIOID1, UIOID2:occurences_in_UIOID2}}
+        self.coreRepresentationsCategorizer = {} # {coreRepresentation1:{UIOID1:occurences_in_UIOID1, UIOID2:occurences_in_UIOID2,...}, ...}
         self.coefficients = [] # list of all coefficients (for the partition given to getTrainingData)
         self.core_generators = {"escher":self.getAllEscherCoreRepresentations,"correctsequence":self.getAllCorrectSequenceCoreRepresentations}
 

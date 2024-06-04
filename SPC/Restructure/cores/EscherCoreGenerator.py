@@ -109,5 +109,7 @@ class EscherCoreGenerator(CoreGenerator):
             if cond1 and cond2:
                 subeschersstartingpoint.append(m+1)
         return subeschersstartingpoint
-
     
+    def getCoreLabels(partition):
+        return ["n-1", "n+k-1", "subescher", "1.insert", "2.insert"]
+

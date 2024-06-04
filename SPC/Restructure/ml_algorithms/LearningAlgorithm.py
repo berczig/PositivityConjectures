@@ -1,11 +1,11 @@
 from SPC.Restructure.ModelLogger import ModelLogger
 
-class MLAlgorithm:
+class LearningAlgorithm:
 
     def __init__(self, model_logger:ModelLogger):
         self.model_logger = model_logger
 
-    def setTrainingData(self,X,y):
+    def setTrainingData(self,X:dict,y:list):
         self.trainingdata_input = X
         self.trainingdata_output = y
 

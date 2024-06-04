@@ -1,4 +1,4 @@
-from SPC.Restructure.ml_algorithms.MLAlgorithm import MLAlgorithm
+from SPC.Restructure.ml_algorithms.LearningAlgorithm import LearningAlgorithm
 
 import networkx as nx #for various graph parameters, such as eigenvalues, macthing number, etc
 import random
@@ -15,11 +15,11 @@ from SPC.Restructure.UIO import UIO
 from SPC.misc.extra import PartiallyLoadable
 from datetime import datetime
 from SPC.Restructure.FilterEvaluator import FilterEvaluator
-from SPC.Restructure.ml_models.RLNNModel import RLNNModel
+from SPC.Restructure.ml_models.RLNNModel_CorrectSequence import RLNNModel_CorrectSequence
 
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE" # fix to omp: error #15 on my laptop
 
-class RLAlgorithm(MLAlgorithm):
+class RLAlgorithm(LearningAlgorithm):
 
     # PARAMETERS
     n_sessions = 300 #number of new sessions per iteration
@@ -31,10 +31,10 @@ class RLAlgorithm(MLAlgorithm):
  
 
     def train(self, iterations, model_save_path="", model_save_time=0):
-        self.model : RLNNModel
+        self.model : RLNNModel_CorrectSequence
         self.model = self.model_logger.get_model()
 
-        self.FE = FilterEvaluator(self.trainingdata_input, self.trainingdata_output, FilterEvaluator.DEFAULT_IGNORE_VALUE, self.model.CORE_LENGTH)
+        self.FE = FilterEvaluator(self.trainingdata_input, self.trainingdata_output, FilterEvaluator.DEFAULT_IGNORE_VALUE, self.model.CORE_LENGTH, self.model_logger)
 
         startstep = self.model_logger.step
         print("startstep:", startstep)
@@ -106,7 +106,6 @@ class RLAlgorithm(MLAlgorithm):
             score_time = time.time()-tic
             
             print("all scores:", len(self.model_logger.all_scores))
-            self.FE.convertConditionMatrixToText
             print("\n" + str(i) +  ". Best individuals: " + str(np.flip(np.sort(super_rewards))))
             print(self.FE.convertConditionMatrixToText(self.convertStateToConditionMatrix(self.getbeststate())))
             self.model_logger.bestscore_history.append(super_rewards[0])

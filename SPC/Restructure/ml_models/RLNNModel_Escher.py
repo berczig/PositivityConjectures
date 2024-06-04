@@ -24,16 +24,17 @@ class RLNNModel_Escher(MLModel):
         self.l,self.k = partition
         # k+2+2*p
         self.CORE_LENGTH = 5   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
-        self.ROWS_IN_CONDITIONMATRIX = 2
+        self.ROWS_IN_CONDITIONMATRIX = 1
         self.ALPHABET_SIZE = 4
-        self.EDGES = int(self.CORE_LENGTH*(self.CORE_LENGTH-1)/2) * self.ROWS_IN_CONDITIONMATRIX
+        self.COLUMNS_IN_CONDITIONMATRIX = int(self.CORE_LENGTH*(self.CORE_LENGTH-1)/2)
+        self.EDGES = self.COLUMNS_IN_CONDITIONMATRIX * self.ROWS_IN_CONDITIONMATRIX
         self.MYN = self.ALPHABET_SIZE*self.EDGES  #The length of the word we are generating. Here we are generating a graph, so we create a 0-1 word of length (N choose 2)
         self.observation_space = self.MYN + self.EDGES #Leave this at 2*MYN. The input vector will have size 2*MYN, where the first MYN letters encode our partial word (with zeros on
                                 #the positions we haven't considered yet), and the next MYN bits one-hot encode which letter we are considering now.
                                 #So e.g. [0,1,0,0,   0,0,1,0] means we have the partial word 01 and we are considering the third letter now.
                                 #Is there a better way to format the input to make it easier for the neural network to understand things?
 
-        self.MAX_EXPECTED_EDGES = 6                       
+        self.MAX_EXPECTED_EDGES = 2
         self.len_game = self.EDGES 
         self.state_dim = (self.observation_space,)
 

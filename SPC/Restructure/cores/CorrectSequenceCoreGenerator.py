@@ -40,3 +40,5 @@ class CorrectSequenceCoreGenerator(CoreGenerator):
                 maximals.append(i)
         return max(maximals)
     
+    def getCoreLabels(partition):
+        return ["p1", "p2", "max"] + ["k"+str(i+1) for i in range(partition[1]+1)]

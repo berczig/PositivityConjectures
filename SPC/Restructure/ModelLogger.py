@@ -1,13 +1,13 @@
 import matplotlib.pyplot as plt
 from SPC.misc.extra import PartiallyLoadable
 from SPC.Restructure.ml_models.MLModel import MLModel
-from SPC.Restructure.ml_models.RLNNModel import RLNNModel
+from SPC.Restructure.ml_models.RLNNModel_CorrectSequence import RLNNModel_CorrectSequence
 from keras.models import load_model
 from keras.utils import custom_object_scope
 
 class ModelLogger(PartiallyLoadable):
-    def __init__(self):
-        super().__init__(["step", "all_scores", "bestscore_history", "meanscore_history", "numgraph_history", "calculationtime_history", "partition"])
+    def __init__(self, core_data_type:str):
+        super().__init__(["step", "all_scores", "bestscore_history", "meanscore_history", "numgraph_history", "calculationtime_history", "partition", "core_data_type"])
         self.step = 0
         self.partition = None
         self.all_scores = {} # {filter_as_tuple:score}
@@ -16,6 +16,7 @@ class ModelLogger(PartiallyLoadable):
         self.numgraph_history = [] # history of number of graphs which we allready have calculated the score of
         self.calculationtime_history = []
         self.model : MLModel
+        self.core_data_type = core_data_type
 
     def load_model_logger(self, model_path:str):
         assert model_path[len(model_path)-6:] == ".keras", "wrong file format"

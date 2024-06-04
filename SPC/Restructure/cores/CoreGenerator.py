@@ -10,3 +10,9 @@ class CoreGenerator:
         abstract function
         """
         pass
+
+    def getCoreLabels(partition):
+        """
+        abstract function
+        """
+        pass

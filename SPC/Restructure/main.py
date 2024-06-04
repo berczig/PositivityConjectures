@@ -1,10 +1,10 @@
 import importlib
 from SPC.Restructure.GlobalUIODataPreparer import GlobalUIODataPreparer
 from SPC.Restructure.ModelLogger import ModelLogger
-from SPC.Restructure.ml_algorithms.MLAlgorithm import MLAlgorithm
+from SPC.Restructure.ml_algorithms.LearningAlgorithm import LearningAlgorithm
 from SPC.Restructure.ml_algorithms.RLAlgorithm import RLAlgorithm
 from SPC.Restructure.ml_models.MLModel import MLModel
-from SPC.Restructure.ml_models.RLNNModel import RLNNModel
+from SPC.Restructure.ml_models.RLNNModel_CorrectSequence import RLNNModel_CorrectSequence
 
 
 if __name__ == "__main__":
@@ -17,8 +17,8 @@ if __name__ == "__main__":
     model_load_path = "" #"SPC/Saves,Tests/models/my_newmodel.keras"
     model_save_path = "" # "SPC/Saves,Tests/models/my_newmodel.keras"
     model_save_time = 300 # how many seconds have to have elapsed before saving
-    ml_training_algorithm_type = "RLAlgorithm" # exact name of the algorithm python class
-    ml_model_type = "RLNNModel_Escher" # exact name of the model python class. The model is the component that contains the weights and perform computations, but the algorithm decides how the model is used
+    ml_training_algorithm_type = "BruteForceAlgorithm" # exact name of the algorithm python class
+    ml_model_type = "RLNNModel_Escher" # RLNNModel_CorrectSequence or RLNNModel_Escher - exact name of the model python class. The model is the component that contains the weights and perform computations, but the algorithm decides how the model is used
     core_data_type = "escher" # escher or correctsequence
     iteration_steps = 5000
     plot_after_training = False
@@ -43,7 +43,7 @@ if __name__ == "__main__":
 
     # 2) get Model
     print("[main - step 2 - get model]")
-    modelLogger = ModelLogger()
+    modelLogger = ModelLogger(core_data_type)
     model : MLModel
     if model_load_path != "":
         print("loading model...")
@@ -62,7 +62,7 @@ if __name__ == "__main__":
 
     # 3) train
     print("[main - step 3 - train]")
-    algorithm : MLAlgorithm
+    algorithm : LearningAlgorithm
     class_ = getattr(importlib.import_module("SPC.Restructure.ml_algorithms."+ml_training_algorithm_type), ml_training_algorithm_type)
     algorithm = class_(modelLogger)
     algorithm.setTrainingData(*Preparer.getTrainingData())
