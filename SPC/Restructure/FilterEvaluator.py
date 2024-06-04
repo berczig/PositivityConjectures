@@ -1,12 +1,15 @@
 import numpy as np
 from SPC.Restructure.UIO import UIO
+from SPC.Restructure.ModelLogger import ModelLogger
+from SPC.Restructure.cores.EscherCoreGenerator import EscherCoreGenerator
+from SPC.Restructure.cores.CorrectSequenceCoreGenerator import CorrectSequenceCoreGenerator
 
 class FilterEvaluator: 
 
     INF = 9999999999
     DEFAULT_IGNORE_VALUE = -1
 
-    def __init__(self, coreRepresentationsCategorizer:dict, true_coefficients, ignore_edge:int, core_length:int):
+    def __init__(self, coreRepresentationsCategorizer:dict, true_coefficients, ignore_edge:int, core_length:int, model_logger:ModelLogger):
         """
         coreRepresentationsCategorizer: {coreRepresentation1:{UIOID1:occurences_in_UIOID1, UIOID2:occurences_in_UIOID2}, ...}
         """
@@ -22,6 +25,11 @@ class FilterEvaluator:
                 counts[uioID] += uio_counts[uioID]
             self.coreRep2[primerep] = counts
 
+        if model_logger.core_data_type == "escher":
+            self.core_labels = EscherCoreGenerator.getCoreLabels(model_logger.partition)
+        elif model_logger.core_data_type == "correctsequence":
+            self.core_labels = CorrectSequenceCoreGenerator.getCoreLabels(model_logger.partition)
+
     def coreFitsConditions(self, correp, Conditions): # ANDs conditions in row together
         for rowcondition in Conditions:
             fits = True
@@ -31,6 +39,7 @@ class FilterEvaluator:
                     break
             if fits:
                 return True
+        # can only be here if all rows are ignore
         return False
     
 
@@ -44,12 +53,17 @@ class FilterEvaluator:
         # prune the Condition_matrix - remove the edges that are of type self.ignore_edge
         Conditions = [[(i, edgecondition) for i, edgecondition in enumerate(conditionrow) if edgecondition != self.ignore_edge] 
                     for conditionrow in filter]
-
+        Conditions = [x for x in Conditions if len(x) != 0] # removes [] from Conditions
         counted = np.zeros(len(self.true_coefficients)) # the i'th entry is the number of correps associated to the i'th uio that fit the Conditions
-        for primeCoreRep in self.coreRep2:
-            #print("primeCoreRep:", primeCoreRep, self.coreRepresentationsCategorizer[primeCoreRep], self.coreFitsConditions(primeCoreRep, Conditions))
-            if not primeCoreRep or self.coreFitsConditions(primeCoreRep, Conditions) == True:
+
+        if len(Conditions) == 0: # count everything
+            for primeCoreRep in self.coreRep2:
                 counted += self.coreRep2[primeCoreRep]
+        else:
+            for primeCoreRep in self.coreRep2:
+                #print("primeCoreRep:", primeCoreRep, self.coreRepresentationsCategorizer[primeCoreRep], self.coreFitsConditions(primeCoreRep, Conditions))
+                if not primeCoreRep or self.coreFitsConditions(primeCoreRep, Conditions) == True:
+                    counted += self.coreRep2[primeCoreRep]
         #print()
         difference = counted - np.array(self.true_coefficients)
         if (difference < 0).any():
@@ -88,12 +102,11 @@ class FilterEvaluator:
         for row in range(rows):
             index = 0
             rowtext = []
-            aORD = ord("a")
             for i in range(self.core_length):
                 for j in range(i+1, self.core_length):
                     edge = int(Condition_matrix[row][index])
                     if edge != self.ignore_edge:
-                        rowtext.append(chr(aORD+i)+UIO.RELATIONTEXT[edge]+chr(aORD+j))
+                        rowtext.append("[{}{}{}]".format(self.core_labels[i],UIO.RELATIONTEXT[edge],self.core_labels[j]))
                     index += 1
             if rowtext:
                 rowtexts.append(" AND ".join(rowtext))
