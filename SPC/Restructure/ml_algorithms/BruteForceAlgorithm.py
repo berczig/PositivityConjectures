@@ -29,7 +29,7 @@ class BruteForceAlgorithm(LearningAlgorithm):
             if score > bestscore or bestfilter is None:
                 bestscore = score
                 bestfilter = filter
-                print("bestfilter:", self.FE.convertConditionMatrixToText(bestfilter))
+                print("bestfilter({}):\n".format(bestscore), self.FE.convertConditionMatrixToText(bestfilter))
             if i % 10000 == 0:
                 print("{}/{}. bestscore: {}".format(i, total_filters, bestscore))
                 current_work_time = time.time()-starttime
