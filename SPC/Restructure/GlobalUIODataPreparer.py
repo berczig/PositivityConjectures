@@ -49,6 +49,8 @@ class GlobalUIODataPreparer(PartiallyLoadable):
         return [extractor.getCorrectSequenceCoreRepresentations(partition) for extractor in self.extractors]
     
     def getAllEscherCoreRepresentations(self, partition):
+        for extractor in self.extractors:
+            print(extractor, "eschercores:", len(extractor.getEscherCoreRepresentations(partition)), "(n,k)-correct seqs:", len(extractor.getCorrectSequences(partition)), "true coeff:", extractor.getCoefficient(partition))
         return [extractor.getEscherCoreRepresentations(partition) for extractor in self.extractors]
 
     def generate_all_uio_encodings(self, n):

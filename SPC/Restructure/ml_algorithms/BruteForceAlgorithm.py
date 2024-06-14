@@ -5,6 +5,7 @@ from SPC.Restructure.UIO import UIO
 import itertools
 import numpy as np
 import math
+import matplotlib.pyplot as plt
 import time
 from datetime import datetime
 
@@ -39,6 +40,49 @@ class BruteForceAlgorithm(LearningAlgorithm):
         print("bestfilter:", self.FE.convertConditionMatrixToText(bestfilter))
         print("bestscore:", bestscore)
 
+
+        res = self.FE.evaluate(bestfilter, return_residuals=True)
+        perfect_indices = np.abs(res) < 0.01
+        perfect_predict = sum(perfect_indices)
+        print("perfect predict: {}/{} ~ {:.2f}%".format(perfect_predict, len(res), 100*perfect_predict/len(res)))
+        res_notp = res[~perfect_indices]
+        print("res mean:", np.mean(res))
+        print("res sd:", np.var(res)**0.5)
+        print("non-zero res mean:", np.mean(res_notp))
+        print("non-zero res sd:", np.var(res_notp)**0.5)
+        tcnz = self.FE.true_coefficients[self.FE.true_coefficients!=0]
+        tcm = np.mean(self.FE.true_coefficients)
+        print("true coeff mean:", tcm)
+        tcnzm = np.mean(tcnz)
+        print("true coeff mean:", tcnzm)
+        print("residuals in 10% mean range: {:.2f}".format(100*sum(res <= (0.1*tcnzm))/len(res)))
+
+        print("non zero coefficients: {:.2f}%".format( 100*sum(self.FE.true_coefficients!=0)/len(self.FE.true_coefficients)  ))
+        #plt.plot(range(len(res_notp)), res_notp+self.FE.true_coefficients[~perfect_indices], range(len(res_notp)), self.FE.true_coefficients[~perfect_indices])
+
+        plt.plot(range(len(res)), res+self.FE.true_coefficients, range(len(res)), self.FE.true_coefficients)
+        plt.title("correct coeffs vs predictions")
+        plt.show()
+
+
+        fig, ax = plt.subplots()
+        ax.plot(range(len(res_notp)), res_notp)
+        ax.hlines(y=[0.1*tcnzm for _ in range(len(res_notp))], xmin=0.0, xmax=1.0, color='r')
+        plt.title("non-zero residuals")
+        plt.show()
+
+        fig, ax = plt.subplots()
+        ax.plot(res[self.FE.true_coefficients == 0])
+        plt.title("residuals of the zero coefficients")
+        plt.show()
+
+        fig, ax = plt.subplots()
+        ax.plot(res[self.FE.true_coefficients != 0])
+        plt.title("residuals of the non-zero coefficients")
+        plt.show()
+
+    def ressi(self, true, res):
+        pass
         # [[ -1  -1  -1  -1  -1  -1  -1 101 101  -1]] -1506.0
 
         # [[ -1  -1  -1  -1  -1  -1  -1  -1  -1  -1]

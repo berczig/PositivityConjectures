@@ -7,23 +7,7 @@ from SPC.Restructure.ml_models.MLModel import MLModel
 from SPC.Restructure.ml_models.RLNNModel_CorrectSequence import RLNNModel_CorrectSequence
 
 
-if __name__ == "__main__":
-
-     # parameters
-    partition = (4,2)
-    uio_length = sum(partition)
-    training_data_load_path = "" # "SPC/Saves,Tests/Trainingdata/partition_4_2.bin"
-    training_data_save_path = "" # "SPC/Saves,Tests/Trainingdata/partition_4_2.bin"
-    model_load_path = "" #"SPC/Saves,Tests/models/my_newmodel.keras"
-    model_save_path = "" # "SPC/Saves,Tests/models/my_newmodel.keras"
-    model_save_time = 300 # how many seconds have to have elapsed before saving
-    ml_training_algorithm_type = "BruteForceAlgorithm" # exact name of the algorithm python class
-    ml_model_type = "RLNNModel_Escher" # RLNNModel_CorrectSequence or RLNNModel_Escher - exact name of the model python class. The model is the component that contains the weights and perform computations, but the algorithm decides how the model is used
-    core_data_type = "escher" # escher or correctsequence
-    iteration_steps = 5000
-    plot_after_training = False
-
-
+def main(partition, training_data_load_path, model_load_path, model_save_path, model_save_time, ml_training_algorithm_type, ml_model_type, core_data_type, iteration_steps, plot_after_training):
 
     # 1) get Training Data
     print("[main - step 1 - get data]")
@@ -83,4 +67,20 @@ if __name__ == "__main__":
 
 
      
+if __name__ == "__main__":
 
+     # parameters
+    partition = (4,2)
+    uio_length = sum(partition)
+    training_data_load_path = "" # "SPC/Saves,Tests/Trainingdata/partition_4_2.bin"
+    training_data_save_path = "" # "SPC/Saves,Tests/Trainingdata/partition_4_2.bin"
+    model_load_path = "" #"SPC/Saves,Tests/models/my_newmodel.keras"
+    model_save_path = "" # "SPC/Saves,Tests/models/my_newmodel.keras"
+    model_save_time = 300 # how many seconds have to have elapsed before saving
+    ml_training_algorithm_type = "BruteForceAlgorithm" # exact name of the algorithm python class BruteForceAlgorithm or RLAlgorithm
+    ml_model_type = "RLNNModel_Escher" # RLNNModel_CorrectSequence or RLNNModel_Escher - exact name of the model python class. The model is the component that contains the weights and perform computations, but the algorithm decides how the model is used
+    core_data_type = "escher" # escher or correctsequence
+    iteration_steps = 500
+    plot_after_training = False
+
+    main(partition, training_data_load_path, model_load_path, model_save_path, model_save_time, ml_training_algorithm_type, ml_model_type, core_data_type, iteration_steps, plot_after_training)

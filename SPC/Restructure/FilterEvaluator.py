@@ -14,7 +14,7 @@ class FilterEvaluator:
         coreRepresentationsCategorizer: {coreRepresentation1:{UIOID1:occurences_in_UIOID1, UIOID2:occurences_in_UIOID2}, ...}
         """
         self.coreRepresentationsCategorizer = coreRepresentationsCategorizer # {coreRepresentation1:{UIOID1:occurences_in_UIOID1, UIOID2:occurences_in_UIOID2}}
-        self.true_coefficients = true_coefficients
+        self.true_coefficients = np.array(true_coefficients)
         self.ignore_edge = ignore_edge
         self.core_length = core_length
         self.coreRep2 = {}
@@ -43,7 +43,7 @@ class FilterEvaluator:
         return False
     
 
-    def evaluate(self, filter, verbose=False):
+    def evaluate(self, filter, verbose=False, return_residuals=False):
         # for each uio of length l+k, check how many of its cores comply  with 
         # the Condition_matrix and compare that amount with the true coefficient c_{l,k}
         if verbose:
@@ -65,10 +65,14 @@ class FilterEvaluator:
                 if not primeCoreRep or self.coreFitsConditions(primeCoreRep, Conditions) == True:
                     counted += self.coreRep2[primeCoreRep]
         #print()
-        difference = counted - np.array(self.true_coefficients)
-        if (difference < 0).any():
+        residuals = counted - self.true_coefficients
+
+        if return_residuals:
+            return residuals
+        
+        if (residuals < 0).any():
             return -self.INF
-        return -sum(difference)
+        return -sum(residuals)
     
     def evaluate_old(self, filter, verbose=False):
         # for each uio of length l+k, check how many of its cores comply  with 

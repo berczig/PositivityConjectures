@@ -66,4 +66,7 @@ class UIODataExtractor:
 
         elif len(partition) == 2:
             return len(self.getCorrectSequences(partition)) - len(self.getCorrectSequences((self.uio.N,)))
+        
+    def __repr__(self) -> str:
+        return "EXTRACTOR OF ["+str(self.uio.encoding)+"]"
 
