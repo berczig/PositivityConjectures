@@ -15,26 +15,15 @@ class EscherCoreGenerator(CoreGenerator):
         #print(u,v, "insertions:", insertions, "escherstartpoints:", escherstartpoints)
         #print(points)
         else:
-            points = [0]
-            has_bigger_than_0_startpoint = False
-            for escherstartpoint in escherstartpoints:
-                if escherstartpoint > 0:
-                    points.append(escherstartpoint)
-                    points.append(escherstartpoint+k-1)
-                    has_bigger_than_0_startpoint = True
-                    break
-            if not has_bigger_than_0_startpoint:
+            points = [0, n-1, n+k-1]
+            if len(escherstartpoints) == 0:
                 points.append(-1)
-                points.append(-2+k)
-            points.append(insertions[0]+0.5) # here 2(n+k)>n+k, but any such number will be fine
-
-            #if len(insertions) > 1:
-            #    points.append(insertions[1]-0.5) # here 2(n+k)>n+k, but any such number will be fine
-            #else:
-            #    points.append(999)
-
-            points.append(n-1)
-            #points.append(n+k-1)
+            else:
+                points.append(escherstartpoints[0]+k-1)
+            if len(insertions) == 1:
+                points.extend([insertions[0]+0.5,2*(n+k)]) # here 2(n+k)>n+k, but any such number will be fine
+            else:
+                points.extend([insertions[0]+0.5,insertions[1]+0.5])
         return points
     
     
@@ -122,5 +111,5 @@ class EscherCoreGenerator(CoreGenerator):
         return subeschersstartingpoint
     
     def getCoreLabels(partition):
-        return ["0", "subescher start interval", "subescher end interval", "1.insert", "n-1"]
+        return ["0", "n-1", "n+k-1", "subescher", "1.insert", "2.insert"]
 

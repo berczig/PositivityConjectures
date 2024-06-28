@@ -2,6 +2,7 @@ import numpy as np
 from SPC.Restructure.UIO import UIO
 from SPC.Restructure.ModelLogger import ModelLogger
 from SPC.Restructure.cores.EscherCoreGenerator import EscherCoreGenerator
+#from SPC.Restructure.cores.EscherCoreGenerator2 import EscherCoreGenerator
 from SPC.Restructure.cores.CorrectSequenceCoreGenerator import CorrectSequenceCoreGenerator
 
 class FilterEvaluator: 
@@ -27,6 +28,8 @@ class FilterEvaluator:
 
         if model_logger.core_data_type == "escher":
             self.core_labels = EscherCoreGenerator.getCoreLabels(model_logger.partition)
+        #elif model_logger.core_data_type == "escher2":
+            #self.core_labels = EscherCoreGenerator2.getCoreLabels(model_logger.partition)
         elif model_logger.core_data_type == "correctsequence":
             self.core_labels = CorrectSequenceCoreGenerator.getCoreLabels(model_logger.partition)
 
@@ -53,7 +56,7 @@ class FilterEvaluator:
         # prune the Condition_matrix - remove the edges that are of type self.ignore_edge
         Conditions = [[(i, edgecondition) for i, edgecondition in enumerate(conditionrow) if edgecondition != self.ignore_edge] 
                     for conditionrow in filter]
-        Conditions = [x for x in Conditions if len(x) != 0] # removes [] from Conditions
+        #Conditions = [x for x in Conditions if len(x) != 0] # removes [] from Conditions - a important decision, can mess up the RL for correct sequences! (1 single condition will always count to few correps)
         counted = np.zeros(len(self.true_coefficients)) # the i'th entry is the number of correps associated to the i'th uio that fit the Conditions
 
         if len(Conditions) == 0: # count everything
@@ -62,17 +65,26 @@ class FilterEvaluator:
         else:
             for primeCoreRep in self.coreRep2:
                 #print("primeCoreRep:", primeCoreRep, self.coreRepresentationsCategorizer[primeCoreRep], self.coreFitsConditions(primeCoreRep, Conditions))
+                if verbose:
+                    print(primeCoreRep, 23 in self.coreRepresentationsCategorizer[primeCoreRep], self.coreRepresentationsCategorizer[primeCoreRep])
                 if not primeCoreRep or self.coreFitsConditions(primeCoreRep, Conditions) == True:
+                    #print("count!")
                     counted += self.coreRep2[primeCoreRep]
+                    if verbose:
+                        print("Good")
+                else:
+                    if verbose:
+                        print("bad")
         #print()
         residuals = counted - self.true_coefficients
 
         if return_residuals:
             return residuals
         
-        if (residuals < 0).any():
-            return -self.INF
-        return -sum(residuals)
+        #if (residuals < 0).any():
+        #    return -self.INF
+        
+        return -sum(abs(residuals))
     
     def evaluate_old(self, filter, verbose=False):
         # for each uio of length l+k, check how many of its cores comply  with 

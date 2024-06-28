@@ -14,6 +14,8 @@ class GlobalUIODataPreparer(PartiallyLoadable):
     def initUIOs(self):
         encodings = self.generate_all_uio_encodings(self.n)
         self.extractors = [UIODataExtractor(UIO(enc)) for enc in encodings]
+        #for i, enc in enumerate(encodings):
+            #print(i, enc)
 
     def computeTrainingData(self, partition:tuple, core_data_type:str) -> tuple:
         """
@@ -49,8 +51,8 @@ class GlobalUIODataPreparer(PartiallyLoadable):
         return [extractor.getCorrectSequenceCoreRepresentations(partition) for extractor in self.extractors]
     
     def getAllEscherCoreRepresentations(self, partition):
-        for extractor in self.extractors:
-            print(extractor, "eschercores:", len(extractor.getEscherCoreRepresentations(partition)), "(n,k)-correct seqs:", len(extractor.getCorrectSequences(partition)), "true coeff:", extractor.getCoefficient(partition))
+        #for extractor in self.extractors:
+            #print(extractor, "eschercores:", len(extractor.getEscherCoreRepresentations(partition)), "(n,k)-correct seqs:", len(extractor.getCorrectSequences(partition)), "true coeff:", extractor.getCoefficient(partition))
         return [extractor.getEscherCoreRepresentations(partition) for extractor in self.extractors]
 
     def generate_all_uio_encodings(self, n):
@@ -99,6 +101,8 @@ class GlobalUIODataPreparer(PartiallyLoadable):
         for cat in core_rep_categories:
             #print("cat:", cat)
             self.coreRepresentationsCategorizer[cat] = counter[core_rep_categories[cat]]
+        for key in self.coreRepresentationsCategorizer:
+            print("core:", key)
         print("Found",len(self.coreRepresentationsCategorizer), "distinct core representations / categories")
 
 if __name__ == "__main__":

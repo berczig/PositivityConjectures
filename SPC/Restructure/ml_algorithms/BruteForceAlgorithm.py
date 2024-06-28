@@ -23,9 +23,26 @@ class BruteForceAlgorithm(LearningAlgorithm):
         bestscore = -FilterEvaluator.INF
         bestfilter = None
         starttime = time.time()
+        my_filter = np.ones((self.model.ROWS_IN_CONDITIONMATRIX, self.model.COLUMNS_IN_CONDITIONMATRIX))*self.FE.DEFAULT_IGNORE_VALUE
+        # ["0", "subescher start interval", "subescher end interval", "1.insert", "2. insert", "n-1", "n+k-1"]
+        my_filter[0][0] = UIO.LESS
+        my_filter[0][11] = UIO.LESS
+        #my_filter[1][7] = UIO.LESS
+        #my_filter[1][9] = UIO.EQUAL
+
+        #my_filter[0][0] = UIO.LESS
+        #my_filter[0][11] = UIO.LESS
+        #my_filter[1][7] = UIO.LESS
+        #my_filter[1][9] = UIO.EQUAL
+
+        #my_filter[0][0] = UIO.LESS
+        #my_filter[0][11] = UIO.LESS
+        #my_filter[0][16] = UIO.LESS
+        #my_filter[1][16] = UIO.GREATER
+        #my_filter[1][19] = UIO.GREATER
+        #for i, filter in [(1, my_filter)]: # enumerate(MatrixGenerator, start=1):
         for i, filter in enumerate(MatrixGenerator, start=1):
             score = self.FE.evaluate(filter)
-            #print(filter, score)
 
             if score > bestscore or bestfilter is None:
                 bestscore = score
@@ -33,15 +50,15 @@ class BruteForceAlgorithm(LearningAlgorithm):
                 print("bestfilter({}):\n".format(bestscore), self.FE.convertConditionMatrixToText(bestfilter))
             if i % 10000 == 0:
                 print("{}/{}. bestscore: {}".format(i, total_filters, bestscore))
-                current_work_time = time.time()-starttime
+                current_work_time = time.time()-starttime+0.0001
                 processing_speed = i/current_work_time
                 ETC = time.time() + (total_filters-i)/ processing_speed
                 print("ETC: {}".format(datetime.fromtimestamp(ETC)))
         print("bestfilter:", self.FE.convertConditionMatrixToText(bestfilter))
         print("bestscore:", bestscore)
+        print()
 
-
-        res = self.FE.evaluate(bestfilter, return_residuals=True)
+        res = self.FE.evaluate(bestfilter, verbose=False, return_residuals=True)
         perfect_indices = np.abs(res) < 0.01
         perfect_predict = sum(perfect_indices)
         print("perfect predict: {}/{} ~ {:.2f}%".format(perfect_predict, len(res), 100*perfect_predict/len(res)))
@@ -67,7 +84,7 @@ class BruteForceAlgorithm(LearningAlgorithm):
 
         fig, ax = plt.subplots()
         ax.plot(range(len(res_notp)), res_notp)
-        ax.hlines(y=[0.1*tcnzm for _ in range(len(res_notp))], xmin=0.0, xmax=1.0, color='r')
+        ax.hlines(y=0.1*tcnzm, xmin=0.0, xmax=len(res_notp), color='r')
         plt.title("non-zero residuals")
         plt.show()
 

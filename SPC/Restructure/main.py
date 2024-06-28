@@ -70,17 +70,17 @@ def main(partition, training_data_load_path, model_load_path, model_save_path, m
 if __name__ == "__main__":
 
      # parameters
-    partition = (4,2)
+    partition = (5,4)
     uio_length = sum(partition)
-    training_data_load_path = "" # "SPC/Saves,Tests/Trainingdata/partition_4_2.bin"
-    training_data_save_path = "" # "SPC/Saves,Tests/Trainingdata/partition_4_2.bin"
+    training_data_load_path = "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core.bin" # "SPC/Saves,Tests/Trainingdata/partition_5_3__7_core.bin"
+    training_data_save_path = "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core.bin"
     model_load_path = "" #"SPC/Saves,Tests/models/my_newmodel.keras"
     model_save_path = "" # "SPC/Saves,Tests/models/my_newmodel.keras"
     model_save_time = 300 # how many seconds have to have elapsed before saving
-    ml_training_algorithm_type = "BruteForceAlgorithm" # exact name of the algorithm python class BruteForceAlgorithm or RLAlgorithm
+    ml_training_algorithm_type = "RLAlgorithm" # exact name of the algorithm python class BruteForceAlgorithm or RLAlgorithm
     ml_model_type = "RLNNModel_Escher" # RLNNModel_CorrectSequence or RLNNModel_Escher - exact name of the model python class. The model is the component that contains the weights and perform computations, but the algorithm decides how the model is used
     core_data_type = "escher" # escher or correctsequence
-    iteration_steps = 500
-    plot_after_training = False
+    iteration_steps = 50
+    plot_after_training = True
 
     main(partition, training_data_load_path, model_load_path, model_save_path, model_save_time, ml_training_algorithm_type, ml_model_type, core_data_type, iteration_steps, plot_after_training)
