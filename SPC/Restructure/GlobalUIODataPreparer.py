@@ -101,8 +101,8 @@ class GlobalUIODataPreparer(PartiallyLoadable):
         for cat in core_rep_categories:
             #print("cat:", cat)
             self.coreRepresentationsCategorizer[cat] = counter[core_rep_categories[cat]]
-        for key in self.coreRepresentationsCategorizer:
-            print("core:", key)
+        #for key in self.coreRepresentationsCategorizer:
+            #print("core:", key)
         print("Found",len(self.coreRepresentationsCategorizer), "distinct core representations / categories")
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@ from keras.optimizers import SGD, Adam
 from keras.utils import register_keras_serializable
 
 @register_keras_serializable()
-class RLNNModel_Escher(MLModel):
+class RLNNModel_Escher_Tripple(MLModel):
     """
 
     """
@@ -22,7 +22,7 @@ class RLNNModel_Escher(MLModel):
         self.partition = partition
 
         # k+2+2*p
-        self.CORE_LENGTH = 5   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
+        self.CORE_LENGTH = 1 + 3*4   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
         self.ROWS_IN_CONDITIONMATRIX = 1
         self.ALPHABET_SIZE = 4
         self.COLUMNS_IN_CONDITIONMATRIX = int(self.CORE_LENGTH*(self.CORE_LENGTH-1)/2)
@@ -33,10 +33,10 @@ class RLNNModel_Escher(MLModel):
                                 #So e.g. [0,1,0,0,   0,0,1,0] means we have the partial word 01 and we are considering the third letter now.
                                 #Is there a better way to format the input to make it easier for the neural network to understand things?
 
-        self.MAX_EXPECTED_EDGES = 4
+        self.MAX_EXPECTED_EDGES = 6
         self.len_game = self.EDGES 
         self.state_dim = (self.observation_space,)
-
+        print("CORE_LENGTH:", self.CORE_LENGTH)
         print("self.ALPHABET_SIZE:", self.ALPHABET_SIZE)
         print("self.EDGES:", self.EDGES)
         print("self.MYN:", self.MYN)

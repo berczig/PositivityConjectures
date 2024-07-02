@@ -1,5 +1,6 @@
 from SPC.Restructure.cores.CorrectSequenceCoreGenerator import CorrectSequenceCoreGenerator
 from SPC.Restructure.cores.EscherCoreGenerator import EscherCoreGenerator
+from SPC.Restructure.cores.EscherTrippleCoreGenerator import EscherTrippleCoreGenerator
 from SPC.Restructure.UIO import UIO
 from SPC.misc.misc import *
 
@@ -46,17 +47,26 @@ class UIODataExtractor:
             a = partition[0]
             return [(seq[:a], seq[a:]) for seq in getPermutationsOfN(self.uio.N) if self.uio.isescher(seq[:a]) 
                     and self.uio.isescher(seq[a:]) ]
+        elif len(partition) == 3:
+            a,b,c  = partition                   
+            return [(seq[:a], seq[a:a+b], seq[a+b:]) for seq in getPermutationsOfN(self.uio.N) if self.uio.isescher(seq[:a]) 
+                    and self.uio.isescher(seq[a:a+b]) and self.uio.isescher(seq[a+b:]) ]
 
     @lru_cache(maxsize=None)
     def getEscherCores(self, partition):
         if len(partition) == 2:
             GEN = EscherCoreGenerator(self.uio, partition)
             return [GEN.generateCore(escherpair) for escherpair in self.getEschers(partition)] 
+        elif len(partition) == 3:
+            GEN = EscherTrippleCoreGenerator(self.uio, partition)
+            return [GEN.generateCore(escherpair) for escherpair in self.getEschers(partition)] 
         
     @lru_cache(maxsize=None)
     def getEscherCoreRepresentations(self, partition):
         if len(partition) == 2:
             return [EscherCoreGenerator.toEscherCoreRepresentation(core) for core in self.getEscherCores(partition)]
+        if len(partition) == 3:
+            return [EscherTrippleCoreGenerator.toEscherCoreRepresentation(core) for core in self.getEscherCores(partition)]
 
 
 
@@ -66,6 +76,14 @@ class UIODataExtractor:
 
         elif len(partition) == 2:
             return len(self.getCorrectSequences(partition)) - len(self.getCorrectSequences((self.uio.N,)))
+        
+        elif len(partition) == 3:
+            n,k,l = partition
+            return 2*len(self.getEschers((n+k+l,))) +\
+                  len(self.getEschers(partition)) -\
+                      len(self.getEschers((n+l,k))) -\
+                          len(self.getEschers((n+k,l))) -\
+                              len(self.getEschers((l+k,n)))
         
     def __repr__(self) -> str:
         return "EXTRACTOR OF ["+str(self.uio.encoding)+"]"

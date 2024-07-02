@@ -41,7 +41,7 @@ def main(partition, training_data_load_path, model_load_path, model_save_path, m
         model.build_model()
         modelLogger.set_model(model)
     model.summary()
-    assert model.partition == Preparer.partition, "model parition does not match training data partition"
+    assert model.partition == Preparer.partition, "model parition({}) does not match training data partition({})".format(model.partition, Preparer.partition)
 
 
     # 3) train
@@ -70,15 +70,15 @@ def main(partition, training_data_load_path, model_load_path, model_save_path, m
 if __name__ == "__main__":
 
      # parameters
-    partition = (5,4)
+    partition = (3,2,1)
     uio_length = sum(partition)
-    training_data_load_path = "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core.bin" # "SPC/Saves,Tests/Trainingdata/partition_5_3__7_core.bin"
-    training_data_save_path = "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core.bin"
+    training_data_load_path = "" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core.bin" # "SPC/Saves,Tests/Trainingdata/partition_5_3__7_core.bin"
+    training_data_save_path = "" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core.bin"
     model_load_path = "" #"SPC/Saves,Tests/models/my_newmodel.keras"
     model_save_path = "" # "SPC/Saves,Tests/models/my_newmodel.keras"
     model_save_time = 300 # how many seconds have to have elapsed before saving
     ml_training_algorithm_type = "RLAlgorithm" # exact name of the algorithm python class BruteForceAlgorithm or RLAlgorithm
-    ml_model_type = "RLNNModel_Escher" # RLNNModel_CorrectSequence or RLNNModel_Escher - exact name of the model python class. The model is the component that contains the weights and perform computations, but the algorithm decides how the model is used
+    ml_model_type = "RLNNModel_Escher_Tripple" # RLNNModel_CorrectSequence or RLNNModel_Escher or RLNNModel_Escher_Tripple - exact name of the model python class. The model is the component that contains the weights and perform computations, but the algorithm decides how the model is used
     core_data_type = "escher" # escher or correctsequence
     iteration_steps = 50
     plot_after_training = True

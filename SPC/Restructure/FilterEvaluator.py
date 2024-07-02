@@ -2,6 +2,7 @@ import numpy as np
 from SPC.Restructure.UIO import UIO
 from SPC.Restructure.ModelLogger import ModelLogger
 from SPC.Restructure.cores.EscherCoreGenerator import EscherCoreGenerator
+from SPC.Restructure.cores.EscherTrippleCoreGenerator import EscherTrippleCoreGenerator
 #from SPC.Restructure.cores.EscherCoreGenerator2 import EscherCoreGenerator
 from SPC.Restructure.cores.CorrectSequenceCoreGenerator import CorrectSequenceCoreGenerator
 
@@ -27,7 +28,7 @@ class FilterEvaluator:
             self.coreRep2[primerep] = counts
 
         if model_logger.core_data_type == "escher":
-            self.core_labels = EscherCoreGenerator.getCoreLabels(model_logger.partition)
+            self.core_labels = EscherTrippleCoreGenerator.getCoreLabels(model_logger.partition)
         #elif model_logger.core_data_type == "escher2":
             #self.core_labels = EscherCoreGenerator2.getCoreLabels(model_logger.partition)
         elif model_logger.core_data_type == "correctsequence":
@@ -37,6 +38,8 @@ class FilterEvaluator:
         for rowcondition in Conditions:
             fits = True
             for edgeIndex, edgevalue in rowcondition:
+                #print("correp:", len(correp), correp)
+                #print("edgeIndex:", edgeIndex)
                 if correp[edgeIndex] != edgevalue:
                     fits = False
                     break
@@ -65,9 +68,8 @@ class FilterEvaluator:
         else:
             for primeCoreRep in self.coreRep2:
                 #print("primeCoreRep:", primeCoreRep, self.coreRepresentationsCategorizer[primeCoreRep], self.coreFitsConditions(primeCoreRep, Conditions))
-                if verbose:
-                    print(primeCoreRep, 23 in self.coreRepresentationsCategorizer[primeCoreRep], self.coreRepresentationsCategorizer[primeCoreRep])
-                if not primeCoreRep or self.coreFitsConditions(primeCoreRep, Conditions) == True:
+                if primeCoreRep == "GOOD" or (primeCoreRep != "BAD" and self.coreFitsConditions(primeCoreRep, Conditions) == True):
+                #if not primeCoreRep or self.coreFitsConditions(primeCoreRep, Conditions) == True:
                     #print("count!")
                     counted += self.coreRep2[primeCoreRep]
                     if verbose:
@@ -75,7 +77,7 @@ class FilterEvaluator:
                 else:
                     if verbose:
                         print("bad")
-        #print()
+
         residuals = counted - self.true_coefficients
 
         if return_residuals:
