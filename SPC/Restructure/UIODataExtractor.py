@@ -1,6 +1,9 @@
 from SPC.Restructure.cores.CorrectSequenceCoreGenerator import CorrectSequenceCoreGenerator
-from SPC.Restructure.cores.EscherCoreGenerator import EscherCoreGenerator
-from SPC.Restructure.cores.EscherTrippleCoreGenerator import EscherTrippleCoreGenerator
+from SPC.Restructure.cores.CorrectSequenceCoreGeneratorAbstract import CorrectSequenceCoreGeneratorAbstract
+from SPC.Restructure.cores.EscherCoreGeneratorBasic import EscherCoreGeneratorBasic
+from SPC.Restructure.cores.CoreGenerator import CoreGenerator
+from SPC.Restructure.cores.EscherCoreGeneratorTripple import EscherCoreGeneratorTripple
+from SPC.Restructure.cores.EscherCoreGeneratorAbstract import EscherCoreGeneratorAbstract
 from SPC.Restructure.UIO import UIO
 from SPC.misc.misc import *
 
@@ -13,8 +16,9 @@ class UIODataExtractor:
     Note: λ-correct sequences are returned as 1 sequence were as λ-eschers are returned as tuples: λ-escher = (escher_1, escher_2)
     """
     
-    def __init__(self, uio:UIO):
+    def __init__(self, uio:UIO, core_generator_class:CoreGenerator):
         self.uio = uio
+        self.core_generator_class = core_generator_class
 
 
     @lru_cache(maxsize=None)
@@ -26,16 +30,32 @@ class UIODataExtractor:
             return [seq for seq in getPermutationsOfN(self.uio.N) if self.uio.iscorrect(seq[:a]) 
                     and self.uio.iscorrect(seq[a:]) ]
         
+    def getCores(self, partition):
+        GEN = self.core_generator_class(self.uio, partition)
+        if isinstance(GEN, EscherCoreGeneratorAbstract):
+            return [GEN.generateCore(eschers) for eschers in self.getEschers(partition)]
+        elif isinstance(GEN, CorrectSequenceCoreGenerator):
+            return [GEN.generateCore(corseq) for corseq in self.getCorrectSequences(partition)]
+        else:
+            assert False==True, "{} is not a subclass of EscherCoreGeneratorAbstract or CorrectSequenceCoreGenerator".format(str(self.core_generator_class))
+
+    def getCoreRepresentations(self, partition):
+        GEN = self.core_generator_class(self.uio, partition)
+        return [GEN.getCoreRepresentation(core) for core in self.getCores(partition)]
+
+        
     @lru_cache(maxsize=None)
     def getCorrectSequenceCores(self, partition):
         if len(partition) == 2:
-            GEN = CorrectSequenceCoreGenerator(self.uio, partition)
+            GEN = self.core_generator(self.uio, partition)
             return [GEN.generateCore(corseq) for corseq in self.getCorrectSequences(partition)]
         
     @lru_cache(maxsize=None)
     def getCorrectSequenceCoreRepresentations(self, partition):
         if len(partition) == 2:
-            return [self.uio.toPosetData(core) for core in self.getCorrectSequenceCores(partition)]
+            GEN = CorrectSequenceCoreGenerator(self.uio, partition)
+            print("yo")
+            return [GEN.getCoreRepresentation(core) for core in self.getCorrectSequenceCores(partition)]
 
 
 
@@ -55,18 +75,20 @@ class UIODataExtractor:
     @lru_cache(maxsize=None)
     def getEscherCores(self, partition):
         if len(partition) == 2:
-            GEN = EscherCoreGenerator(self.uio, partition)
+            GEN = EscherCoreGeneratorBasic(self.uio, partition)
             return [GEN.generateCore(escherpair) for escherpair in self.getEschers(partition)] 
         elif len(partition) == 3:
-            GEN = EscherTrippleCoreGenerator(self.uio, partition)
+            GEN = EscherCoreGeneratorTripple(self.uio, partition)
             return [GEN.generateCore(escherpair) for escherpair in self.getEschers(partition)] 
         
     @lru_cache(maxsize=None)
     def getEscherCoreRepresentations(self, partition):
         if len(partition) == 2:
-            return [EscherCoreGenerator.toEscherCoreRepresentation(core) for core in self.getEscherCores(partition)]
+            GEN = EscherCoreGeneratorBasic(self.uio, partition)
+            return [GEN.getCoreRepresentation(core) for core in self.getEscherCores(partition)]
         if len(partition) == 3:
-            return [EscherTrippleCoreGenerator.toEscherCoreRepresentation(core) for core in self.getEscherCores(partition)]
+            GEN = EscherCoreGeneratorTripple(self.uio, partition)
+            return [GEN.getCoreRepresentation(core) for core in self.getEscherCores(partition)]
 
 
 

@@ -14,7 +14,7 @@ class BruteForceAlgorithm(LearningAlgorithm):
         self.model : RLNNModel_CorrectSequence
         self.model = self.model_logger.get_model()
 
-        self.FE = FilterEvaluator(self.trainingdata_input, self.trainingdata_output, FilterEvaluator.DEFAULT_IGNORE_VALUE, self.model.CORE_LENGTH, self.model_logger)
+        self.FE = FilterEvaluator(self.trainingdata_input, self.trainingdata_output, FilterEvaluator.DEFAULT_IGNORE_VALUE, self.model_logger)
 
         total_filters = self.getTotalNumberOfFilters(self.model.ALPHABET_SIZE, self.model.ROWS_IN_CONDITIONMATRIX, self.model.COLUMNS_IN_CONDITIONMATRIX, self.model.MAX_EXPECTED_EDGES)
         print("will generate {} matrices".format(total_filters))
@@ -25,8 +25,8 @@ class BruteForceAlgorithm(LearningAlgorithm):
         starttime = time.time()
         my_filter = np.ones((self.model.ROWS_IN_CONDITIONMATRIX, self.model.COLUMNS_IN_CONDITIONMATRIX))*self.FE.DEFAULT_IGNORE_VALUE
         # ["0", "subescher start interval", "subescher end interval", "1.insert", "2. insert", "n-1", "n+k-1"]
-        my_filter[0][0] = UIO.LESS
-        my_filter[0][11] = UIO.LESS
+        #my_filter[0][0] = UIO.LESS
+        #my_filter[0][11] = UIO.LESS
         #my_filter[1][7] = UIO.LESS
         #my_filter[1][9] = UIO.EQUAL
 

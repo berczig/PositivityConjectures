@@ -1,8 +1,8 @@
 import numpy as np
 from SPC.Restructure.UIO import UIO
 from SPC.Restructure.ModelLogger import ModelLogger
-from SPC.Restructure.cores.EscherCoreGenerator import EscherCoreGenerator
-from SPC.Restructure.cores.EscherTrippleCoreGenerator import EscherTrippleCoreGenerator
+from SPC.Restructure.cores.EscherCoreGeneratorBasic import EscherCoreGeneratorBasic
+from SPC.Restructure.cores.EscherCoreGeneratorTripple import EscherCoreGeneratorTripple
 #from SPC.Restructure.cores.EscherCoreGenerator2 import EscherCoreGenerator
 from SPC.Restructure.cores.CorrectSequenceCoreGenerator import CorrectSequenceCoreGenerator
 
@@ -11,14 +11,15 @@ class FilterEvaluator:
     INF = 9999999999
     DEFAULT_IGNORE_VALUE = -1
 
-    def __init__(self, coreRepresentationsCategorizer:dict, true_coefficients, ignore_edge:int, core_length:int, model_logger:ModelLogger):
+    def __init__(self, coreRepresentationsCategorizer:dict, true_coefficients, ignore_edge:int, model_logger:ModelLogger):
         """
         coreRepresentationsCategorizer: {coreRepresentation1:{UIOID1:occurences_in_UIOID1, UIOID2:occurences_in_UIOID2}, ...}
         """
         self.coreRepresentationsCategorizer = coreRepresentationsCategorizer # {coreRepresentation1:{UIOID1:occurences_in_UIOID1, UIOID2:occurences_in_UIOID2}}
         self.true_coefficients = np.array(true_coefficients)
         self.ignore_edge = ignore_edge
-        self.core_length = core_length
+        print("ture coefficients:", true_coefficients)
+        print(np.sum(true_coefficients))
         self.coreRep2 = {}
         for primerep in coreRepresentationsCategorizer:
             counts = np.zeros(len(true_coefficients))
@@ -27,14 +28,11 @@ class FilterEvaluator:
                 counts[uioID] += uio_counts[uioID]
             self.coreRep2[primerep] = counts
 
-        if model_logger.core_data_type == "escher":
-            self.core_labels = EscherTrippleCoreGenerator.getCoreLabels(model_logger.partition)
-        #elif model_logger.core_data_type == "escher2":
-            #self.core_labels = EscherCoreGenerator2.getCoreLabels(model_logger.partition)
-        elif model_logger.core_data_type == "correctsequence":
-            self.core_labels = CorrectSequenceCoreGenerator.getCoreLabels(model_logger.partition)
+        self.core_labels = model_logger.core_generator_class_.getCoreLabels(model_logger.partition)
+        self.comp_indices = model_logger.core_generator_class_.comp_indices
 
     def coreFitsConditions(self, correp, Conditions): # ANDs conditions in row together
+
         for rowcondition in Conditions:
             fits = True
             for edgeIndex, edgevalue in rowcondition:
@@ -67,6 +65,7 @@ class FilterEvaluator:
                 counted += self.coreRep2[primeCoreRep]
         else:
             for primeCoreRep in self.coreRep2:
+                #print("filter:", filter)
                 #print("primeCoreRep:", primeCoreRep, self.coreRepresentationsCategorizer[primeCoreRep], self.coreFitsConditions(primeCoreRep, Conditions))
                 if primeCoreRep == "GOOD" or (primeCoreRep != "BAD" and self.coreFitsConditions(primeCoreRep, Conditions) == True):
                 #if not primeCoreRep or self.coreFitsConditions(primeCoreRep, Conditions) == True:
@@ -118,14 +117,11 @@ class FilterEvaluator:
         rows, columns = Condition_matrix.shape
         rowtexts = []
         for row in range(rows):
-            index = 0
             rowtext = []
-            for i in range(self.core_length):
-                for j in range(i+1, self.core_length):
-                    edge = int(Condition_matrix[row][index])
-                    if edge != self.ignore_edge:
-                        rowtext.append("[{}{}{}]".format(self.core_labels[i],UIO.RELATIONTEXT[edge],self.core_labels[j]))
-                    index += 1
+            for index, (i,j) in enumerate(self.comp_indices):
+                edge = int(Condition_matrix[row][index])
+                if edge != self.ignore_edge:
+                    rowtext.append("[{}{}{}]".format(self.core_labels[i],UIO.RELATIONTEXT[edge],self.core_labels[j]))
             if rowtext:
                 rowtexts.append(" AND ".join(rowtext))
         return 3*" " + 16*"-" + "\n" + "\nOR\n".join(rowtexts) + "\n"+ 3*" " + 16*"-"

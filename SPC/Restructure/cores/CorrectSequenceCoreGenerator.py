@@ -1,7 +1,7 @@
-from SPC.Restructure.cores.CoreGenerator import CoreGenerator
+from SPC.Restructure.cores.CorrectSequenceCoreGeneratorAbstract import CorrectSequenceCoreGeneratorAbstract
 from SPC.Restructure.UIO import UIO
 
-class CorrectSequenceCoreGenerator(CoreGenerator):
+class CorrectSequenceCoreGenerator(CorrectSequenceCoreGeneratorAbstract):
 
     p = 1
 
@@ -40,5 +40,9 @@ class CorrectSequenceCoreGenerator(CoreGenerator):
                 maximals.append(i)
         return max(maximals)
     
+    def getCoreRepresentation(self, core):
+        return self.uio.toPosetData(core)
+    
+    @staticmethod
     def getCoreLabels(partition):
         return ["p1", "p2", "max"] + ["k"+str(i+1) for i in range(partition[1]+1)]

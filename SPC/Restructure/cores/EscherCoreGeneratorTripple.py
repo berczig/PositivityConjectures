@@ -1,12 +1,44 @@
-
-
-from SPC.Restructure.cores.CoreGenerator import CoreGenerator
+from SPC.Restructure.cores.EscherCoreGeneratorAbstract import EscherCoreGeneratorAbstract
 from SPC.Restructure.UIO import UIO
 import numpy as np
 import sys
-class EscherTrippleCoreGenerator(CoreGenerator):
-    def generateCore(self, eschertripple):
+class EscherCoreGeneratorTripple(EscherCoreGeneratorAbstract):
 
+    def compareTwoCoreElements(self, a, b):
+        if a < b:
+            return UIO.LESS
+        elif a > b:
+            return UIO.GREATER
+        return UIO.EQUAL
+    
+
+    @staticmethod
+    def getCoreComparisions(partition):
+        #return EscherCoreGeneratorTripple.getAllCoreComparisions(partition)
+        return {
+            "0" : ["subescher vw start", "vw 1. insert", "subescher uv_w start", "uv_w 1. insert", "subescher uw_v start", "uw_v 1. insert"],
+            "len(v)-1" : ["subescher vw start", "subescher vw end", "vw 1. insert", "subescher uv_w start", "subescher uv_w end", "uv_w 1. insert", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"],
+            "subescher vw start" : ["subescher vw end", "vw 1. insert", "len(uv)_1", "subescher uv_w start", "subescher uv_w end", "uv_w 1. insert","len(uw)-1", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"],
+            "subescher vw end" : ["vw 1. insert", "len(uv)_1", "subescher uv_w start", "subescher uv_w end", "uv_w 1. insert","len(uw)-1", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"],
+            "vw 1. insert" : ["len(uv)_1", "subescher uv_w start", "subescher uv_w end", "uv_w 1. insert","len(uw)-1", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"],
+            "len(uv)_1" : ["subescher uv_w start", "subescher uv_w end", "uv_w 1. insert", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"],
+            "subescher uv_w start" : ["subescher uv_w end", "uv_w 1. insert","len(uw)-1", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"],
+            "subescher uv_w end" : ["uv_w 1. insert","len(uw)-1", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"],
+            "uv_w 1. insert" : ["len(uw)-1", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"],
+            "len(uw)-1" : ["subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"],
+            "subescher uw_v start" : ["subescher uw_v end", "uw_v 1. insert"],
+            "subescher uw_v end" : ["uw_v 1. insert"],
+                }
+
+
+    @staticmethod
+    def getCoreLabels(partition):
+        return ["0", "len(v)-1", "subescher vw start", "subescher vw end", "vw 1. insert", "len(uv)_1", "subescher uv_w start", 
+                "subescher uv_w end", "uv_w 1. insert","len(uw)-1", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"]
+
+    
+
+    def generateCore(self, eschertripple):
         
         def add_half(L):
             return L[:-1]+[L[-1]+0.5]
@@ -38,7 +70,7 @@ class EscherTrippleCoreGenerator(CoreGenerator):
 
 
         #print([0] + add_half(core_v_w) + add_half(core_uv_w) + add_half(core_uw_v))
-        print([0] + core_v_w + core_uv_w + core_uw_v)
+        #print([0] + core_v_w + core_uv_w + core_uw_v)
         return [0] + core_v_w + core_uv_w + core_uw_v
         
         """
@@ -137,7 +169,7 @@ class EscherTrippleCoreGenerator(CoreGenerator):
         k = len(second)
         return first[:insertionpoint%f+1]+self.cyclicslice(second, insertionpoint+1, insertionpoint+k+1)+first[insertionpoint%f+1:]
     
-    def toEscherCoreRepresentation(core):
+    def getCoreRepresentation(self, core):
         k = len(core)
 
         if core == "GOOD":
@@ -155,10 +187,6 @@ class EscherTrippleCoreGenerator(CoreGenerator):
                 elif core[i] > core[j]:
                     comparison_matrix[i, j] = UIO.GREATER
                     comparison_matrix[j,i] = UIO.LESS
-
-        if len(tuple([comparison_matrix[i,j] for i in range(k) for j in range(i+1, k)])) == 3:
-            print("core:", core)
-            sys.exit(0)
 
         return tuple([comparison_matrix[i,j] for i in range(k) for j in range(i+1, k)])
     
@@ -229,6 +257,3 @@ class EscherTrippleCoreGenerator(CoreGenerator):
             if cond1 and cond2:
                 subeschersstartingpoint.append(m+1)
         return subeschersstartingpoint
-    
-    def getCoreLabels(partition):
-        return ["0", "len(v)-1", "subescher vw start", "subescher vw end", "vw 1. insert", "len(uv)_1", "subescher uv_w start", "subescher uv_w end", "uv_w 1. insert","len(uw)-1", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"]

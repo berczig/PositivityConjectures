@@ -34,7 +34,10 @@ class RLAlgorithm(LearningAlgorithm):
         self.model : RLNNModel_CorrectSequence
         self.model = self.model_logger.get_model()
 
-        self.FE = FilterEvaluator(self.trainingdata_input, self.trainingdata_output, FilterEvaluator.DEFAULT_IGNORE_VALUE, self.model.CORE_LENGTH, self.model_logger)
+        self.FE = FilterEvaluator(self.trainingdata_input, self.trainingdata_output, FilterEvaluator.DEFAULT_IGNORE_VALUE, self.model_logger)
+
+        self.current_bestscore = -FilterEvaluator.INF
+        self.current_beststate = None
 
         startstep = self.model_logger.step
         print("startstep:", startstep)
@@ -48,6 +51,8 @@ class RLAlgorithm(LearningAlgorithm):
         fit_time = 0
         score_time = 0
         next_save_time = time.time() + model_save_time
+
+        
 
 
         myRand = random.randint(0,1000) #used in the filename
@@ -105,12 +110,12 @@ class RLAlgorithm(LearningAlgorithm):
 
             score_time = time.time()-tic
             
-            print("all scores:", len(self.model_logger.all_scores))
             print("\n" + str(i) +  ". Best individuals: " + str(np.flip(np.sort(super_rewards))))
-            print(self.FE.convertConditionMatrixToText(self.convertStateToConditionMatrix(self.getbeststate())))
-            self.model_logger.bestscore_history.append(super_rewards[0])
+            print("best state:", self.current_bestscore, self.FE.convertConditionMatrixToText(self.convertStateToConditionMatrix(self.current_beststate)))
+            self.model_logger.bestscore_history.append(self.current_bestscore)
+            self.model_logger.bestfilter_history.append(self.current_beststate)
             self.model_logger.meanscore_history.append(np.mean(super_rewards))
-            self.model_logger.numgraph_history.append(len(self.model_logger.all_scores))
+            #self.model_logger.numgraph_history.append(len(self.model_logger.all_scores))
             self.model_logger.calculationtime_history.append(time.time()-tic0)
             
             #uncomment below line to print out how much time each step in this loop takes. 
@@ -154,9 +159,10 @@ class RLAlgorithm(LearningAlgorithm):
 
     def convertStateToConditionMatrix(self, state):
         # state is of length MYN
-        columns = int(self.model.CORE_LENGTH * (self.model.CORE_LENGTH-1) / 2)
-        graph = np.ones((self.model.ROWS_IN_CONDITIONMATRIX, columns))*self.FE.ignore_edge
-        for i in range(self.model.ROWS_IN_CONDITIONMATRIX):
+        columns = self.model.COLUMNS_IN_CONDITIONMATRIX
+        rows = self.model.ROWS_IN_CONDITIONMATRIX
+        graph = np.ones((rows, columns))*self.FE.ignore_edge
+        for i in range(rows):
             for j in range(columns):
                 actionvector = state[self.model.ALPHABET_SIZE*(i*columns + j) : self.model.ALPHABET_SIZE*(i*columns + j+1)]
                 argmax = np.argmax(actionvector)
@@ -167,14 +173,11 @@ class RLAlgorithm(LearningAlgorithm):
         return graph
 
     def calcScore(self, state):
-        key_state = tuple(state)
-        #print("all_scores:", len(all_scores))
-        if key_state in self.model_logger.all_scores:
-            return self.model_logger.all_scores[key_state]
-        else:
-            new_score = self.FE.evaluate(self.convertStateToConditionMatrix(state), False)
-            self.model_logger.all_scores[key_state] = new_score
-            return new_score
+        new_score = self.FE.evaluate(self.convertStateToConditionMatrix(state), False)
+        if new_score > self.current_bestscore:
+            self.current_bestscore = new_score
+            self.current_beststate = state
+        return new_score
 
 
     ####No need to change anything below here. 
@@ -329,11 +332,3 @@ class RLAlgorithm(LearningAlgorithm):
         super_rewards = np.array(super_rewards)
         return super_states, super_actions, super_rewards
     
-    def getbeststate(self):
-        bestscore = -99999999999
-        beststate = None
-        for state in self.model_logger.all_scores:
-            if self.model_logger.all_scores[state] > bestscore:
-                bestscore = self.model_logger.all_scores[state]
-                beststate = state
-        return beststate

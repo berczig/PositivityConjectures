@@ -7,7 +7,10 @@ from SPC.Restructure.ml_models.MLModel import MLModel
 from SPC.Restructure.ml_models.RLNNModel_CorrectSequence import RLNNModel_CorrectSequence
 
 
-def main(partition, training_data_load_path, model_load_path, model_save_path, model_save_time, ml_training_algorithm_type, ml_model_type, core_data_type, iteration_steps, plot_after_training):
+def main(partition, training_data_load_path, model_load_path, model_save_path, model_save_time, ml_training_algorithm_type, ml_model_type, core_generator_type, iteration_steps, plot_after_training):
+
+    uio_length = sum(partition)
+    # core_data_type
 
     # 1) get Training Data
     print("[main - step 1 - get data]")
@@ -17,7 +20,7 @@ def main(partition, training_data_load_path, model_load_path, model_save_path, m
         Preparer.loadTrainingData(training_data_load_path)
     else:
         print("computing training data...")
-        Preparer.computeTrainingData(partition, core_data_type)
+        Preparer.computeTrainingData(partition, core_generator_type)
 
         # save Training data?
         if training_data_save_path != "":
@@ -27,7 +30,7 @@ def main(partition, training_data_load_path, model_load_path, model_save_path, m
 
     # 2) get Model
     print("[main - step 2 - get model]")
-    modelLogger = ModelLogger(core_data_type)
+    modelLogger = ModelLogger(partition, core_generator_type)
     model : MLModel
     if model_load_path != "":
         print("loading model...")
@@ -37,7 +40,7 @@ def main(partition, training_data_load_path, model_load_path, model_save_path, m
         print("creating new model...")
         class_ = getattr(importlib.import_module("SPC.Restructure.ml_models."+ml_model_type), ml_model_type)
         model = class_()
-        model.setParameters(partition)
+        model.setParameters(partition, modelLogger.core_length, modelLogger.core_representation_length)
         model.build_model()
         modelLogger.set_model(model)
     model.summary()
@@ -71,16 +74,15 @@ if __name__ == "__main__":
 
      # parameters
     partition = (3,2,1)
-    uio_length = sum(partition)
     training_data_load_path = "" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core.bin" # "SPC/Saves,Tests/Trainingdata/partition_5_3__7_core.bin"
     training_data_save_path = "" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core.bin"
-    model_load_path = "" #"SPC/Saves,Tests/models/my_newmodel.keras"
-    model_save_path = "" # "SPC/Saves,Tests/models/my_newmodel.keras"
-    model_save_time = 300 # how many seconds have to have elapsed before saving
+    model_load_path = "SPC/Saves,Tests/models/tripple_escher.keras"#"" #"SPC/Saves,Tests/models/my_newmodel.keras"
+    model_save_path = "" # "SPC/Saves,Tests/models/tripple_escher.keras"
+    model_save_time = 600 # how many seconds have to have elapsed before saving
     ml_training_algorithm_type = "RLAlgorithm" # exact name of the algorithm python class BruteForceAlgorithm or RLAlgorithm
     ml_model_type = "RLNNModel_Escher_Tripple" # RLNNModel_CorrectSequence or RLNNModel_Escher or RLNNModel_Escher_Tripple - exact name of the model python class. The model is the component that contains the weights and perform computations, but the algorithm decides how the model is used
-    core_data_type = "escher" # escher or correctsequence
-    iteration_steps = 50
+    core_generator_type = "EscherCoreGeneratorTripple" # EscherCoreGeneratorBasic  EscherCoreGeneratorTripple
+    iteration_steps = 500
     plot_after_training = True
 
-    main(partition, training_data_load_path, model_load_path, model_save_path, model_save_time, ml_training_algorithm_type, ml_model_type, core_data_type, iteration_steps, plot_after_training)
+    main(partition, training_data_load_path, model_load_path, model_save_path, model_save_time, ml_training_algorithm_type, ml_model_type, core_generator_type, iteration_steps, plot_after_training)

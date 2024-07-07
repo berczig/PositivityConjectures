@@ -1,15 +1,35 @@
-from SPC.Restructure.cores.CoreGenerator import CoreGenerator
+from SPC.Restructure.cores.EscherCoreGeneratorAbstract import EscherCoreGeneratorAbstract
 from SPC.Restructure.UIO import UIO
 import numpy as np
 
-class EscherCoreGenerator(CoreGenerator):
+class EscherCoreGeneratorBasic(EscherCoreGeneratorAbstract):
+
+    def compareTwoCoreElements(self, a, b):
+        if a < b:
+            return UIO.LESS
+        elif a > b:
+            return UIO.GREATER
+        return UIO.EQUAL
+    
+    @staticmethod
+    def getCoreLabels(partition):
+        return ["0", "subescher start interval", "subescher end interval", "1.insert", "n-1"]
+    
+    @staticmethod
+    def getCoreComparisions(partition):
+        return {"0":["subescher start interval", "subescher end interval", "1.insert"],
+                "subescher start interval":["1.insert", "n-1"], 
+                "subescher end interval":["1.insert", "n-1"],
+                "1.insert":["n-1"]}
+    
+
     def generateCore(self, escherpair):
         n,k = self.partition  # maybe have to switch n and k
         u,v = escherpair
         core = self.getInsertionsSubeshers(u,v)
         insertions, escherstartpoints = core
         if len(insertions) == 0:
-            return []
+            return "GOOD"
         #if escherstartpoints == []:
         #    print("Problem with core:",self.encoding,u,v,core)
         #print(u,v, "insertions:", insertions, "escherstartpoints:", escherstartpoints)
@@ -37,8 +57,7 @@ class EscherCoreGenerator(CoreGenerator):
             #points.append(n+k-1)
         return points
     
-    
-    def toEscherCoreRepresentation(core):
+    """ def getCoreRepresentation(self, core):
         k = len(core)
         if k == 0:
             return ()
@@ -51,8 +70,7 @@ class EscherCoreGenerator(CoreGenerator):
                 elif core[i] > core[j]:
                     comparison_matrix[i, j] = UIO.GREATER
                     comparison_matrix[j,i] = UIO.LESS
-        return tuple([comparison_matrix[i,j] for i in range(k) for j in range(i+1, k)])
-    
+        return tuple([comparison_matrix[i,j] for i in range(k) for j in range(i+1, k)]) """
     
     def getInsertionsSubeshers(self, u, v): # u is length n, v is length k
         n = len(u)
@@ -120,7 +138,6 @@ class EscherCoreGenerator(CoreGenerator):
             if cond1 and cond2:
                 subeschersstartingpoint.append(m+1)
         return subeschersstartingpoint
+
     
-    def getCoreLabels(partition):
-        return ["0", "subescher start interval", "subescher end interval", "1.insert", "n-1"]
 
