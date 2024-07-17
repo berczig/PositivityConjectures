@@ -15,6 +15,7 @@ class GlobalUIODataPreparer(PartiallyLoadable):
 
     def initUIOs(self, core_generator_type):
         encodings = self.generate_all_uio_encodings(self.n)
+        #encodings = [encodings[2379]]
         self.extractors = [UIODataExtractor(UIO(enc), core_generator_type) for enc in encodings]
         #for i, enc in enumerate(encodings):
             #print(i, enc)
@@ -68,8 +69,17 @@ class GlobalUIODataPreparer(PartiallyLoadable):
 
         A = []
         generate_uio_encoding_rec(A, [0], n, 1)
+        #print("this is the one 2379:", A[2379])
         print("Generated", len(A), "unit order intervals encodings")
         return A
+    
+    def getInputdataAsCountsMatrix(self):
+        countmatrix = [[0 for __ in range(len(self.coreRepresentationsCategorizer))] for _ in range(len(self.coefficients))]
+        for corerepID, corerep in enumerate(self.coreRepresentationsCategorizer):
+            UIOcounts = self.coreRepresentationsCategorizer[corerep]
+            for UIOID in UIOcounts:
+                countmatrix[UIOID][corerepID] += UIOcounts[UIOID]
+        return countmatrix
     
     def countCoreRepresentations(self, partition):
         print("Categorizing core representations...")

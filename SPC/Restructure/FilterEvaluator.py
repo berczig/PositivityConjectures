@@ -18,7 +18,9 @@ class FilterEvaluator:
         self.coreRepresentationsCategorizer = coreRepresentationsCategorizer # {coreRepresentation1:{UIOID1:occurences_in_UIOID1, UIOID2:occurences_in_UIOID2}}
         self.true_coefficients = np.array(true_coefficients)
         self.ignore_edge = ignore_edge
-        print("ture coefficients:", true_coefficients)
+        print("true coefficients:", true_coefficients)
+        print("true coefficients length:", len(true_coefficients))
+        print("true coefficients max coef:", max(true_coefficients))
         print(np.sum(true_coefficients))
         self.coreRep2 = {}
         for primerep in coreRepresentationsCategorizer:
@@ -29,6 +31,7 @@ class FilterEvaluator:
             self.coreRep2[primerep] = counts
 
         self.core_labels = model_logger.core_generator_class_.getCoreLabels(model_logger.partition)
+        model_logger.core_generator_class_.calculate_comp_indices(model_logger.partition)
         self.comp_indices = model_logger.core_generator_class_.comp_indices
 
     def coreFitsConditions(self, correp, Conditions): # ANDs conditions in row together
@@ -72,10 +75,10 @@ class FilterEvaluator:
                     #print("count!")
                     counted += self.coreRep2[primeCoreRep]
                     if verbose:
-                        print("Good")
+                        print(primeCoreRep, "Good")
                 else:
                     if verbose:
-                        print("bad")
+                        print(primeCoreRep, "bad")
 
         residuals = counted - self.true_coefficients
 
@@ -83,8 +86,11 @@ class FilterEvaluator:
             return residuals
         
         #if (residuals < 0).any():
-        #    return -self.INF
-        
+            #return -self.INF
+        """if -sum(abs(residuals)) > -10:
+            for id, x in enumerate(residuals):
+                if x > 0:
+                    print("UIOID:", id, counted[id], self.true_coefficients[id])"""
         return -sum(abs(residuals))
     
     def evaluate_old(self, filter, verbose=False):

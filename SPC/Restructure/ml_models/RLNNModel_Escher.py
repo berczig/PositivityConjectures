@@ -23,7 +23,7 @@ class RLNNModel_Escher(MLModel):
 
         # k+2+2*p
         self.CORE_LENGTH = core_length   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
-        self.ROWS_IN_CONDITIONMATRIX = 1
+        self.ROWS_IN_CONDITIONMATRIX = 2
         self.ALPHABET_SIZE = 4
         self.COLUMNS_IN_CONDITIONMATRIX = corerep_length
         self.EDGES = self.COLUMNS_IN_CONDITIONMATRIX * self.ROWS_IN_CONDITIONMATRIX
@@ -33,7 +33,7 @@ class RLNNModel_Escher(MLModel):
                                 #So e.g. [0,1,0,0,   0,0,1,0] means we have the partial word 01 and we are considering the third letter now.
                                 #Is there a better way to format the input to make it easier for the neural network to understand things?
 
-        self.MAX_EXPECTED_EDGES = 2
+        self.MAX_EXPECTED_EDGES = 6
         self.len_game = self.EDGES 
         self.state_dim = (self.observation_space,)
 

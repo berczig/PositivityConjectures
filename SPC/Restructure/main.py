@@ -73,15 +73,15 @@ def main(partition, training_data_load_path, model_load_path, model_save_path, m
 if __name__ == "__main__":
 
      # parameters
-    partition = (3,2,1)
-    training_data_load_path = "" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core.bin" # "SPC/Saves,Tests/Trainingdata/partition_5_3__7_core.bin"
-    training_data_save_path = "" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core.bin"
-    model_load_path = "SPC/Saves,Tests/models/tripple_escher.keras"#"" #"SPC/Saves,Tests/models/my_newmodel.keras"
+    partition = (3,2,1) 
+    training_data_load_path = "" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core_9_7_2024.bin"
+    training_data_save_path = "SPC/Saves,Tests/Trainingdata/partition_3_2_1_symmectric_core_9_7_2024.bin" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core.bin"
+    model_load_path = "" # "SPC/Saves,Tests/models/tripple_escher.keras"#"" #"SPC/Saves,Tests/models/my_newmodel.keras"
     model_save_path = "" # "SPC/Saves,Tests/models/tripple_escher.keras"
     model_save_time = 600 # how many seconds have to have elapsed before saving
     ml_training_algorithm_type = "RLAlgorithm" # exact name of the algorithm python class BruteForceAlgorithm or RLAlgorithm
     ml_model_type = "RLNNModel_Escher_Tripple" # RLNNModel_CorrectSequence or RLNNModel_Escher or RLNNModel_Escher_Tripple - exact name of the model python class. The model is the component that contains the weights and perform computations, but the algorithm decides how the model is used
-    core_generator_type = "EscherCoreGeneratorTripple" # EscherCoreGeneratorBasic  EscherCoreGeneratorTripple
+    core_generator_type = "EscherCoreGeneratorTrippleSymmetric" # EscherCoreGeneratorBasic  EscherCoreGeneratorTripple
     iteration_steps = 500
     plot_after_training = True
 

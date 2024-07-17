@@ -32,12 +32,17 @@ class CoreGenerator:
         self.uio = uio
         self.partition = partition
 
+        self.calculate_comp_indices(partition)
+
+    @classmethod
+    def calculate_comp_indices(cls, partition):
+
         # this attribute is common for all coregenerator even when they have different UIO. So it should be a class attribute
-        if not hasattr(self, "comp_indices"):
+        if not hasattr(cls, "comp_indices"):
             comp_indices = []
 
-            labels = self.getCoreLabels(partition)
-            comp = self.getCoreComparisions(partition)
+            labels = cls.getCoreLabels(partition)
+            comp = cls.getCoreComparisions(partition)
 
             for first_index, first_label in enumerate(labels):
                 if first_label in comp:
@@ -46,7 +51,7 @@ class CoreGenerator:
                         comp_indices.append((first_index, second_index))
 
             # Set the calculated comp_indices for all CoreGenerators of this type (but not the base class)
-            type(self).comp_indices = comp_indices
+            cls.comp_indices = comp_indices
             print("Reduced size of core representations: {} -> {}".format(len(labels)*(len(labels)-1)/2, len(comp_indices)))
 
     def getCoreRepresentation(self, core):

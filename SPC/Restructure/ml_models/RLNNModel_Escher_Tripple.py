@@ -24,8 +24,8 @@ class RLNNModel_Escher_Tripple(MLModel):
 
         # k+2+2*p
         self.CORE_LENGTH = core_length   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
-        self.ROWS_IN_CONDITIONMATRIX = 3
-        self.ALPHABET_SIZE = 4
+        self.ROWS_IN_CONDITIONMATRIX = 2
+        self.ALPHABET_SIZE = 3
         self.COLUMNS_IN_CONDITIONMATRIX = corerep_length
         self.EDGES = self.COLUMNS_IN_CONDITIONMATRIX * self.ROWS_IN_CONDITIONMATRIX
         self.MYN = self.ALPHABET_SIZE*self.EDGES  #The length of the word we are generating. Here we are generating a graph, so we create a 0-1 word of length (N choose 2)

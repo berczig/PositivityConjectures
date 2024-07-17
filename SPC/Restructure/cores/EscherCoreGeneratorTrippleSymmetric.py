@@ -2,7 +2,7 @@ from SPC.Restructure.cores.EscherCoreGeneratorAbstract import EscherCoreGenerato
 from SPC.Restructure.UIO import UIO
 import numpy as np
 import sys
-class EscherCoreGeneratorTripple(EscherCoreGeneratorAbstract):
+class EscherCoreGeneratorTrippleSymmetric(EscherCoreGeneratorAbstract):
 
     def compareTwoCoreElements(self, a, b):
         if a < b:
@@ -14,7 +14,7 @@ class EscherCoreGeneratorTripple(EscherCoreGeneratorAbstract):
 
     @staticmethod
     def getCoreComparisions(partition):
-        #return EscherCoreGeneratorTripple.getAllCoreComparisions(partition)
+        return EscherCoreGeneratorTrippleSymmetric.getAllCoreComparisions(partition)
         return {
             "0" : ["subescher vw start", "vw 1. insert", "subescher uv_w start", "uv_w 1. insert", "subescher uw_v start", "uw_v 1. insert"],
             "len(v)-1" : ["subescher vw start", "subescher vw end", "vw 1. insert", "subescher uv_w start", "subescher uv_w end", "uv_w 1. insert", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"],
@@ -33,8 +33,10 @@ class EscherCoreGeneratorTripple(EscherCoreGeneratorAbstract):
 
     @staticmethod
     def getCoreLabels(partition):
-        return ["0", "len(v)-1", "subescher vw start", "subescher vw end", "vw 1. insert", "len(uv)_1", "subescher uv_w start", 
-                "subescher uv_w end", "uv_w 1. insert","len(uw)-1", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"]
+        return ["0", "len(u)-1", "subescher uv start", "subescher uv end", "uv 1. insert", "len(v)-1", "subescher vw start", "subescher vw end", "vw 1. insert", 
+     "len(u)-1", "subescher uw start", "subescher uw end", "uw 1. insert", "len(uv)_1", "subescher uv_w start", 
+                "subescher uv_w end", "uv_w 1. insert","len(uw)-1", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert",
+                "len(vw)-1", "subescher vw_u start", "subescher vw_u end", "vw_u 1. insert"]
 
     
 
@@ -67,11 +69,16 @@ class EscherCoreGeneratorTripple(EscherCoreGeneratorAbstract):
 
         if core_v_w[-1] == -1:
             core_v_w = add_half(core_v_w)
+            core_vw_u = [len(v) + len(w)-1, -1, -1, -1]
+        else:
+            vw = self.concat(v, w, insertionpoint=core_v_w[-1])
+            core_vw_u = self.get_insertion_and_subescher_of_2_eschers(vw,u)
 
 
         #print([0] + add_half(core_v_w) + add_half(core_uv_w) + add_half(core_uw_v))
         #print([0] + core_v_w + core_uv_w + core_uw_v)
-        return [0] + core_v_w + core_uv_w + core_uw_v
+        return [0] + core_u_v + core_v_w + core_u_w + core_uv_w + core_uw_v + core_vw_u
+
         
         """
         u,v, w = eschertripple

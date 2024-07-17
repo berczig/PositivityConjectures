@@ -4,8 +4,8 @@ class UIO:
 
     INCOMPARABLE = 100    # (i,j) is INCOMPARABLE if neither i < j nor j < i nor i = j -- connected in the incomparability graph -- intersecting intervals
     LESS = 101              # (i,j) is LE iff i < j     interval i is to the left of j 
-    EQUAL = 102              # (i,j) is EQ iff i = j     interval i and interval j are same interval
-    GREATER = 103              # (i,j) is LE iff i > j     interval i is to the right of j
+    GREATER = 102              # (i,j) is LE iff i > j     interval i is to the right of j
+    EQUAL = 103              # (i,j) is EQ iff i = j     interval i and interval j are same interval
     RELATIONTEXT = {LESS:"<", EQUAL:"=", GREATER:">"}
 
     def __init__(self, uio_encoding):

@@ -35,7 +35,12 @@ class RLAlgorithm(LearningAlgorithm):
         self.model = self.model_logger.get_model()
 
         self.FE = FilterEvaluator(self.trainingdata_input, self.trainingdata_output, FilterEvaluator.DEFAULT_IGNORE_VALUE, self.model_logger)
-
+        print(50*"HERE")
+        for correp in self.trainingdata_input:
+            uiocounts = self.trainingdata_input[correp]
+            if 2379 in uiocounts:
+                print(correp, uiocounts[2379])
+            #print("corerep:", x, len(self.trainingdata_input[x]))
         self.current_bestscore = -FilterEvaluator.INF
         self.current_beststate = None
 
@@ -112,6 +117,7 @@ class RLAlgorithm(LearningAlgorithm):
             
             print("\n" + str(i) +  ". Best individuals: " + str(np.flip(np.sort(super_rewards))))
             print("best state:", self.current_bestscore, self.FE.convertConditionMatrixToText(self.convertStateToConditionMatrix(self.current_beststate)))
+            #self.calcScore(self.current_beststate, True)
             self.model_logger.bestscore_history.append(self.current_bestscore)
             self.model_logger.bestfilter_history.append(self.current_beststate)
             self.model_logger.meanscore_history.append(np.mean(super_rewards))
@@ -172,8 +178,8 @@ class RLAlgorithm(LearningAlgorithm):
         #print("graph:", graph)
         return graph
 
-    def calcScore(self, state):
-        new_score = self.FE.evaluate(self.convertStateToConditionMatrix(state), False)
+    def calcScore(self, state, verbose=False):
+        new_score = self.FE.evaluate(self.convertStateToConditionMatrix(state), verbose=verbose)
         if new_score > self.current_bestscore:
             self.current_bestscore = new_score
             self.current_beststate = state
