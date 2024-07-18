@@ -1,36 +1,43 @@
+
 from gurobipy import Model, GRB
 
-def solve_subset_sum(matrix, targets):
+def solve_subset_sum(matrix, targets, max_solutions=10):
     n_rows, n_cols = len(matrix), len(matrix[0])
-    
+    solutions = []
+
     # Create a new model
     m = Model("subset_sum")
-    
+
     # Add decision variables
     x = m.addVars(n_cols, vtype=GRB.BINARY, name="x")
-    
+
     # Add constraints for each row to match the target sum
     for i in range(n_rows):
         m.addConstr(sum(matrix[i][j] * x[j] for j in range(n_cols)) == targets[i], f"target_{i}")
-    
+
     # Since it's a feasibility problem, we don't have an explicit objective to optimize
     m.setObjective(0, GRB.MAXIMIZE)
-    
+
+    # Configure the model to find multiple solutions
+    m.setParam(GRB.Param.PoolSearchMode, 2)
+    m.setParam(GRB.Param.PoolSolutions, max_solutions)
+
     # Optimize model
     m.optimize()
-    
-    # Check if a solution exists
+
+    # Check if solutions were found
     if m.status == GRB.OPTIMAL or m.status == GRB.FEASIBLE:
-        solution = [j for j in range(n_cols) if x[j].X > 0.5]  # Extracting the solution
-        print("Solution found: Columns included in the subset are:", solution)
-    else:
-        print("No solution exists.")
+        solution_count = m.SolCount
+        for s in range(min(solution_count, max_solutions)):
+            m.setParam(GRB.Param.SolutionNumber, s)
+            solution = [j for j in range(n_cols) if x[j].Xn > 0.5]
+            solutions.append(solution)
+            print(f"Solution {s}: {solution}")
+            print('Length:', len(solution))
 
-# Example usage
-matrix = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]  # nxk table of integers
-targets = [6, 15, 24]  # Set of target sums T={t_1,...,t_n}
-solve_subset_sum(matrix, targets)
+    
 
+    return solutions
 
 def read_and_solve_with_first_column_as_target(filename):
     with open(filename, 'r') as file:
