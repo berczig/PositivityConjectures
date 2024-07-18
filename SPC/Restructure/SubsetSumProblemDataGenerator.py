@@ -7,7 +7,7 @@ from SPC.Restructure.ml_models.MLModel import MLModel
 from SPC.Restructure.ml_models.RLNNModel_CorrectSequence import RLNNModel_CorrectSequence
 
 
-partition = (5,4)
+partition = (3,2,1)
 core_generator_type = "EscherCoreGeneratorTripple" # EscherCoreGeneratorBasic  EscherCoreGeneratorTripple
 
 uio_length = sum(partition)
