@@ -1,6 +1,8 @@
 
 from gurobipy import Model, GRB
 
+from SPC.Restructure.GlobalUIODataPreparer import GlobalUIODataPreparer
+
 def solve_subset_sum(matrix, targets, max_solutions=10):
     n_rows, n_cols = len(matrix), len(matrix[0])
     solutions = []
@@ -32,10 +34,8 @@ def solve_subset_sum(matrix, targets, max_solutions=10):
             m.setParam(GRB.Param.SolutionNumber, s)
             solution = [j for j in range(n_cols) if x[j].Xn > 0.5]
             solutions.append(solution)
-            print(f"Solution {s}: {solution}")
-            print('Length:', len(solution))
-
-    
+            #print(f"Solution {s}: {solution}")
+            #print('Length:', len(solution))
 
     return solutions
 
@@ -52,8 +52,30 @@ def read_and_solve_with_first_column_as_target(filename):
             # The rest of the numbers form part of the matrix
             matrix.append(numbers[1:])
     
-    solve_subset_sum(matrix, targets)
+    return solve_subset_sum(matrix, targets)
+
 
 # Adjust the path to the file as necessary
 filename = "SPC/Saves,Tests/subsetsum/subsetsum3_2_1_symmetric.txt"
-read_and_solve_with_first_column_as_target(filename)
+solutions = read_and_solve_with_first_column_as_target(filename)
+
+print("Solutions:", solutions)
+
+solution = solutions[0]
+
+partition = (3,2,1)
+core_generator_type = "EscherCoreGeneratorTripple" # EscherCoreGeneratorBasic  EscherCoreGeneratorTripple
+
+uio_length = sum(partition)
+# core_data_type
+
+# 1) get Training Data
+Preparer = GlobalUIODataPreparer(uio_length)
+#Preparer.computeTrainingData(partition, core_generator_type)
+Preparer.loadTrainingData("SPC/Saves,Tests/Trainingdata/partition_3_2_1_symmectric_core_9_7_2024.bin")
+for corerepID, corerep in enumerate(Preparer.coreRepresentationsCategorizer):
+    if corerepID in solution:
+        print(corerep)
+
+
+
