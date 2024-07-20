@@ -1,9 +1,10 @@
 
 from gurobipy import Model, GRB
+import numpy as np
 
 from SPC.Restructure.GlobalUIODataPreparer import GlobalUIODataPreparer
 
-def solve_subset_sum(matrix, targets, max_solutions=10):
+def solve_subset_sum(matrix, targets, max_solutions=5):
     n_rows, n_cols = len(matrix), len(matrix[0])
     solutions = []
 
@@ -51,20 +52,29 @@ def read_and_solve_with_first_column_as_target(filename):
             targets.append(numbers[0])
             # The rest of the numbers form part of the matrix
             matrix.append(numbers[1:])
+        solutions = solve_subset_sum(matrix, targets)
     
-    return solve_subset_sum(matrix, targets)
+    return targets, matrix, solutions
 
 
 # Adjust the path to the file as necessary
-filename = "SPC/Saves,Tests/subsetsum/subsetsum3_2_1_symmetric.txt"
-solutions = read_and_solve_with_first_column_as_target(filename)
+filename = "SPC/Saves,Tests/subsetsum/subsetsum4_2.txt"
+targets, matrix, solutions = read_and_solve_with_first_column_as_target(filename)
 
 print("Solutions:", solutions)
 
-solution = solutions[0]
+# Print the intersection of the solutions
 
-partition = (3,2,1)
-core_generator_type = "EscherCoreGeneratorTripple" # EscherCoreGeneratorBasic  EscherCoreGeneratorTripple
+intersection = set(solutions[0])
+for solution in solutions[1:]:
+    intersection = intersection.intersection(set(solution))
+
+print("Intersection:", intersection)
+
+#solutions.append(list(intersection))
+
+partition = (4,2)
+#core_generator_type = "EscherCoreGeneratorTripple" # EscherCoreGeneratorBasic  EscherCoreGeneratorTripple
 
 uio_length = sum(partition)
 # core_data_type
@@ -72,10 +82,93 @@ uio_length = sum(partition)
 # 1) get Training Data
 Preparer = GlobalUIODataPreparer(uio_length)
 #Preparer.computeTrainingData(partition, core_generator_type)
-Preparer.loadTrainingData("SPC/Saves,Tests/Trainingdata/partition_3_2_1_symmectric_core_9_7_2024.bin")
-for corerepID, corerep in enumerate(Preparer.coreRepresentationsCategorizer):
-    if corerepID in solution:
-        print(corerep)
+Preparer.loadTrainingData("SPC/Saves,Tests/Trainingdata/partition_4_2.bin")
+
+from sklearn.tree import DecisionTreeClassifier, export_text
+
+
+for solution in solutions:
+    print("SOLUTION")
+    
+    solutioncorereps = []
+    notsolutioncorereps = []
+    X = []
+    y = []
+    for corerepID, corerep in enumerate(Preparer.coreRepresentationsCategorizer):
+        if corerep != 'GOOD':
+            X.append(corerep)
+            if corerepID in solution:
+            #print(corerep)
+                solutioncorereps.append(corerep)
+                y.append(1)
+            else:
+                notsolutioncorereps.append(corerep)
+                y.append(0)
+
+    print("Length of solution core representations:", len(solutioncorereps))
+    print("Length of not solution core representations:", len(notsolutioncorereps))
+    print('y', y)
+
+    # Decision tree classifier
+
+
+    # Convert the data to numpy arrays
+    X = np.array(X)
+    y = np.array(y)
+
+    # Train the decision tree
+    clf = DecisionTreeClassifier(splitter="best", max_depth=5)
+    clf.fit(X, y)
+
+    # Extract the logical expression
+    tree_rules = export_text(clf, feature_names=[f"v{i}" for i in range(len(X[0]))])
+    print(tree_rules)
+
+    # Calculate and print the efficiency of the tree on the training data
+    accuracy = clf.score(X, y)
+    print(f"Efficiency (Accuracy) on Training Data: {accuracy*100:.2f}%")
+
+    # Calculate the 
+
+    # Print how many points are  misclassified
+
+    predictions = clf.predict(X)
+    misclassified = np.where(predictions != y)[0]
+    print(f"Number of misclassified points: {len(misclassified)}")
+
+    # Print the misclassified points
+    for i in misclassified:
+        print(f"Point {i} is misclassified as {predictions[i]}")
+
+    
+    # Make a 2d numpy array from matrix
+
+    matrix = np.array(matrix)
+
+    print(matrix.shape)
+
+    #Add the columns of matrix indexed by entries of 'intersection' 
+
+    sum_of_misclassified = np.sum(matrix[:, list(misclassified)], axis=1)
+
+    print("Sum of misclassified:", sum_of_misclassified)
+
+
+    # Subtract the sum of the intersection from the targets
+
+    #targets = np.array(targets)
+
+    #remainder = targets - sum_of_misclassified
+
+    #print("Remainder:", remainder)
+    
+
+    
+
+    
+
+    
+
 
 
 
