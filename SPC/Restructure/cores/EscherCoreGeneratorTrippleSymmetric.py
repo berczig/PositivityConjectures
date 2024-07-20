@@ -34,7 +34,7 @@ class EscherCoreGeneratorTrippleSymmetric(EscherCoreGeneratorAbstract):
     @staticmethod
     def getCoreLabels(partition):
         return ["0", "len(u)-1", "subescher uv start", "subescher uv end", "uv 1. insert", "len(v)-1", "subescher vw start", "subescher vw end", "vw 1. insert", 
-     "len(u)-1", "subescher uw start", "subescher uw end", "uw 1. insert", "len(uv)_1", "subescher uv_w start", 
+     "len(u)-1 (again)", "subescher uw start", "subescher uw end", "uw 1. insert", "len(uv)_1", "subescher uv_w start", 
                 "subescher uv_w end", "uv_w 1. insert","len(uw)-1", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert",
                 "len(vw)-1", "subescher vw_u start", "subescher vw_u end", "vw_u 1. insert"]
 
@@ -176,7 +176,7 @@ class EscherCoreGeneratorTrippleSymmetric(EscherCoreGeneratorAbstract):
         k = len(second)
         return first[:insertionpoint%f+1]+self.cyclicslice(second, insertionpoint+1, insertionpoint+k+1)+first[insertionpoint%f+1:]
     
-    def getCoreRepresentation(self, core):
+    """ def getCoreRepresentation(self, core):
         k = len(core)
 
         if core == "GOOD":
@@ -195,7 +195,7 @@ class EscherCoreGeneratorTrippleSymmetric(EscherCoreGeneratorAbstract):
                     comparison_matrix[i, j] = UIO.GREATER
                     comparison_matrix[j,i] = UIO.LESS
 
-        return tuple([comparison_matrix[i,j] for i in range(k) for j in range(i+1, k)])
+        return tuple([comparison_matrix[i,j] for i in range(k) for j in range(i+1, k)]) """
     
     
     def getInsertionsSubeshers(self, u, v): # u is length n, v is length k

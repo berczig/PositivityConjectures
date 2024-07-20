@@ -23,74 +23,50 @@ class UIODataExtractor:
 
     @lru_cache(maxsize=None)
     def getCorrectSequences(self, partition):
+        P = getPermutationsOfN(self.uio.N)
         if len(partition) == 1:
-            return [seq for seq in getPermutationsOfN(self.uio.N) if self.uio.iscorrect(seq)]
+            for seq in P:
+                if self.uio.iscorrect(seq):
+                    yield seq
         elif len(partition) == 2:
             a = partition[0]
-            return [seq for seq in getPermutationsOfN(self.uio.N) if self.uio.iscorrect(seq[:a]) 
-                    and self.uio.iscorrect(seq[a:]) ]
-        
+            for seq in P:
+                if self.uio.iscorrect(seq[:a]) and self.uio.iscorrect(seq[a:]):
+                    yield seq
+         
     def getCores(self, partition):
         GEN = self.core_generator_class(self.uio, partition)
         if isinstance(GEN, EscherCoreGeneratorAbstract):
-            return [GEN.generateCore(eschers) for eschers in self.getEschers(partition)]
+            for escher in self.getEschers(partition):
+                yield GEN.generateCore(escher)
         elif isinstance(GEN, CorrectSequenceCoreGenerator):
-            return [GEN.generateCore(corseq) for corseq in self.getCorrectSequences(partition)]
+            for corseq in self.getCorrectSequences(partition):
+                yield GEN.generateCore(corseq)
         else:
             assert False==True, "{} is not a subclass of EscherCoreGeneratorAbstract or CorrectSequenceCoreGenerator".format(str(self.core_generator_class))
 
     def getCoreRepresentations(self, partition):
         GEN = self.core_generator_class(self.uio, partition)
-        return [GEN.getCoreRepresentation(core) for core in self.getCores(partition)]
-
-        
-    @lru_cache(maxsize=None)
-    def getCorrectSequenceCores(self, partition):
-        if len(partition) == 2:
-            GEN = self.core_generator(self.uio, partition)
-            return [GEN.generateCore(corseq) for corseq in self.getCorrectSequences(partition)]
-        
-    @lru_cache(maxsize=None)
-    def getCorrectSequenceCoreRepresentations(self, partition):
-        if len(partition) == 2:
-            GEN = CorrectSequenceCoreGenerator(self.uio, partition)
-            print("yo")
-            return [GEN.getCoreRepresentation(core) for core in self.getCorrectSequenceCores(partition)]
+        for core in self.getCores(partition):
+            yield GEN.getCoreRepresentation(core)
 
 
-
-    @lru_cache(maxsize=None)
     def getEschers(self, partition):
+        P = getPermutationsOfN(self.uio.N)
         if len(partition) == 1:
-            return [seq for seq in getPermutationsOfN(self.uio.N) if self.uio.isescher(seq)]
+            for seq in P:
+                if self.uio.isescher(seq):
+                    yield seq
         elif len(partition) == 2:
             a = partition[0]
-            return [(seq[:a], seq[a:]) for seq in getPermutationsOfN(self.uio.N) if self.uio.isescher(seq[:a]) 
-                    and self.uio.isescher(seq[a:]) ]
+            for seq in P:
+                if self.uio.isescher(seq[:a]) and self.uio.isescher(seq[a:]):
+                    yield (seq[:a], seq[a:])
         elif len(partition) == 3:
-            a,b,c  = partition                   
-            return [(seq[:a], seq[a:a+b], seq[a+b:]) for seq in getPermutationsOfN(self.uio.N) if self.uio.isescher(seq[:a]) 
-                    and self.uio.isescher(seq[a:a+b]) and self.uio.isescher(seq[a+b:]) ]
-
-    @lru_cache(maxsize=None)
-    def getEscherCores(self, partition):
-        if len(partition) == 2:
-            GEN = EscherCoreGeneratorBasic(self.uio, partition)
-            return [GEN.generateCore(escherpair) for escherpair in self.getEschers(partition)] 
-        elif len(partition) == 3:
-            GEN = EscherCoreGeneratorTripple(self.uio, partition)
-            return [GEN.generateCore(escherpair) for escherpair in self.getEschers(partition)] 
-        
-    @lru_cache(maxsize=None)
-    def getEscherCoreRepresentations(self, partition):
-        if len(partition) == 2:
-            GEN = EscherCoreGeneratorBasic(self.uio, partition)
-            return [GEN.getCoreRepresentation(core) for core in self.getEscherCores(partition)]
-        if len(partition) == 3:
-            GEN = EscherCoreGeneratorTripple(self.uio, partition)
-            return [GEN.getCoreRepresentation(core) for core in self.getEscherCores(partition)]
-
-
+            a,b,c  = partition              
+            for seq in P:
+                if self.uio.isescher(seq[:a]) and self.uio.isescher(seq[a:a+b]) and self.uio.isescher(seq[a+b:]):
+                    yield (seq[:a], seq[a:a+b], seq[a+b:])     
 
     def getCoefficient(self, partition):
         if len(partition) == 1:
@@ -101,11 +77,16 @@ class UIODataExtractor:
         
         elif len(partition) == 3:
             n,k,l = partition
-            return 2*len(self.getEschers((n+k+l,))) +\
+            """ return 2*len(self.getEschers((n+k+l,))) +\
                   len(self.getEschers(partition)) -\
                       len(self.getEschers((n+l,k))) -\
                           len(self.getEschers((n+k,l))) -\
-                              len(self.getEschers((l+k,n)))
+                              len(self.getEschers((l+k,n))) """
+            return 2*count(self.getEschers((n+k+l,))) +\
+                  count(self.getEschers(partition)) -\
+                      count(self.getEschers((n+l,k))) -\
+                          count(self.getEschers((n+k,l))) -\
+                              count(self.getEschers((l+k,n)))
         
     def __repr__(self) -> str:
         return "EXTRACTOR OF ["+str(self.uio.encoding)+"]"

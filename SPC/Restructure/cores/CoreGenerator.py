@@ -71,6 +71,7 @@ class CoreGenerator:
     
     @classmethod
     def getCoreLength(cls, partition):
+        assert len(cls.getCoreLabels(partition)) == len(set(cls.getCoreLabels(partition))), "the labels are not unique"
         return len(cls.getCoreLabels(partition))
     
     @classmethod

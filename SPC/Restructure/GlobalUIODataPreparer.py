@@ -11,12 +11,12 @@ class GlobalUIODataPreparer(PartiallyLoadable):
         self.n = n
         self.coreRepresentationsCategorizer = {} # {coreRepresentation1:{UIOID1:occurences_in_UIOID1, UIOID2:occurences_in_UIOID2,...}, ...}
         self.coefficients = [] # list of all coefficients (for the partition given to getTrainingData)
-        self.core_generators = {"escher":self.getAllEscherCoreRepresentations,"correctsequence":self.getAllCorrectSequenceCoreRepresentations}
 
     def initUIOs(self, core_generator_type):
         encodings = self.generate_all_uio_encodings(self.n)
         #encodings = [encodings[2379]]
         self.extractors = [UIODataExtractor(UIO(enc), core_generator_type) for enc in encodings]
+        print("Initialized {} UIOs".format(len(encodings)))
         #for i, enc in enumerate(encodings):
             #print(i, enc)
 
@@ -32,6 +32,7 @@ class GlobalUIODataPreparer(PartiallyLoadable):
         
         y is a list with the coefficient of each UIO.
         """
+        print("computing training data...")
         # uios initialized?
         if not hasattr(self, "extractors"):
             class_ = getattr(importlib.import_module("SPC.Restructure.cores."+core_generator_type), core_generator_type)
@@ -50,14 +51,6 @@ class GlobalUIODataPreparer(PartiallyLoadable):
     def saveTrainingData(self, filepath:str) -> None:
         self.save(filepath)
     
-    def getAllCorrectSequenceCoreRepresentations(self, partition):
-        return [extractor.getCorrectSequenceCoreRepresentations(partition) for extractor in self.extractors]
-    
-    def getAllEscherCoreRepresentations(self, partition):
-        #for extractor in self.extractors:
-            #print(extractor, "eschercores:", len(extractor.getEscherCoreRepresentations(partition)), "(n,k)-correct seqs:", len(extractor.getCorrectSequences(partition)), "true coeff:", extractor.getCoefficient(partition))
-        return [extractor.getEscherCoreRepresentations(partition) for extractor in self.extractors]
-
     def generate_all_uio_encodings(self, n):
 
         def generate_uio_encoding_rec(A, uio, n, i):
@@ -85,12 +78,17 @@ class GlobalUIODataPreparer(PartiallyLoadable):
         print("Categorizing core representations...")
         core_rep_categories = {} # coreRepresentation:ID
         counter = {} # corerepID:dict(uioID1:occurrences1, uioID2:occurrences2)
-        all_corereps = [extractor.getCoreRepresentations(partition) for extractor in self.extractors]
-        print("Found", sum([len(corereps) for corereps in all_corereps]), "core representations in total")
+        corerep_generators = [extractor.getCoreRepresentations(partition) for extractor in self.extractors]
 
         ID = 0
-        for uioID, corereps in enumerate(all_corereps):
-            for corerep in corereps:
+        total_corereps = 0
+        n = len(corerep_generators)
+        n_10 = n//10
+        for uioID, corerep_generator in enumerate(corerep_generators):
+            if uioID % n_10 == 0:
+                print(" > current UIO: {}/{}".format(uioID+1, n))
+            for corerep in corerep_generator:
+                total_corereps += 1
                 #print("b", type(corerep), corerep)
                 # determine corerep ID
                 if corerep not in core_rep_categories:
@@ -109,6 +107,8 @@ class GlobalUIODataPreparer(PartiallyLoadable):
                     else:
                         categoryOccurrencer[uioID] += 1
 
+        print("Found {} core representations in total".format(total_corereps))
+        
         # change keys from an ID of the coreRepresentation to the coreRepresentation itself
         for cat in core_rep_categories:
             #print("cat:", cat)

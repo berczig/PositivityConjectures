@@ -169,7 +169,7 @@ class EscherCoreGeneratorTripple(EscherCoreGeneratorAbstract):
         k = len(second)
         return first[:insertionpoint%f+1]+self.cyclicslice(second, insertionpoint+1, insertionpoint+k+1)+first[insertionpoint%f+1:]
     
-    def getCoreRepresentation(self, core):
+    """ def getCoreRepresentation(self, core):
         k = len(core)
 
         if core == "GOOD":
@@ -188,7 +188,7 @@ class EscherCoreGeneratorTripple(EscherCoreGeneratorAbstract):
                     comparison_matrix[i, j] = UIO.GREATER
                     comparison_matrix[j,i] = UIO.LESS
 
-        return tuple([comparison_matrix[i,j] for i in range(k) for j in range(i+1, k)])
+        return tuple([comparison_matrix[i,j] for i in range(k) for j in range(i+1, k)]) """
     
     
     def getInsertionsSubeshers(self, u, v): # u is length n, v is length k
