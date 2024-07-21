@@ -82,5 +82,12 @@ class CoreGenerator:
             comp[label] = labels[index+1:]
         return comp
 
-
-    
+    @classmethod
+    def convertCorerepToText(cls, corerep, partition):
+        cls.calculate_comp_indices(partition)
+        labels = cls.getCoreLabels(partition)
+        s = []
+        for index, (i,j) in enumerate(cls.comp_indices):
+            edge = corerep[index]
+            s.append(labels[i] + " " + UIO.RELATIONTEXT[edge] + " " + labels[j])
+        return "\n".join(s)

@@ -119,6 +119,11 @@ class FilterEvaluator:
                 return -self.INF
         return -sum(difference)
     
+    def convertCorerepToText(self, corerep):
+        for index, (i,j) in enumerate(self.comp_indices):
+            edge = corerep[index]
+            print( self.core_labels[i], UIO.RELATIONTEXT[edge], self.core_labels[j])
+    
     def convertConditionMatrixToText(self, Condition_matrix):
         rows, columns = Condition_matrix.shape
         rowtexts = []

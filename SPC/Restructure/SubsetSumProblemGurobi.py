@@ -3,6 +3,7 @@ from gurobipy import Model, GRB
 import numpy as np
 
 from SPC.Restructure.GlobalUIODataPreparer import GlobalUIODataPreparer
+from SPC.Restructure.cores.EscherCoreGeneratorBasic import EscherCoreGeneratorBasic
 
 def solve_subset_sum(matrix, targets, max_solutions=5):
     n_rows, n_cols = len(matrix), len(matrix[0])
@@ -97,8 +98,8 @@ for solution in solutions:
     for corerepID, corerep in enumerate(Preparer.coreRepresentationsCategorizer):
         if corerep != 'GOOD':
             X.append(corerep)
+            print("corerep:", corerep, "meaning:", EscherCoreGeneratorBasic.convertCorerepToText(corerep, partition), "\n")
             if corerepID in solution:
-            #print(corerep)
                 solutioncorereps.append(corerep)
                 y.append(1)
             else:
