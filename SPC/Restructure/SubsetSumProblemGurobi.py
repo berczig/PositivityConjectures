@@ -4,6 +4,7 @@ import numpy as np
 
 from SPC.Restructure.GlobalUIODataPreparer import GlobalUIODataPreparer
 from SPC.Restructure.cores.EscherCoreGeneratorBasic import EscherCoreGeneratorBasic
+from SPC.Restructure.cores.EscherCoreGeneratorTrippleSymmetric import EscherCoreGeneratorTrippleSymmetric
 
 def solve_subset_sum(matrix, targets, max_solutions=5):
     n_rows, n_cols = len(matrix), len(matrix[0])
@@ -59,7 +60,7 @@ def read_and_solve_with_first_column_as_target(filename):
 
 
 # Adjust the path to the file as necessary
-filename = "SPC/Saves,Tests/subsetsum/subsetsum4_2.txt"
+filename = "SPC/Saves,Tests/subsetsum/subsetsum3_2_1_symmetric.txt"
 targets, matrix, solutions = read_and_solve_with_first_column_as_target(filename)
 
 print("Solutions:", solutions)
@@ -83,7 +84,7 @@ uio_length = sum(partition)
 # 1) get Training Data
 Preparer = GlobalUIODataPreparer(uio_length)
 #Preparer.computeTrainingData(partition, core_generator_type)
-Preparer.loadTrainingData("SPC/Saves,Tests/Trainingdata/partition_4_2.bin")
+Preparer.loadTrainingData("SPC/Saves,Tests/Trainingdata/partition_3_2_1_symmectric_core_9_7_2024.bin")
 
 from sklearn.tree import DecisionTreeClassifier, export_text
 
@@ -98,7 +99,7 @@ for solution in solutions:
     for corerepID, corerep in enumerate(Preparer.coreRepresentationsCategorizer):
         if corerep != 'GOOD':
             X.append(corerep)
-            print("corerep:", corerep, "meaning:", EscherCoreGeneratorBasic.convertCorerepToText(corerep, partition), "\n")
+            print("corerep:", corerep, "meaning:", EscherCoreGeneratorTrippleSymmetric.convertCorerepToText(corerep, partition), "\n")
             if corerepID in solution:
                 solutioncorereps.append(corerep)
                 y.append(1)
