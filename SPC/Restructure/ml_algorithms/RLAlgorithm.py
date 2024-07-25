@@ -72,6 +72,11 @@ class RLAlgorithm(LearningAlgorithm):
             tic = time.time()
             
             states_batch = np.array(sessions[0], dtype = int)
+            print("states_batch:", states_batch.shape)
+            for ii in range(self.n_sessions):
+                first_graph = states_batch[ii][:, -1]
+                print("graph:", first_graph)
+                print("{} graph:".format(ii),self.FE.convertConditionMatrixToText(self.convertStateToConditionMatrix(first_graph)))
             actions_batch = np.array(sessions[1], dtype = int)
             rewards_batch = np.array(sessions[2])
             states_batch = np.transpose(states_batch,axes=[0,2,1])
@@ -165,6 +170,7 @@ class RLAlgorithm(LearningAlgorithm):
 
     def convertStateToConditionMatrix(self, state):
         # state is of length MYN
+        #print(len(state))
         columns = self.model.COLUMNS_IN_CONDITIONMATRIX
         rows = self.model.ROWS_IN_CONDITIONMATRIX
         graph = np.ones((rows, columns))*self.FE.ignore_edge
@@ -237,6 +243,7 @@ class RLAlgorithm(LearningAlgorithm):
 
                 vectoraction = np.random.multinomial(1, prob[i], size=1).reshape(self.model.ALPHABET_SIZE)
 
+                #print("vectoraction:", vectoraction)
                 if vectoraction[0] != 1:
                     edges[i] += 1
                         

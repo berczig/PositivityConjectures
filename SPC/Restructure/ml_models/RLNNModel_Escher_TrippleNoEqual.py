@@ -34,7 +34,7 @@ class RLNNModel_Escher_TrippleNoEqual(MLModel):
                                 #So e.g. [0,1,0,0,   0,0,1,0] means we have the partial word 01 and we are considering the third letter now.
                                 #Is there a better way to format the input to make it easier for the neural network to understand things?
 
-        self.MAX_EXPECTED_EDGES = 6
+        self.MAX_EXPECTED_EDGES = 5
         self.len_game = self.EDGES 
         self.state_dim = (self.observation_space,)
         print("CORE_LENGTH:", self.CORE_LENGTH)

@@ -43,6 +43,7 @@ def main(partition, training_data_load_path, model_load_path, model_save_path, m
         model.build_model()
         modelLogger.set_model(model)
     model.summary()
+    print("weights:", model.get_weights())
     assert model.partition == Preparer.partition, "model parition({}) does not match training data partition({})".format(model.partition, Preparer.partition)
 
 
@@ -81,7 +82,7 @@ if __name__ == "__main__":
     ml_training_algorithm_type = "RLAlgorithm" # exact name of the algorithm python class BruteForceAlgorithm or RLAlgorithm
     ml_model_type = "RLNNModel_Escher_TrippleNoEqual" # RLNNModel_CorrectSequence or RLNNModel_Escher or RLNNModel_Escher_Tripple - exact name of the model python class. The model is the component that contains the weights and perform computations, but the algorithm decides how the model is used
     core_generator_type = "EscherCoreGeneratorTrippleSymmetricNoEqual" # EscherCoreGeneratorBasic  EscherCoreGeneratorTripple
-    iteration_steps = 50
+    iteration_steps = 500
     plot_after_training = True
 
     main(partition, training_data_load_path, model_load_path, model_save_path, model_save_time, ml_training_algorithm_type, ml_model_type, core_generator_type, iteration_steps, plot_after_training)
