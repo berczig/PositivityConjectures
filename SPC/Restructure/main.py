@@ -79,9 +79,9 @@ if __name__ == "__main__":
     model_save_path = "" # "SPC/Saves,Tests/models/tripple_escher.keras"
     model_save_time = 600 # how many seconds have to have elapsed before saving
     ml_training_algorithm_type = "RLAlgorithm" # exact name of the algorithm python class BruteForceAlgorithm or RLAlgorithm
-    ml_model_type = "RLNNModel_Escher_Tripple" # RLNNModel_CorrectSequence or RLNNModel_Escher or RLNNModel_Escher_Tripple - exact name of the model python class. The model is the component that contains the weights and perform computations, but the algorithm decides how the model is used
-    core_generator_type = "EscherCoreGeneratorTrippleSymmetric" # EscherCoreGeneratorBasic  EscherCoreGeneratorTripple
-    iteration_steps = 5
+    ml_model_type = "RLNNModel_Escher_TrippleNoEqual" # RLNNModel_CorrectSequence or RLNNModel_Escher or RLNNModel_Escher_Tripple - exact name of the model python class. The model is the component that contains the weights and perform computations, but the algorithm decides how the model is used
+    core_generator_type = "EscherCoreGeneratorTrippleSymmetricNoEqual" # EscherCoreGeneratorBasic  EscherCoreGeneratorTripple
+    iteration_steps = 50
     plot_after_training = True
 
     main(partition, training_data_load_path, model_load_path, model_save_path, model_save_time, ml_training_algorithm_type, ml_model_type, core_generator_type, iteration_steps, plot_after_training)
