@@ -6,7 +6,7 @@ from SPC.Restructure.GlobalUIODataPreparer import GlobalUIODataPreparer
 from SPC.Restructure.cores.EscherCoreGeneratorBasic import EscherCoreGeneratorBasic
 from SPC.Restructure.cores.EscherCoreGeneratorTrippleSymmetric import EscherCoreGeneratorTrippleSymmetric
 
-def solve_subset_sum(matrix, targets, max_solutions=5):
+def solve_subset_sum(matrix, targets, max_solutions=1):
     n_rows, n_cols = len(matrix), len(matrix[0])
     solutions = []
 
@@ -99,7 +99,7 @@ for solution in solutions:
     for corerepID, corerep in enumerate(Preparer.coreRepresentationsCategorizer):
         if corerep != 'GOOD':
             X.append(corerep)
-            print("corerep:", corerep, "meaning:", EscherCoreGeneratorTrippleSymmetric.convertCorerepToText(corerep, partition), "\n")
+            print("corerep meaning:", EscherCoreGeneratorTrippleSymmetric.convertCorerepToText(corerep, partition), "\n")
             if corerepID in solution:
                 solutioncorereps.append(corerep)
                 y.append(1)
@@ -119,7 +119,7 @@ for solution in solutions:
     y = np.array(y)
 
     # Train the decision tree
-    clf = DecisionTreeClassifier(splitter="best", max_depth=5)
+    clf = DecisionTreeClassifier(splitter="random", max_depth=3)
     clf.fit(X, y)
 
     # Extract the logical expression

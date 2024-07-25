@@ -14,18 +14,31 @@ class EscherCoreGeneratorTrippleSymmetric(EscherCoreGeneratorAbstract):
 
     @staticmethod
     def getCoreComparisions(partition):
-        return EscherCoreGeneratorTrippleSymmetric.getAllCoreComparisions(partition)
+        #return EscherCoreGeneratorTrippleSymmetric.getAllCoreComparisions(partition)
+        #return {
+        #    "0" : ["subescher vw start", "vw 1. insert", "subescher uv_w start", "uv_w 1. insert", "subescher uw_v start", "uw_v 1. insert"],
+        #    "len(v)-1" : ["subescher vw start", "subescher vw end", "vw 1. insert", "subescher uv_w start", "subescher uv_w end", "uv_w 1. insert", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"],
+        #    "subescher vw start" : ["vw 1. insert", "len(uv)_1", "subescher uv_w start", "subescher uv_w end", "uv_w 1. insert","len(uw)-1", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"],
+        #    "subescher vw end" : ["vw 1. insert", "len(uv)_1", "subescher uv_w start", "subescher uv_w end", "uv_w 1. insert","len(uw)-1", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"],
+        #    "vw 1. insert" : ["len(uv)_1", "subescher uv_w start", "subescher uv_w end", "uv_w 1. insert","len(uw)-1", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"],
+        #    "len(uv)_1" : ["subescher uv_w start", "subescher uv_w end", "uv_w 1. insert", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"],
+        #    "subescher uv_w start" : ["uv_w 1. insert","len(uw)-1", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"],
+        #    "subescher uv_w end" : ["uv_w 1. insert","len(uw)-1", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"],
+        #    "uv_w 1. insert" : ["len(uw)-1", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"],
+        #    "len(uw)-1" : ["subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"],
+        #    "subescher uw_v start" : ["uw_v 1. insert"],
+        #    "subescher uw_v end" : ["uw_v 1. insert"],}
         return {
-            "0" : ["subescher vw start", "vw 1. insert", "subescher uv_w start", "uv_w 1. insert", "subescher uw_v start", "uw_v 1. insert"],
-            "len(v)-1" : ["subescher vw start", "subescher vw end", "vw 1. insert", "subescher uv_w start", "subescher uv_w end", "uv_w 1. insert", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"],
-            "subescher vw start" : ["vw 1. insert", "len(uv)_1", "subescher uv_w start", "subescher uv_w end", "uv_w 1. insert","len(uw)-1", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"],
-            "subescher vw end" : ["vw 1. insert", "len(uv)_1", "subescher uv_w start", "subescher uv_w end", "uv_w 1. insert","len(uw)-1", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"],
-            "vw 1. insert" : ["len(uv)_1", "subescher uv_w start", "subescher uv_w end", "uv_w 1. insert","len(uw)-1", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"],
-            "len(uv)_1" : ["subescher uv_w start", "subescher uv_w end", "uv_w 1. insert", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"],
-            "subescher uv_w start" : ["uv_w 1. insert","len(uw)-1", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"],
-            "subescher uv_w end" : ["uv_w 1. insert","len(uw)-1", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"],
-            "uv_w 1. insert" : ["len(uw)-1", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"],
-            "len(uw)-1" : ["subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"],
+            "0" : ["subescher uv start", "subescher uw start", "subescher vw start", "subescher uv_w start", "subescher uw_v start", "subescher vw_u start", "uv 1. insert","uw 1. insert", "vw 1. insert", "uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert", "uv_w 1. insert"],
+            "len(v)-1" : ["vw 1. insert", "uv_w 1. insert", "uw_v 1. insert"],
+            "subescher vw start" : ["vw 1. insert", "uv_w 1. insert", "uw_v 1. insert"],
+            "subescher vw end" : ["vw 1. insert", "uv_w 1. insert", "uw_v 1. insert"],
+            "vw 1. insert" : ["len(uv)_1", "subescher uv_w start", "subescher uv_w end", "len(uw)-1", "subescher uw_v start", "subescher uw_v end"],
+            "len(uv)_1" : ["uv_w 1. insert", "uw_v 1. insert"],
+            "subescher uv_w start" : ["uv_w 1. insert","uw_v 1. insert"],
+            "subescher uv_w end" : ["uv_w 1. insert", "uw_v 1. insert"],
+            "uv_w 1. insert" : ["len(uw)-1", "subescher uw_v start", "subescher uw_v end"],
+            "len(uw)-1" : ["uw_v 1. insert"],
             "subescher uw_v start" : ["uw_v 1. insert"],
             "subescher uw_v end" : ["uw_v 1. insert"],
                 }
@@ -44,7 +57,7 @@ class EscherCoreGeneratorTrippleSymmetric(EscherCoreGeneratorAbstract):
         
         def add_half(L):
             return L[:-1]+[L[-1]+0.5]
-        u,v, w = eschertripple
+        u,v,w = eschertripple
 
         # get data of double pairs
         core_u_v = self.get_insertion_and_subescher_of_2_eschers(u,v)
@@ -68,7 +81,6 @@ class EscherCoreGeneratorTrippleSymmetric(EscherCoreGeneratorAbstract):
             core_uw_v = self.get_insertion_and_subescher_of_2_eschers(uw,v)
 
         if core_v_w[-1] == -1:
-            core_v_w = add_half(core_v_w)
             core_vw_u = [len(v) + len(w)-1, -1, -1, -1]
         else:
             vw = self.concat(v, w, insertionpoint=core_v_w[-1])
@@ -77,7 +89,7 @@ class EscherCoreGeneratorTrippleSymmetric(EscherCoreGeneratorAbstract):
 
         #print([0] + add_half(core_v_w) + add_half(core_uv_w) + add_half(core_uw_v))
         #print([0] + core_v_w + core_uv_w + core_uw_v)
-        return [0] + core_u_v + core_v_w + core_u_w + core_uv_w + core_uw_v + core_vw_u
+        return [0] + add_half(core_u_v) + add_half(core_v_w) + add_half(core_u_w) + add_half(core_uv_w) + add_half(core_uw_v) + add_half(core_vw_u)
 
         
         """
