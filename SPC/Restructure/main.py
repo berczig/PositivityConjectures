@@ -43,7 +43,6 @@ def main(partition, training_data_load_path, model_load_path, model_save_path, m
         model.build_model()
         modelLogger.set_model(model)
     model.summary()
-    print("weights:", model.get_weights())
     assert model.partition == Preparer.partition, "model parition({}) does not match training data partition({})".format(model.partition, Preparer.partition)
 
 

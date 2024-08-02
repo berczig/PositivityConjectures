@@ -26,6 +26,8 @@ class EscherCoreGeneratorTrippleSymmetricNoEqual(EscherCoreGeneratorAbstract):
         #    "len(uw)-1" : ["subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"],
         #    "subescher uw_v start" : ["uw_v 1. insert"],
         #    "subescher uw_v end" : ["uw_v 1. insert"],}
+        #return {
+        #    "0" : ["subescher uv start", "subescher uw start", "subescher vw start", "subescher uv_w start", "subescher uw_v start", "subescher vw_u start", "uv 1. insert","uw 1. insert", "vw 1. insert"]}
         return {
             "0" : ["subescher uv start", "subescher uw start", "subescher vw start", "subescher uv_w start", "subescher uw_v start", "subescher vw_u start", "uv 1. insert","uw 1. insert", "vw 1. insert", "uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert", "uv_w 1. insert"],
             "len(v)-1" : ["vw 1. insert", "uv_w 1. insert", "uw_v 1. insert"],

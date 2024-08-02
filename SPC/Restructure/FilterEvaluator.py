@@ -91,7 +91,13 @@ class FilterEvaluator:
             for id, x in enumerate(residuals):
                 if x > 0:
                     print("UIOID:", id, counted[id], self.true_coefficients[id])"""
-        return -sum(abs(residuals))
+        
+        from SPC.Restructure.ml_algorithms.RLAlgorithm import RLAlgorithm
+        num_edges = np.sum(filter != self.DEFAULT_IGNORE_VALUE)
+    
+        has_trivial_row = np.any([np.all(row==self.DEFAULT_IGNORE_VALUE) for row in filter])
+
+        return -sum(abs(residuals)) - RLAlgorithm.edgePenalty*num_edges + (-1000 if has_trivial_row else 0)
     
     def evaluate_old(self, filter, verbose=False):
         # for each uio of length l+k, check how many of its cores comply  with 

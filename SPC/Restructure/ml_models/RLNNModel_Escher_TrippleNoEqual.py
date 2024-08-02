@@ -15,7 +15,7 @@ class RLNNModel_Escher_TrippleNoEqual(MLModel):
     SECOND_LAYER_NEURONS = 64
     THIRD_LAYER_NEURONS = 4
 
-    LEARNING_RATE = 0.1 #Increase this to make convergence faster, decrease if the algorithm gets stuck in local optima too often.
+    LEARNING_RATE = 0.05 #Increase this to make convergence faster, decrease if the algorithm gets stuck in local optima too often.
 
 
     def setParameters(self, partition, core_length, corerep_length):
@@ -24,7 +24,7 @@ class RLNNModel_Escher_TrippleNoEqual(MLModel):
 
         # k+2+2*p
         self.CORE_LENGTH = core_length   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
-        self.ROWS_IN_CONDITIONMATRIX = 2
+        self.ROWS_IN_CONDITIONMATRIX = 3
         self.ALPHABET_SIZE = 3
         self.COLUMNS_IN_CONDITIONMATRIX = corerep_length
         self.EDGES = self.COLUMNS_IN_CONDITIONMATRIX * self.ROWS_IN_CONDITIONMATRIX
@@ -37,16 +37,19 @@ class RLNNModel_Escher_TrippleNoEqual(MLModel):
         self.MAX_EXPECTED_EDGES = 5
         self.len_game = self.EDGES 
         self.state_dim = (self.observation_space,)
+        print("self.ROWS_IN_CONDITIONMATRIX:", self.ROWS_IN_CONDITIONMATRIX)
         print("CORE_LENGTH:", self.CORE_LENGTH)
         print("self.ALPHABET_SIZE:", self.ALPHABET_SIZE)
         print("self.EDGES:", self.EDGES)
         print("self.MYN:", self.MYN)
         print("self.observation_space:", self.observation_space)
+
     def build_model(self):
         self.add(Dense(self.FIRST_LAYER_NEURONS,  activation="relu"))
         self.add(Dense(self.SECOND_LAYER_NEURONS, activation="relu"))
         self.add(Dense(self.THIRD_LAYER_NEURONS, activation="relu"))
         self.add(Dense(self.ALPHABET_SIZE, activation="softmax"))
+        
         self.build((None, self.observation_space))
         self.compile(loss="categorical_crossentropy", optimizer=SGD(learning_rate = self.LEARNING_RATE), run_eagerly=True) #Adam optimizer also works well, with lower learning rate
 
