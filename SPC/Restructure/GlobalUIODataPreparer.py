@@ -20,6 +20,10 @@ class GlobalUIODataPreparer(PartiallyLoadable):
         #for i, enc in enumerate(encodings):
             #print(i, enc)
 
+    def getUIOs(self,i):
+        return self.extractors[i].uio.encoding
+
+
     def computeTrainingData(self, partition:tuple, core_generator_type:str) -> tuple:
         """
         :return: (X,y) the training data. Where X is a dict with the keys being coreRepresentations, and 

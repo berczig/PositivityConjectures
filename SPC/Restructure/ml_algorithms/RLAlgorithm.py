@@ -1,3 +1,4 @@
+from SPC.Restructure.GlobalUIODataPreparer import GlobalUIODataPreparer
 from SPC.Restructure.ml_algorithms.LearningAlgorithm import LearningAlgorithm
 
 import networkx as nx #for various graph parameters, such as eigenvalues, macthing number, etc
@@ -12,6 +13,7 @@ import os
 import matplotlib.pyplot as plt
 import sys
 from SPC.Restructure.UIO import UIO
+from SPC.Restructure.ml_models import RLNNModel_Escher, RLNNModel_Escher_TrippleNoEqual
 from SPC.misc.extra import PartiallyLoadable
 from datetime import datetime
 from SPC.Restructure.FilterEvaluator import FilterEvaluator
@@ -22,17 +24,17 @@ os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE" # fix to omp: error #15 on my laptop
 class RLAlgorithm(LearningAlgorithm):
 
 	# PARAMETERS
-	n_sessions = 600 #number of new sessions per iteration
+	n_sessions = 800 #number of new sessions per iteration
 	percentile = 93 #top 100-X percentile we are learning from
 	super_percentile = 94 #top 100-X percentile that survives to next iteration
 	reduce_uio = 0
 	INF = 1000000
-	edgePenalty = 3
+	edgePenalty = 1
 	#########################
  
 
 	def train(self, iterations, model_save_path="", model_save_time=0):
-		self.model : RLNNModel_CorrectSequence
+		self.model : RLNNModel_Escher_TrippleNoEqual #RLNNModel_Escher
 		self.model = self.model_logger.get_model()
 
 		self.FE = FilterEvaluator(self.trainingdata_input, self.trainingdata_output, FilterEvaluator.DEFAULT_IGNORE_VALUE, self.model_logger)
@@ -122,7 +124,11 @@ class RLAlgorithm(LearningAlgorithm):
 			
 			print("\n" + str(i) +  ". Best individuals: " + str(np.flip(np.sort(super_rewards))))
 			print("best state:", self.current_bestscore, self.FE.convertConditionMatrixToText(self.convertStateToConditionMatrix(self.current_beststate)))
-			#self.calcScore(self.current_beststate, True)
+			residuals = self.FE.evaluate(self.convertStateToConditionMatrix(self.current_beststate), return_residuals=True)
+			print("residuals:", residuals)
+			for i, res in enumerate(residuals):
+				if res != 0: print("residual:", res, self.UIO_preparer.getUIOs(i))
+			
 			self.model_logger.bestscore_history.append(self.current_bestscore)
 			self.model_logger.bestfilter_history.append(self.current_beststate)
 			self.model_logger.meanscore_history.append(np.mean(super_rewards))
@@ -254,7 +260,10 @@ class RLAlgorithm(LearningAlgorithm):
 				state_next[i] = states[i,:,step-1]
 				play_time += time.time()-tic
 
-				state_next[i][self.model.ALPHABET_SIZE*(step-1):self.model.ALPHABET_SIZE*step] = vectoraction
+				which_row = (step-1) % self.model.ROWS_IN_CONDITIONMATRIX
+				shift = which_row*self.model.COLUMNS_IN_CONDITIONMATRIX + (step-1)//self.model.ROWS_IN_CONDITIONMATRIX 
+
+				state_next[i][shift*self.model.ALPHABET_SIZE:(shift+1)*self.model.ALPHABET_SIZE] = vectoraction
 
 				state_next[i][self.model.MYN + step-1] = 0
 

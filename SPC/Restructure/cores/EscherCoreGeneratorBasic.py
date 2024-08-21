@@ -7,20 +7,26 @@ class EscherCoreGeneratorBasic(EscherCoreGeneratorAbstract):
     def compareTwoCoreElements(self, a, b):
         if a < b:
             return UIO.LESS
-        elif a > b:
-            return UIO.GREATER
-        return UIO.EQUAL
+        return UIO.GREATER
+    
+        # if a < b:
+        #     return UIO.LESS
+        # elif a > b:
+        #     return UIO.GREATER
+        # return UIO.EQUAL
     
     @staticmethod
     def getCoreLabels(partition):
-        return ["0", "subescher start interval", "subescher end interval", "1.insert", "n-1"]
+        return ["0", "subescher start interval", "subescher end interval", "1.insert"]#, "n-1"]
     
     @staticmethod
     def getCoreComparisions(partition):
-        return {"0":["subescher start interval", "subescher end interval", "1.insert"],
-                "subescher start interval":["1.insert", "n-1"], 
-                "subescher end interval":["1.insert", "n-1"],
-                "1.insert":["n-1"]}
+        #return {"0":["subescher start interval", "subescher end interval", "1.insert"],
+        #        "subescher start interval":["1.insert", "n-1"], 
+        #        "subescher end interval":["1.insert", "n-1"],
+        #        "1.insert":["n-1"]}
+        return {"0": ["subescher start interval","1. insert"],
+                "subescher end interval":["1.insert"],}
     
 
     def generateCore(self, escherpair):
@@ -29,7 +35,8 @@ class EscherCoreGeneratorBasic(EscherCoreGeneratorAbstract):
         core = self.getInsertionsSubeshers(u,v)
         insertions, escherstartpoints = core
         if len(insertions) == 0:
-            return "GOOD"
+            #return "GOOD"
+            return [0,-1,-1,-0.5]
         #if escherstartpoints == []:
         #    print("Problem with core:",self.encoding,u,v,core)
         #print(u,v, "insertions:", insertions, "escherstartpoints:", escherstartpoints)
@@ -45,7 +52,7 @@ class EscherCoreGeneratorBasic(EscherCoreGeneratorAbstract):
                     break
             if not has_bigger_than_0_startpoint:
                 points.append(-1)
-                points.append(-2+k)
+                points.append(k-2)
             points.append(insertions[0]+0.5) # here 2(n+k)>n+k, but any such number will be fine
 
             #if len(insertions) > 1:
@@ -53,7 +60,7 @@ class EscherCoreGeneratorBasic(EscherCoreGeneratorAbstract):
             #else:
             #    points.append(999)
 
-            points.append(n-1)
+            #points.append(n-1)
             #points.append(n+k-1)
         return points
     

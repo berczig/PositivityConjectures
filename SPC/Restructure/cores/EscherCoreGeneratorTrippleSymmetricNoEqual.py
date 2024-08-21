@@ -26,32 +26,133 @@ class EscherCoreGeneratorTrippleSymmetricNoEqual(EscherCoreGeneratorAbstract):
         #    "len(uw)-1" : ["subescher uw_v start", "subescher uw_v end", "uw_v 1. insert"],
         #    "subescher uw_v start" : ["uw_v 1. insert"],
         #    "subescher uw_v end" : ["uw_v 1. insert"],}
+        # Reduced edges
         #return {
-        #    "0" : ["subescher uv start", "subescher uw start", "subescher vw start", "subescher uv_w start", "subescher uw_v start", "subescher vw_u start", "uv 1. insert","uw 1. insert", "vw 1. insert"]}
+        #    "0" : ["subescher uv start", "subescher uw start", "subescher vw start", "subescher uv_w start", "subescher uw_v start", "subescher vw_u start"],#, "uv 1. insert","uw 1. insert", "vw 1. insert", "uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert"],
+        #    "len(v)-1" : ["vw 1. insert"],# "uv_w 1. insert", "uw_v 1. insert"],
+        #    "len(u)-1" : ["uv 1. insert", "uw 1. insert"], #"uv_w 1. insert", "uw_v 1. insert"],
+        #    "len(uv)_1" : ["uv_w 1. insert"],# "uw_v 1. insert"],
+        #    "len(uw)-1" : ["uw_v 1. insert"],
+        #    "len(vw)-1" : ["vw_u 1. insert"],
+        #    "subescher uv end" : ["uv 1. insert","uw 1. insert","vw 1. insert", "uv_w 1. insert", "uw_v 1. insert"],
+        #    "subescher uw end" : ["uv 1. insert","uw 1. insert","vw 1. insert", "uv_w 1. insert", "uw_v 1. insert"],
+        #    "subescher vw end" : ["uv 1. insert","uw 1. insert","vw 1. insert", "uv_w 1. insert", "uw_v 1. insert"],
+        #    "subescher uv_w end" : ["uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert"],
+        #    "subescher uw_v end" : ["uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert"],
+        #    "subescher vw_u end" : ["uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert"],}
+        # Edges after dropping len's
         return {
-            "0" : ["subescher uv start", "subescher uw start", "subescher vw start", "subescher uv_w start", "subescher uw_v start", "subescher vw_u start", "uv 1. insert","uw 1. insert", "vw 1. insert", "uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert", "uv_w 1. insert"],
-            "len(v)-1" : ["vw 1. insert", "uv_w 1. insert", "uw_v 1. insert"],
-            "subescher vw start" : ["vw 1. insert", "uv_w 1. insert", "uw_v 1. insert"],
-            "subescher vw end" : ["vw 1. insert", "uv_w 1. insert", "uw_v 1. insert"],
-            "vw 1. insert" : ["len(uv)_1", "subescher uv_w start", "subescher uv_w end", "len(uw)-1", "subescher uw_v start", "subescher uw_v end"],
-            "len(uv)_1" : ["uv_w 1. insert", "uw_v 1. insert"],
-            "subescher uv_w start" : ["uv_w 1. insert","uw_v 1. insert"],
-            "subescher uv_w end" : ["uv_w 1. insert", "uw_v 1. insert"],
-            "uv_w 1. insert" : ["len(uw)-1", "subescher uw_v start", "subescher uw_v end"],
-            "len(uw)-1" : ["uw_v 1. insert"],
-            "subescher uw_v start" : ["uw_v 1. insert"],
-            "subescher uw_v end" : ["uw_v 1. insert"],
-                }
-
+            "0" : ["subescher uv start", "subescher uw start", "subescher vw start", "subescher uv_w start", "subescher uw_v start", "subescher vw_u start"],#, "uv 1. insert","uw 1. insert", "vw 1. insert", "uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert"],
+            "subescher uv end" : ["uv 1. insert","uw 1. insert","vw 1. insert", "uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert"],
+            "subescher uw end" : ["uv 1. insert","uw 1. insert","vw 1. insert", "uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert"],
+            "subescher vw end" : ["uv 1. insert","uw 1. insert","vw 1. insert", "uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert"],
+            "subescher uv_w end" : ["uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert","uw 1. insert","vw 1. insert"],
+            "subescher uw_v end" : ["uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert","uv 1. insert","vw 1. insert"],
+            "subescher vw_u end" : ["uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert", "uv 1. insert","uw 1. insert"],}
+        #Edges after dropping len's and changing the cores for pairs
+        # return {
+        #     "subescher uv end" : ["0","uv 1. insert","uw 1. insert","vw 1. insert", "uv_w 1. insert", "uw_v 1. insert"],
+        #     "subescher uw end" : ["0","uv 1. insert","uw 1. insert","vw 1. insert", "uv_w 1. insert", "uw_v 1. insert"],
+        #     "subescher vw end" : ["0","uv 1. insert","uw 1. insert","vw 1. insert", "uv_w 1. insert", "uw_v 1. insert"],
+        #     "subescher uv_w end" : ["0","uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert"],
+        #     "subescher uw_v end" : ["0","uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert"],
+        #     "subescher vw_u end" : ["0","uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert"],}    
+    
 
     @staticmethod
     def getCoreLabels(partition):
-        return ["0", "len(u)-1", "subescher uv start", "subescher uv end", "uv 1. insert", "len(v)-1", "subescher vw start", "subescher vw end", "vw 1. insert", 
-     "len(u)-1 (again)", "subescher uw start", "subescher uw end", "uw 1. insert", "len(uv)_1", "subescher uv_w start", 
-                "subescher uv_w end", "uv_w 1. insert","len(uw)-1", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert",
-                "len(vw)-1", "subescher vw_u start", "subescher vw_u end", "vw_u 1. insert"]
+        # original cores
+        #return ["0", "len(u)-1", "subescher uv start", "subescher uv end", "uv 1. insert", "len(v)-1", "subescher vw start", "subescher vw end", "vw 1. insert", 
+        #        "len(u)-1 (again)", "subescher uw start", "subescher uw end", "uw 1. insert", "len(uv)_1", "subescher uv_w start", 
+        #        "subescher uv_w end", "uv_w 1. insert","len(uw)-1", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert",
+        #        "len(vw)-1", "subescher vw_u start", "subescher vw_u end", "vw_u 1. insert"]
+        # short cores (without len's)
+        return ["0", "subescher uv start", "subescher uv end", "uv 1. insert", "subescher vw start", "subescher vw end", "vw 1. insert", 
+                "subescher uw start", "subescher uw end", "uw 1. insert", "subescher uv_w start", 
+                "subescher uv_w end", "uv_w 1. insert", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert",
+                "subescher vw_u start", "subescher vw_u end", "vw_u 1. insert"]
+        # shortest cores (without len's and escher starts)
+        # return ["0", "subescher uv end", "uv 1. insert", "subescher vw end", "vw 1. insert", 
+        #         "subescher uw end", "uw 1. insert",  
+        #         "subescher uv_w end", "uv_w 1. insert", "subescher uw_v end", "uw_v 1. insert",
+        #         "subescher vw_u end", "vw_u 1. insert"]
 
-    
+
+    # def generateCore(self, eschertripple):
+        
+    #     def add_half(L):
+    #         return L[:-1]+[L[-1]+0.5]
+    #     u,v,w = eschertripple
+
+    #     # get data of double pairs
+    #     core_u_v = self.get_insertion_and_subescher_of_2_eschers(u,v)
+    #     core_v_w = self.get_insertion_and_subescher_of_2_eschers(v,w)
+    #     core_u_w = self.get_insertion_and_subescher_of_2_eschers(u,w)
+        
+    #     # If there is no insertion, then it is good
+    #     #if core_u_v == [] or core_u_w == [] or core_v_w == []:
+    #     #    return "GOOD"
+
+    #     if core_u_v[-1] == -1:
+    #         core_uv_w = [len(u)+len(v)-1, -1, -1, -1]
+    #     else:
+    #         uv = self.concat(u, v, insertionpoint=core_u_v[-1])
+    #         core_uv_w = self.get_insertion_and_subescher_of_2_eschers(uv,w)
+
+    #     if core_u_w[-1] == -1:
+    #         core_uw_v = [len(u)+len(w)-1, -1, -1, -1]
+    #     else:
+    #         uw = self.concat(u, w, insertionpoint=core_u_w[-1])
+    #         core_uw_v = self.get_insertion_and_subescher_of_2_eschers(uw,v)
+
+    #     if core_v_w[-1] == -1:
+    #         core_vw_u = [len(v) + len(w)-1, -1, -1, -1]
+    #     else:
+    #         vw = self.concat(v, w, insertionpoint=core_v_w[-1])
+    #         core_vw_u = self.get_insertion_and_subescher_of_2_eschers(vw,u)
+
+
+    #     #print([0] + add_half(core_v_w) + add_half(core_uv_w) + add_half(core_uw_v))
+    #     #print([0] + core_v_w + core_uv_w + core_uw_v)
+    #     return [0] + add_half(core_u_v) + add_half(core_v_w) + add_half(core_u_w) + add_half(core_uv_w) + add_half(core_uw_v) + add_half(core_vw_u)
+
+    # def generateCore(self, eschertripple):
+        
+    #     def add_half(L):
+    #         return L[:-1]+[L[-1]+0.5]
+    #     u,v,w = eschertripple
+
+    #     # get data of double pairs
+    #     core_u_v = self.get_short_insertion_and_subescher_of_2_eschers(u,v)
+    #     core_v_w = self.get_short_insertion_and_subescher_of_2_eschers(v,w)
+    #     core_u_w = self.get_short_insertion_and_subescher_of_2_eschers(u,w)
+        
+    #     # If there is no insertion, then it is good
+    #     #if core_u_v == [] or core_u_w == [] or core_v_w == []:
+    #     #    return "GOOD"
+
+    #     if core_u_v[-1] == -1:
+    #         core_uv_w = [-1, -1, -1]
+    #     else:
+    #         uv = self.concat(u, v, insertionpoint=core_u_v[-1])
+    #         core_uv_w = self.get_short_insertion_and_subescher_of_2_eschers(uv,w)
+
+    #     if core_u_w[-1] == -1:
+    #         core_uw_v = [-1, -1, -1]
+    #     else:
+    #         uw = self.concat(u, w, insertionpoint=core_u_w[-1])
+    #         core_uw_v = self.get_short_insertion_and_subescher_of_2_eschers(uw,v)
+
+    #     if core_v_w[-1] == -1:
+    #         core_vw_u = [-1, -1, -1]
+    #     else:
+    #         vw = self.concat(v, w, insertionpoint=core_v_w[-1])
+    #         core_vw_u = self.get_short_insertion_and_subescher_of_2_eschers(vw,u)
+
+
+    #     #print([0] + add_half(core_v_w) + add_half(core_uv_w) + add_half(core_uw_v))
+    #     #print([0] + core_v_w + core_uv_w + core_uw_v)
+    #     return [0] + add_half(core_u_v) + add_half(core_v_w) + add_half(core_u_w) + add_half(core_uv_w) + add_half(core_uw_v) + add_half(core_vw_u)
 
     def generateCore(self, eschertripple):
         
@@ -60,38 +161,37 @@ class EscherCoreGeneratorTrippleSymmetricNoEqual(EscherCoreGeneratorAbstract):
         u,v,w = eschertripple
 
         # get data of double pairs
-        core_u_v = self.get_insertion_and_subescher_of_2_eschers(u,v)
-        core_v_w = self.get_insertion_and_subescher_of_2_eschers(v,w)
-        core_u_w = self.get_insertion_and_subescher_of_2_eschers(u,w)
+        core_u_v = self.get_shortb_insertion_and_subescher_of_2_eschers(u,v)
+        core_v_w = self.get_shortb_insertion_and_subescher_of_2_eschers(v,w)
+        core_u_w = self.get_shortb_insertion_and_subescher_of_2_eschers(u,w)
         
         # If there is no insertion, then it is good
         #if core_u_v == [] or core_u_w == [] or core_v_w == []:
         #    return "GOOD"
 
         if core_u_v[-1] == -1:
-            core_uv_w = [len(u)+len(v)-1, -1, -1, -1]
+            core_uv_w = [-1, -1, -1]
         else:
             uv = self.concat(u, v, insertionpoint=core_u_v[-1])
-            core_uv_w = self.get_insertion_and_subescher_of_2_eschers(uv,w)
+            core_uv_w = self.get_shortb_insertion_and_subescher_of_2_eschers(uv,w)
 
         if core_u_w[-1] == -1:
-            core_uw_v = [len(u)+len(w)-1, -1, -1, -1]
+            core_uw_v = [-1,-1, -1]
         else:
             uw = self.concat(u, w, insertionpoint=core_u_w[-1])
-            core_uw_v = self.get_insertion_and_subescher_of_2_eschers(uw,v)
+            core_uw_v = self.get_shortb_insertion_and_subescher_of_2_eschers(uw,v)
 
         if core_v_w[-1] == -1:
-            core_vw_u = [len(v) + len(w)-1, -1, -1, -1]
+            core_vw_u = [-1, -1, -1]
         else:
             vw = self.concat(v, w, insertionpoint=core_v_w[-1])
-            core_vw_u = self.get_insertion_and_subescher_of_2_eschers(vw,u)
+            core_vw_u = self.get_shortb_insertion_and_subescher_of_2_eschers(vw,u)
 
 
         #print([0] + add_half(core_v_w) + add_half(core_uv_w) + add_half(core_uw_v))
         #print([0] + core_v_w + core_uv_w + core_uw_v)
         return [0] + add_half(core_u_v) + add_half(core_v_w) + add_half(core_u_w) + add_half(core_uv_w) + add_half(core_uw_v) + add_half(core_vw_u)
 
-        
         """
         u,v, w = eschertripple
 
@@ -117,9 +217,6 @@ class EscherCoreGeneratorTrippleSymmetricNoEqual(EscherCoreGeneratorAbstract):
         return [0] + core_u_v + core_v_w + core_u_w + core_uv_w + core_vw_u + core_uw_v
         """
 
-        
-
-    
     def get_insertion_and_subescher_of_2_eschers(self, u,v):
         n,k = len(u), len(v)
         core = self.getInsertionsSubeshers(u,v)
@@ -142,6 +239,68 @@ class EscherCoreGeneratorTrippleSymmetricNoEqual(EscherCoreGeneratorAbstract):
             points.append(insertions[0]) # here 2(n+k)>n+k, but any such number will be fine,  "insertion + 0.5 is good"
         return points
 
+
+    def get_short_insertion_and_subescher_of_2_eschers(self, u,v): #core = (escherstartpoint, esherendpoint,insertion)
+        n,k = len(u), len(v)
+        core = self.getInsertionsSubeshers(u,v)
+        insertions, escherstartpoints = core
+
+        if len(insertions) == 0:
+            return [-1, -1, -1]
+        else:
+            points = []
+            has_bigger_than_0_startpoint = False
+            for escherstartpoint in escherstartpoints:
+                if escherstartpoint > 0:
+                    points.append(escherstartpoint)
+                    points.append(escherstartpoint+k-1)
+                    has_bigger_than_0_startpoint = True
+                    break
+            if not has_bigger_than_0_startpoint:
+                points.append(-1)
+                points.append(k-2)
+            points.append(insertions[0]) # here 2(n+k)>n+k, but any such number will be fine,  "insertion + 0.5 is good"
+        return points
+    
+    def get_shortb_insertion_and_subescher_of_2_eschers(self, u,v): 
+        #Let uu be the longer, vv the shorter escher
+        # n,k = max(len(u),len(v)), min(len(u),len(v))
+        # if len(u) == n:
+        #     uu = u
+        #     vv = v
+        # else:
+        #     uu = v
+        #     vv = u
+        # core = self.getInsertionsSubeshers(uu,vv)
+        n,k = len(u), len(v)
+        core = self.getInsertionsSubeshers(u,v)
+        insertions, escherstartpoints = core
+        if len(insertions) == 0:
+            return [-1, -1, -1]
+        else:
+            points = []
+            has_bigger_than_0_startpoint = False
+            for escherstartpoint in escherstartpoints:
+                if escherstartpoint > 0:
+                    points.append(escherstartpoint)
+                    points.append(escherstartpoint+k-1)
+                    has_bigger_than_0_startpoint = True
+                    break
+            if not has_bigger_than_0_startpoint:
+                points.append(-1)
+                points.append(insertions[0]+1)
+            points.append(insertions[0])
+            # if len(escherstartpoints) == 0:
+            #     points.append(-1)
+            #     points.append(-1)
+            # else:
+            #     points.append(escherstartpoints[0])
+            #     points.append(escherstartpoints[0]+k-1)
+            # points.append(insertions[0])
+        return points
+
+    
+    
     def generateCore_2partition(self, escherpair):
         n,k = self.partition  # maybe have to switch n and k
         u,v = escherpair

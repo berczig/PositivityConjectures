@@ -15,7 +15,7 @@ class RLNNModel_Escher(MLModel):
     SECOND_LAYER_NEURONS = 64
     THIRD_LAYER_NEURONS = 4
 
-    LEARNING_RATE = 0.1 #Increase this to make convergence faster, decrease if the algorithm gets stuck in local optima too often.
+    LEARNING_RATE = 0.05 #Increase this to make convergence faster, decrease if the algorithm gets stuck in local optima too often.
 
     def setParameters(self, partition, core_length, corerep_length):
         print("model using", partition, "partition")
@@ -24,7 +24,7 @@ class RLNNModel_Escher(MLModel):
         # k+2+2*p
         self.CORE_LENGTH = core_length   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
         self.ROWS_IN_CONDITIONMATRIX = 2
-        self.ALPHABET_SIZE = 4
+        self.ALPHABET_SIZE = 3
         self.COLUMNS_IN_CONDITIONMATRIX = corerep_length
         self.EDGES = self.COLUMNS_IN_CONDITIONMATRIX * self.ROWS_IN_CONDITIONMATRIX
         self.MYN = self.ALPHABET_SIZE*self.EDGES  #The length of the word we are generating. Here we are generating a graph, so we create a 0-1 word of length (N choose 2)
@@ -33,7 +33,7 @@ class RLNNModel_Escher(MLModel):
                                 #So e.g. [0,1,0,0,   0,0,1,0] means we have the partial word 01 and we are considering the third letter now.
                                 #Is there a better way to format the input to make it easier for the neural network to understand things?
 
-        self.MAX_EXPECTED_EDGES = 6
+        self.MAX_EXPECTED_EDGES = 3
         self.len_game = self.EDGES 
         self.state_dim = (self.observation_space,)
 

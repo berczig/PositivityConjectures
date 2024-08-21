@@ -61,6 +61,7 @@ class CoreGenerator:
         if core == "BAD":
             return "BAD"
         
+        #print("core", core)
         return tuple([self.compareTwoCoreElements(core[f_index], core[s_index]) for f_index, s_index in self.comp_indices])
     
     @classmethod
