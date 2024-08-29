@@ -73,7 +73,7 @@ def main(partition, training_data_load_path, model_load_path, model_save_path, m
 if __name__ == "__main__":
 
      # parameters
-    partition = (3,2,1) 
+    partition = (3,2,2) 
     training_data_load_path = "" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core_9_7_2024.bin"
     training_data_save_path = "" #"SPC/Saves,Tests/Trainingdata/partition_4_3_2_3rows.bin" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core.bin"
     model_load_path = "" # "SPC/Saves,Tests/models/tripple_escher.keras"#"" #"SPC/Saves,Tests/models/my_newmodel.keras"

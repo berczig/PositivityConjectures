@@ -24,7 +24,7 @@ class RLNNModel_Escher_TrippleNoEqual(MLModel):
 
         # k+2+2*p
         self.CORE_LENGTH = core_length   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
-        self.ROWS_IN_CONDITIONMATRIX = 2
+        self.ROWS_IN_CONDITIONMATRIX = 3
         self.ALPHABET_SIZE = 3
         self.COLUMNS_IN_CONDITIONMATRIX = corerep_length
         self.EDGES = self.COLUMNS_IN_CONDITIONMATRIX * self.ROWS_IN_CONDITIONMATRIX

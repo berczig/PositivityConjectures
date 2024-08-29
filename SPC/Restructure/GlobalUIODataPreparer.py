@@ -122,10 +122,10 @@ class GlobalUIODataPreparer(PartiallyLoadable):
         print("Found",len(self.coreRepresentationsCategorizer), "distinct core representations / categories")
 
 if __name__ == "__main__":
-    Preparer = GlobalUIODataPreparer(6)
+    Preparer = GlobalUIODataPreparer(6,CoreGenerator)
     print("here")
-    # X,y = Preparer.computeTrainingData((4,2))
-    X,y = Preparer.loadTrainingData("SPC/Saves,Tests/Preparersavetest.bin")
+    X,y = Preparer.computeTrainingData((4,2))
+    #X,y = Preparer.loadTrainingData("SPC/Saves,Tests/Preparersavetest.bin")
     #for key in X:
         #print(key, Preparer.coreRepresentationsCategorizer[key])
     print(y)
