@@ -99,6 +99,10 @@ class FilterEvaluator:
 
         return -sum(abs(residuals)) - RLAlgorithm.edgePenalty*num_edges + (-1000 if has_trivial_row else 0)
     
+    def getCorrectUIOs(self, filter, verbose=False):
+        residuals = self.evaluate(filter, verbose, return_residuals=True)
+        return np.sum(residuals != 0)
+    
     def evaluate_old(self, filter, verbose=False):
         # for each uio of length l+k, check how many of its cores comply  with 
         # the Condition_matrix and compare that amount with the true coefficient c_{l,k}
