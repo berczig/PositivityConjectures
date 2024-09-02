@@ -12,18 +12,125 @@ class EscherCoreGeneratorQuadruple(EscherCoreGeneratorAbstract):
 
     @staticmethod
     def getCoreComparisions(partition):
+        # 0 is compared to all subescher starts, subescher ends are compared to all 1. inserts
         return {
-            "a" : ["b", "c"],
-            "b" : ["c"]}
+            "0" : ["subescher uv start", "subescher uw start", "subescher vw start", "subescher uv_w start", "subescher uw_v start", "subescher vw_u start", 
+                   "subescher uz start", "subescher vz start", "subescher wz start", "subescher uz_w start", "subescher vz_u start", "subescher wz_v start"],
+            "subescher uv end" : ["uv 1. insert","uw 1. insert","vw 1. insert", "uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert", "uz 1. insert", "vz 1. insert", "wz 1. insert", "uz_w 1. insert", "vz_u 1. insert", "wz_v 1. insert"],
+            "subescher uw end" : ["uv 1. insert","uw 1. insert","vw 1. insert", "uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert", "uz 1. insert", "vz 1. insert", "wz 1. insert", "uz_w 1. insert", "vz_u 1. insert", "wz_v 1. insert"],
+            "subescher vw end" : ["uv 1. insert","uw 1. insert","vw 1. insert", "uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert", "uz 1. insert", "vz 1. insert", "wz 1. insert", "uz_w 1. insert", "vz_u 1. insert", "wz_v 1. insert"],
+            "subescher uv_w end" : ["uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert","uw 1. insert","vw 1. insert", "uz_w 1. insert", "vz_u 1. insert", "wz_v 1. insert", "uz 1. insert", "vz 1. insert", "wz 1. insert"],
+            "subescher uw_v end" : ["uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert","uv 1. insert","vw 1. insert", "uz_w 1. insert", "vz_u 1. insert", "wz_v 1. insert", "uz 1. insert", "vz 1. insert", "wz 1. insert"],
+            "subescher vw_u end" : ["uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert", "uv 1. insert","uw 1. insert", "uz_w 1. insert", "vz_u 1. insert","wz_v 1. insert", "uz 1. insert", "vz 1. insert", "wz 1. insert"],
+            "subescher uz end" : ["uz 1. insert", "vz 1. insert", "wz 1. insert", "uz_w 1. insert", "vz_u 1. insert", "wz_v 1. insert", "uv 1. insert", "uw 1. insert", "vw 1. insert", "uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert"],
+            "subescher vz end" : ["uz 1. insert", "vz 1. insert", "wz 1. insert", "uz_w 1. insert", "vz_u 1. insert", "wz_v 1. insert", "uv 1. insert", "uw 1. insert", "vw 1. insert", "uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert"],
+            "subescher wz end" : ["uz 1. insert", "vz 1. insert", "wz 1. insert", "uz_w 1. insert", "vz_u 1. insert", "wz_v 1. insert", "uv 1. insert", "uw 1. insert", "vw 1. insert", "uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert"],
+            "subescher uz_w end" : ["uz_w 1. insert", "vz_u 1. insert", "wz_v 1. insert", "uz 1. insert", "vz 1. insert", "wz 1. insert", "uv 1. insert", "uw 1. insert", "vw 1. insert", "uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert"],
+            "subescher vz_u end" : ["uz_w 1. insert", "vz_u 1. insert", "wz_v 1. insert", "uz 1. insert", "vz 1. insert", "wz 1. insert", "uv 1. insert", "uw 1. insert", "vw 1. insert", "uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert"],
+            "subescher wz_v end" : ["uz_w 1. insert", "vz_u 1. insert", "wz_v 1. insert", "uz 1. insert", "vz 1. insert", "wz 1. insert", "uv 1. insert", "uw 1. insert", "vw 1. insert", "uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert"]}
+            
 
-    @staticmethod
+
     def getCoreLabels(partition):
-        return ["a", "b", "c"]
+        # original cores
+        #return ["0", "len(u)-1", "subescher uv start", "subescher uv end", "uv 1. insert", "len(v)-1", "subescher vw start", "subescher vw end", "vw 1. insert", 
+        #        "len(u)-1 (again)", "subescher uw start", "subescher uw end", "uw 1. insert", "len(uv)_1", "subescher uv_w start", 
+        #        "subescher uv_w end", "uv_w 1. insert","len(uw)-1", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert",
+        #        "len(vw)-1", "subescher vw_u start", "subescher vw_u end", "vw_u 1. insert"]
+        # short cores (without len's)
+        # return subescher start for all pairs, 1. insert for all pairs, subescher end for all pairs
+        return ["0", "subescher uv start", "subescher uv end", "uv 1. insert", "subescher vw start", "subescher vw end", "vw 1. insert", 
+                "subescher uw start", "subescher uw end", "uw 1. insert", "subescher uz start", "subescher uz end", "uz 1. insert",
+                "subescher vz start", "subescher vz end", "vz 1. insert", "subescher wz start", "subescher wz end", "wz 1. insert",
+                "subescher uv_w start", "subescher uv_w end", "uv_w 1. insert", "subescher uw_v start", "subescher uw_v end", "uw_v 1. insert",
+                "subescher vw_u start", "subescher vw_u end", "vw_u 1. insert", "subescher uz_w start", "subescher uz_w end", "uz_w 1. insert",
+                "subescher vz_u start", "subescher vz_u end", "vz_u 1. insert", "subescher wz_v start", "subescher wz_v end", "wz_v 1. insert"]
+    
+    #@staticmethod
+    #def getCoreLabels(partition):
+    #    return ["a", "b", "c"]
 
     def generateCore(self, escherquadruple):
         
-        a,b,c,d = escherquadruple
-        return (a[0], b[0], c[0])
+        u,v,w,z = escherquadruple
+
+        def add_half(L):
+            return L[:-1]+[L[-1]+0.5]
+        
+
+        # get data of double pairs
+        core_u_v = self.get_shortb_insertion_and_subescher_of_2_eschers(u,v)
+        core_v_w = self.get_shortb_insertion_and_subescher_of_2_eschers(v,w)
+        core_u_w = self.get_shortb_insertion_and_subescher_of_2_eschers(u,w)
+        core_u_z = self.get_shortb_insertion_and_subescher_of_2_eschers(u,z)
+        core_v_z = self.get_shortb_insertion_and_subescher_of_2_eschers(v,z)
+        core_w_z = self.get_shortb_insertion_and_subescher_of_2_eschers(w,z)
+
+        
+        # If there is no insertion, then it is good
+        #if core_u_v == [] or core_u_w == [] or core_v_w == []:
+        #    return "GOOD"
+
+        if core_u_v[-1] == -1:
+            core_uv_w = [-1, -1, -1]
+            core_uv_z = [-1, -1, -1]
+        else:
+            uv = self.concat(u, v, insertionpoint=core_u_v[-1])
+            core_uv_w = self.get_shortb_insertion_and_subescher_of_2_eschers(uv,w)
+            core_uv_z = self.get_shortb_insertion_and_subescher_of_2_eschers(uv,z)
+
+        if core_u_w[-1] == -1:
+            core_uw_v = [-1,-1, -1]
+            core_uw_z = [-1,-1, -1]
+        else:
+            uw = self.concat(u, w, insertionpoint=core_u_w[-1])
+            core_uw_v = self.get_shortb_insertion_and_subescher_of_2_eschers(uw,v)
+            core_uw_z = self.get_shortb_insertion_and_subescher_of_2_eschers(uw,z)
+
+        if core_v_w[-1] == -1:
+            core_vw_u = [-1, -1, -1]
+            core_vw_z = [-1, -1, -1]
+        
+        else:
+            vw = self.concat(v, w, insertionpoint=core_v_w[-1])
+            core_vw_u = self.get_shortb_insertion_and_subescher_of_2_eschers(vw,u)
+            core_vw_z = self.get_shortb_insertion_and_subescher_of_2_eschers(vw,z)
+
+        if core_u_z[-1] == -1:
+            core_uz_w = [-1, -1, -1]
+            core_uz_v = [-1, -1, -1]
+
+        else:
+            uz = self.concat(u, z, insertionpoint=core_u_z[-1])
+            core_uz_w = self.get_shortb_insertion_and_subescher_of_2_eschers(uz,w)
+            core_uz_v = self.get_shortb_insertion_and_subescher_of_2_eschers(uz,v)
+
+        if core_v_z[-1] == -1:
+            core_vz_w = [-1, -1, -1]
+            core_vz_u = [-1, -1, -1]
+        else:
+            vz = self.concat(v, z, insertionpoint=core_v_z[-1])
+            core_vz_w = self.get_shortb_insertion_and_subescher_of_2_eschers(vz,w)
+            core_vz_u = self.get_shortb_insertion_and_subescher_of_2_eschers(vz,u)
+
+        if core_w_z[-1] == -1:
+            core_wz_u = [-1, -1, -1]
+            core_wz_v = [-1, -1, -1]
+        else:
+            wz = self.concat(w, z, insertionpoint=core_w_z[-1])
+            core_wz_u = self.get_shortb_insertion_and_subescher_of_2_eschers(wz,u)
+            core_wz_v = self.get_shortb_insertion_and_subescher_of_2_eschers(wz,v)
+
+
+
+        #print([0] + add_half(core_v_w) + add_half(core_uv_w) + add_half(core_uw_v))
+        #print([0] + core_v_w + core_uv_w + core_uw_v)
+        return [0] + add_half(core_u_v) + add_half(core_v_w) + add_half(core_u_w) + add_half(core_uv_w) + add_half(core_uw_v) + add_half(core_vw_u)+add_half(core_vw_z) + add_half(core_u_z) + add_half(core_v_z) + add_half(core_w_z) + add_half(core_uv_z) + add_half(core_uw_z) + add_half(core_uz_w) + add_half(core_uz_v) + add_half(core_vz_w) + add_half(core_vz_u) + add_half(core_wz_u) + add_half(core_wz_v)
+
+
+
+
+        #return (a[0], b[0], c[0])
 
     def get_insertion_and_subescher_of_2_eschers(self, u,v):
         n,k = len(u), len(v)

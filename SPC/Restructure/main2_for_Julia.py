@@ -24,7 +24,7 @@ def main(partition, training_data_load_path,core_generator_type):
     coreRepresentationsCategorizer, coefficients = Preparer.getTrainingData()
     encodings = Preparer.getAllUIOEncodings()
 
-    print("coreRepresentationsCategorizer:", coreRepresentationsCategorizer)
+    #print("coreRepresentationsCategorizer:", coreRepresentationsCategorizer)
     print("coeffs:", coefficients)
     print("UIO encodings:", encodings)
 
@@ -37,9 +37,9 @@ def main(partition, training_data_load_path,core_generator_type):
 if __name__ == "__main__":
 
      # parameters
-    partition = (3,2,1) 
+    partition = (3,2,1,1) 
     training_data_load_path = "" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core_9_7_2024.bin"
     training_data_save_path = "" #"SPC/Saves,Tests/Trainingdata/partition_4_3_2_3rows.bin" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core.bin"
-    core_generator_type =  "EscherCoreGeneratorTrippleSymmetricNoEqual" # "EscherCoreGeneratorBasic"   "EscherCoreGeneratorTripple"
+    core_generator_type =  "EscherCoreGeneratorQuadruple" # "EscherCoreGeneratorTrippleSymmetricNoEqual" # "EscherCoreGeneratorBasic"   "EscherCoreGeneratorTripple"
 
     main(partition, training_data_load_path, core_generator_type)
