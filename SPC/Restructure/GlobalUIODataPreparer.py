@@ -47,6 +47,15 @@ class GlobalUIODataPreparer(PartiallyLoadable):
         # count correps and compute coefficients
         self.partition = partition # remember what partition was used to calculate the most recent training data
         self.countCoreRepresentations(partition)
+
+        print("Calculating coefficients...")
+        n = len(self.extractors)
+        n_10 = n//10
+        self.coefficients = []
+        for uioID, extractor in enumerate(self.extractors):
+            if uioID % n_10 == 0:
+                print(" > current UIO: {}/{}".format(uioID+1, n))
+            self.coefficients.append(extractor.getCoefficient(partition))
         self.coefficients = [extractor.getCoefficient(partition) for extractor in self.extractors]
     
     def loadTrainingData(self, filepath:str) -> tuple:

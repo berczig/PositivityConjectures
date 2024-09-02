@@ -67,6 +67,11 @@ class UIODataExtractor:
             for seq in P:
                 if self.uio.isescher(seq[:a]) and self.uio.isescher(seq[a:a+b]) and self.uio.isescher(seq[a+b:]):
                     yield (seq[:a], seq[a:a+b], seq[a+b:])     
+        elif len(partition) == 4:
+            a,b,c,d  = partition              
+            for seq in P:
+                if self.uio.isescher(seq[:a]) and self.uio.isescher(seq[a:a+b]) and self.uio.isescher(seq[a+b:a+b+c]) and self.uio.isescher(seq[a+b+c:a+b+c+d]):
+                    yield (seq[:a], seq[a:a+b], seq[a+b:a+b+c], seq[a+b+c:])     
 
     def getCoefficient(self, partition):
         if len(partition) == 1:
@@ -82,11 +87,38 @@ class UIODataExtractor:
                       len(self.getEschers((n+l,k))) -\
                           len(self.getEschers((n+k,l))) -\
                               len(self.getEschers((l+k,n))) """
-            return 2*count(self.getEschers((n+k+l,))) +\
-                  count(self.getEschers(partition)) -\
-                      count(self.getEschers((n+l,k))) -\
-                          count(self.getEschers((n+k,l))) -\
-                              count(self.getEschers((l+k,n)))
+            return 2*self.countEschers((n+k+l,)) +\
+                  self.countEschers(partition) -\
+                      self.countEschers((n+l,k)) -\
+                          self.countEschers((n+k,l)) -\
+                              self.countEschers((l+k,n))
+        elif len(partition) == 4:
+            a,b,c,d = partition
+            return \
+            self.countEschers((a,b,c,d)) -\
+            \
+            self.countEschers((a+b,c,d)) -\
+            self.countEschers((a+c,b,d)) -\
+            self.countEschers((a+d,b,c)) -\
+            self.countEschers((b+c,a,d)) -\
+            self.countEschers((b+d,a,c)) -\
+            self.countEschers((c+d,a,b)) +\
+            \
+            2*self.countEschers((a+b,c+d)) +\
+            2*self.countEschers((a+c, b+d)) +\
+            2*self.countEschers((a+d, b+c)) +\
+            \
+            2*self.countEschers((a+b+c, d)) +\
+            2*self.countEschers((a+b+d, c)) +\
+            2*self.countEschers((a+c+d,b)) +\
+            2*self.countEschers((b+c+d,a)) -\
+            \
+            9*self.countEschers((a+b+c+d,))
+        
+
+    @lru_cache(maxsize=None) # while calculating the coefficient the same partition can appear multiple times
+    def countEschers(self, partition):
+        return count(self.getEschers(partition))
         
     def __repr__(self) -> str:
         return "EXTRACTOR OF ["+str(self.uio.encoding)+"]"

@@ -1,5 +1,6 @@
 from functools import lru_cache
 from itertools import permutations
+import time
 
 # COMBINATORIC FUNCTIONS
 #@lru_cache(maxsize=None)

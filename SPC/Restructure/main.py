@@ -73,7 +73,7 @@ def main(partition, training_data_load_path, model_load_path, model_save_path, m
 if __name__ == "__main__":
 
      # parameters
-    partition = (3,2,2) 
+    partition = (3,2,1,1) 
     training_data_load_path = "" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core_9_7_2024.bin"
     training_data_save_path = "" #"SPC/Saves,Tests/Trainingdata/partition_4_3_2_3rows.bin" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core.bin"
     model_load_path = "" # "SPC/Saves,Tests/models/tripple_escher.keras"#"" #"SPC/Saves,Tests/models/my_newmodel.keras"
@@ -81,7 +81,7 @@ if __name__ == "__main__":
     model_save_time = 600 # how many seconds have to have elapsed before saving
     ml_training_algorithm_type = "RLAlgorithm" # exact name of the algorithm python class BruteForceAlgorithm or RLAlgorithm
     ml_model_type =  "RLNNModel_Escher_TrippleNoEqual" # RLNNModel_Escher RLNNModel_CorrectSequence or RLNNModel_Escher or RLNNModel_Escher_Tripple - exact name of the model python class. The model is the component that contains the weights and perform computations, but the algorithm decides how the model is used
-    core_generator_type =  "EscherCoreGeneratorTrippleSymmetricNoEqual" # "EscherCoreGeneratorBasic"   "EscherCoreGeneratorTripple"
+    core_generator_type =  "EscherCoreGeneratorQuadruple" # "EscherCoreGeneratorBasic"   "EscherCoreGeneratorTripple"
     iteration_steps = 200
     plot_after_training = True
 
