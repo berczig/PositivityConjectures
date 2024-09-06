@@ -15,7 +15,13 @@ class EscherCoreGeneratorQuadruple(EscherCoreGeneratorAbstract):
         # 0 is compared to all subescher starts, subescher ends are compared to all 1. inserts
         return {
             "0" : ["subescher uv start", "subescher uw start", "subescher vw start", "subescher uv_w start", "subescher uw_v start", "subescher vw_u start", 
-                   "subescher uz start", "subescher vz start", "subescher wz start", "subescher uz_w start", "subescher vz_u start", "subescher wz_v start"],
+                   "subescher uz start", "subescher vz start", "subescher wz start", 
+                   "subescher uv_w start", "subescher uw_v start", "subescher vw_u start",
+                   "subescher uv_z start", "subescher uz_v start", "subescher vz_u start", 
+                    "subescher uw_z start", "subescher uz_w start", "subescher wz_u start", 
+                    "subescher vw_z start", "subescher vz_w start", "subescher wz_v start",
+                    "subescher uvw_z start", "subescher uvz_w start", "subescher uwz_v start", "subescher vwz_u start",
+                    "subescher uv_wz start", "subescher uw_vz start", "subescher vw_uz start"],
             "subescher uv end" : ["uv 1. insert","uw 1. insert","vw 1. insert", "uz 1. insert", "vz 1. insert", "wz 1. insert"],
             "subescher uw end" : ["uv 1. insert","uw 1. insert","vw 1. insert", "uz 1. insert", "vz 1. insert", "wz 1. insert"],
             "subescher vw end" : ["uv 1. insert","uw 1. insert","vw 1. insert", "uz 1. insert", "vz 1. insert", "wz 1. insert"],
@@ -37,8 +43,11 @@ class EscherCoreGeneratorQuadruple(EscherCoreGeneratorAbstract):
             "subescher uvw_z end" : ["uvw_z 1. insert", "uvz_w 1. insert", "uwz_v 1. insert", "vwz_u 1. insert", "uv_wz 1. insert", "uw_vz 1. insert", "vw_uz 1. insert"],
             "subescher uvz_w end" : ["uvw_z 1. insert", "uvz_w 1. insert", "uwz_v 1. insert", "vwz_u 1. insert", "uv_wz 1. insert", "uw_vz 1. insert", "vw_uz 1. insert"],
             "subescher uwz_v end" : ["uvw_z 1. insert", "uvz_w 1. insert", "uwz_v 1. insert", "vwz_u 1. insert", "uv_wz 1. insert", "uw_vz 1. insert", "vw_uz 1. insert"],
-            "subescher vwz_u end" : ["uvw_z 1. insert", "uvz_w 1. insert", "uwz_v 1. insert", "vwz_u 1. insert", "uv_wz 1. insert", "uw_vz 1. insert", "vw_uz 1. insert"],}
-
+            "subescher vwz_u end" : ["uvw_z 1. insert", "uvz_w 1. insert", "uwz_v 1. insert", "vwz_u 1. insert", "uv_wz 1. insert", "uw_vz 1. insert", "vw_uz 1. insert"],
+            "subescher uv_wz end" : ["uvw_z 1. insert", "uvz_w 1. insert", "uwz_v 1. insert", "vwz_u 1. insert", "uv_wz 1. insert", "uw_vz 1. insert", "vw_uz 1. insert"],
+            "subescher uw_vz end" : ["uvw_z 1. insert", "uvz_w 1. insert", "uwz_v 1. insert", "vwz_u 1. insert", "uv_wz 1. insert", "uw_vz 1. insert", "vw_uz 1. insert"],
+            "subescher vw_uz end" : ["uvw_z 1. insert", "uvz_w 1. insert", "uwz_v 1. insert", "vwz_u 1. insert", "uv_wz 1. insert", "uw_vz 1. insert", "vw_uz 1. insert"],}
+        
 
     def getCoreLabels(partition):
         # original cores
