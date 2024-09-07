@@ -1,0 +1,117 @@
+- hyperparameter grid search: number_of_ors, max_edges, constants like 0, n-1, k-1
+
+- The paramter p is still in the model
+- Maybe subclass ModelLogger for the specific ml_algorithm
+- Rework the states used in adam RL. Currently each edge can only be used in at most one row in the conditionmatrix
+
+#  train l,3. 
+range(0) vs range(1)        -----> each core has the number of pairs prepend therefore range(1), but I dont like this design anymore. We put this information in every core eventhough we only need it once; all cores have the same p-value
+score inf aber in training gibt es auch so eine Stelle -----> FilterEvaluator.INF
+uio_enc[i] < i==> incom, comparison matrix EQUAL or INCOMP ----> The diagonal is Equal, makes sense
+komischer error bei ger escher,  ------> "if points != [] and points not in self.cores:" in getEschersCores
+
+23.05.24
+Fix RL structure so that an edge can be in more than one row                DONE
+import Escher correctly into Restructure                                    DONE
+influence of p in CrossentropyEschers with Eschers?                         DONE n = l+k+p etc. CHANGED
+
+28.05.24:
+bug in creating row condition?
+Ignore edge not incomparable, that was strange
+(4,2) partition gives -620 in restructure but -46 in CrossentropyEschers    DONE Restructure still used n, n+k not n-1, n+k-1
+just brute force try all conditionmatrices                                  DONE, new learning algo
+take a closer look at select_elites with the item and add to list - wohl bloß numpy zu liste
+    reward_threshold-0.0000001 bruh
+
+action-vector, why only zero state?             MEANS no edge types choosen yet (we calc score before the graph is finished), the ero is used in the RL algorithm, it's not a zero for the FilterEvaluator, becauseits used to make the conditionmatrix
+
+4.6.24:
+- change bruteforcealgo to ignore some edges like comparing n with n+k
+- result: subescher > 1.insert
+- add "n+k" to core
+- do some experiment to get results and plot them
+    - find parition on high partiiotn, test on smaller partitions
+    - high accuricy with some few highi differences or all about right#
+    - hope to find a rather simple graph so one could generalize it to bigger partition - the graph must not be perfect but predict the right coefficient for most uios
+
+14.6.24:
+- cant train correct seq or use bruteforcealgo on correct seq
+- okay, wir sind verwirrt weil der filter vor einem Jahr so gut funktioniert hat und nun ist da ein großer Unterschied zwischen
+  Prediction und true coeffs. Deswegen wäre es jetzt klug sich den filter von vor 1 Jahr anzugucken und den score davon zu
+  berechnen. Wieso findet brute force ihn nicht?: Fixed, falscher core
+
+27.06.24:
+- bruteforcealgo geht für correct seq, aber RL nicht
+    Lösung: Ich habe es beim Filter so eingestellt, dass falls man in einer row eine Condition hat, dass alle anderen rows welche nur ignore haben dann
+        selbst ignoriert werden, weil der gesamte Filter dann trotzdem noch alle correps annehmen würde. Aber mit diesem Verfahren werden die correct
+        sequences Filter beim setzten von ersten Wert im Filter zu wenig correps zählen, weil es mit den correct sequences der Fall ist, dass man 2 Conditions
+        in 2 Rows braucht um nicht zu wenig zhhu zahlen, eine Condition alleine wird immer zu wenig zählen und damit -inf zurück geben. Also müsste es möglich
+        sein nach einem Schritt der -inf zurück gibt, dann noch einen Schritt machen zu dürfen - das kann man tatsächlich auch so hinkriegen, aber wir aber nicht.
+
+        Also werde ich wieder zum vorherigen System zurück gehen wo wenn man die erste condition gesetzt hat man tatsächlich immer noch alle correps zählt, 
+        weil in den anderen rows noch nur ignore values sind.
+todo: make core type as selectable by class anme as model and training method, for this I must also make modifications in the GlobalUIOdataprepatere
+todo: functionality to print out UIO and it's cores and with are good etc.
+todo: add a way to say "is good" and "is bad" at the core generation
+todo: add to bruteforce a way of setting some of the conditions, because it's sometimes clear what the relationship between values is, like n-1 and n+k-1 
+
+
+28.06.24:
+Conclusion: 
+    - drop n+k-1 and 2. insertion 
+    - change score function to be -sum(abs(residuals)) eventhough the prediction may be smaller than 
+    the true coefficient BUT the accuracy is much better!
+todo: check (5 4), (6, 3)
+todo: add a parameter to change the score function  !!!!!!!!
+todo: add warning when loading data with different core size
+todo: when saving data add as info all the paramters, number of UIOs, core reps, core types
+todo: add progress bar when generating uio and categorizing core representations  !!!!!!!
+todo: Arbeitsspeicher untersuchen           DONE; does not keep track of previous checked things anymore
+
+
+
+02.07.2024:
+todo: change core to contain 
+    - some actual points, where comparison is done between points
+    - some additional information, like "Yes there is an insertion" = 1 or "No there is no insertion" = -1
+todo: add a way to say WRONG in coregenerator           DONE
+todo: self.core_labels = EscherTrippleCoreGenerator.getCoreLabels(model_logger.partition)   get the labels of the correct generator, elevate choice of core generator to choice of learning method      DONE
+todo: look at bug where the score gets better in the tripple case with more impossible conditions?
+todo: look at the one UIO that is one off in (5,4) with the simple condition !!!!!!!
+Boolean core: cores with different sizes
+remove excess core generators - cleanup         DONE
+
+07.07.2024:
+change core:
+    - drop n-1
+    - drop EQUALS
+    - try (4,3,2)
+    - symmetric core
+
+
+15.07.24:
+- remove exluded columns
+- check tripple conditions from a year ago, compare tripple core from a year ago with current
+
+19.07.24:
+- what to do when there are double labels?
+- nun wo memory cache weg ist nochmel die getCoeff funktion überdneken
+
+25.07.24
+. intermediate print out when calculating coefficient
+- why does -9600 not improve?
+- why does it take so long  for the best score to propagate to the best individuals?   
+    - do we save the best intermediate score?
+- generate the new (4,3,2) partition with a corerep size of 40
+- print out some of the graph from the first RL graphs batch
+- a new sciore functions that takes into account for how many uios the prediction is close
+
+21.8:
+-5,2,1
+-4,3,2
+4,3,1
+
+
+07.09.24:
+bessere abspeicherung von den daten
+cleanup
