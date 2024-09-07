@@ -24,12 +24,12 @@ os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE" # fix to omp: error #15 on my laptop
 class RLAlgorithm(LearningAlgorithm):
 
 	# PARAMETERS
-	n_sessions = 100 #number of new sessions per iteration
+	n_sessions = 200 #number of new sessions per iteration
 	percentile = 93 #top 100-X percentile we are learning from
 	super_percentile = 94 #top 100-X percentile that survives to next iteration
 	reduce_uio = 0
 	INF = 1000000
-	edgePenalty = 3
+	edgePenalty = 1
 	#########################
  
 

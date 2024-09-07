@@ -104,16 +104,16 @@ class UIODataExtractor:
             self.countEschers((b+d,a,c)) -\
             self.countEschers((c+d,a,b)) +\
             \
-            2*self.countEschers((a+b,c+d)) +\
-            2*self.countEschers((a+c, b+d)) +\
-            2*self.countEschers((a+d, b+c)) +\
+            self.countEschers((a+b,c+d)) +\
+            self.countEschers((a+c, b+d)) +\
+            self.countEschers((a+d, b+c)) +\
             \
             2*self.countEschers((a+b+c, d)) +\
             2*self.countEschers((a+b+d, c)) +\
             2*self.countEschers((a+c+d,b)) +\
             2*self.countEschers((b+c+d,a)) -\
             \
-            9*self.countEschers((a+b+c+d,))
+            6*self.countEschers((a+b+c+d,))
         
 
     @lru_cache(maxsize=None) # while calculating the coefficient the same partition can appear multiple times
