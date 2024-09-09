@@ -115,3 +115,14 @@ change core:
 07.09.24:
 bessere abspeicherung von den daten
 cleanup
+
+Gergely's  list on 07.09.2024
+
+1) Tests: a) Redo calculations for triples with the reduced comparison set: (3,2,1),(4,2,1),(4,3,2),(5,2,2)
+        b) Quadruples: (2,1,1,1), (2,2,1,1), (3,2,1,1),(3,2,2,1),(3,3,2,1) (maybe 6 rows?)
+        TODAY JONAA: (3,2,1,1) with 6 rows 
+        TODAY Gergely: Triple cases (3,2,1)?
+1.5) Saving test data in a file (JONAS TODAY)        
+2) Save results of tests in a visual way. Diagrams: a) steps vs graph size b) steps vs score c) steps vs residual table (resudialtable means either number of nonzero entries or sum of nonzero entries)
+3) Draw the final best graph 
+4) Table on best results sorted by number of rows.

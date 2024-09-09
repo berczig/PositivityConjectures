@@ -28,7 +28,7 @@ class RLAlgorithm(LearningAlgorithm):
 	super_percentile = 94 #top 100-X percentile that survives to next iteration
 	reduce_uio = 0
 	INF = 1000000
-	edgePenalty = 1
+	edgePenalty = 0.1
 	#########################
  
 

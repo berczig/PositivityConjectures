@@ -41,14 +41,19 @@ class EscherCoreGeneratorTrippleSymmetricNoEqual(EscherCoreGeneratorAbstract):
         #    "subescher uw_v end" : ["uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert"],
         #    "subescher vw_u end" : ["uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert"],}
         # Edges after dropping len's
+        # return {
+        #     "0" : ["subescher uv start", "subescher uw start", "subescher vw start", "subescher uv_w start", "subescher uw_v start", "subescher vw_u start"],#, "uv 1. insert","uw 1. insert", "vw 1. insert", "uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert"],
+        #     "subescher uv end" : ["uv 1. insert","uw 1. insert","vw 1. insert", "uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert"],
+        #     "subescher uw end" : ["uv 1. insert","uw 1. insert","vw 1. insert", "uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert"],
+        #     "subescher vw end" : ["uv 1. insert","uw 1. insert","vw 1. insert", "uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert"],
+        #     "subescher uv_w end" : ["uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert","uw 1. insert","vw 1. insert"],
+        #     "subescher uw_v end" : ["uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert","uv 1. insert","vw 1. insert"],
+        #     "subescher vw_u end" : ["uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert", "uv 1. insert","uw 1. insert"]}
         return {
             "0" : ["subescher uv start", "subescher uw start", "subescher vw start", "subescher uv_w start", "subescher uw_v start", "subescher vw_u start"],#, "uv 1. insert","uw 1. insert", "vw 1. insert", "uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert"],
-            "subescher uv end" : ["uv 1. insert","uw 1. insert","vw 1. insert", "uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert"],
-            "subescher uw end" : ["uv 1. insert","uw 1. insert","vw 1. insert", "uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert"],
-            "subescher vw end" : ["uv 1. insert","uw 1. insert","vw 1. insert", "uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert"],
-            "subescher uv_w end" : ["uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert","uw 1. insert","vw 1. insert"],
-            "subescher uw_v end" : ["uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert","uv 1. insert","vw 1. insert"],
-            "subescher vw_u end" : ["uv_w 1. insert", "uw_v 1. insert", "vw_u 1. insert", "uv 1. insert","uw 1. insert"],}
+            "subescher uv end" : ["uv 1. insert","uw 1. insert","vw 1. insert"],
+            "subescher uw end" : ["uv 1. insert","uw 1. insert","vw 1. insert"],
+            "subescher vw end" : ["uv 1. insert","uw 1. insert","vw 1. insert"]}
         #Edges after dropping len's and changing the cores for pairs
         # return {
         #     "subescher uv end" : ["0","uv 1. insert","uw 1. insert","vw 1. insert", "uv_w 1. insert", "uw_v 1. insert"],
