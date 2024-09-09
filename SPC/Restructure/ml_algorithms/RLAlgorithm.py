@@ -125,8 +125,8 @@ class RLAlgorithm(LearningAlgorithm):
 			print("best state:", self.current_bestscore, self.FE.convertConditionMatrixToText(self.convertStateToConditionMatrix(self.current_beststate)))
 			residuals = self.FE.evaluate(self.convertStateToConditionMatrix(self.current_beststate), return_residuals=True)
 			print("residuals:", residuals)
-			for i, res in enumerate(residuals):
-				if res != 0: print("residual:", res, self.UIO_preparer.getUIOs(i))
+			for j, res in enumerate(residuals):
+				if res != 0: print("residual:", res, self.UIO_preparer.getUIOs(j))
 			
 			self.model_logger.bestscore_history.append(self.current_bestscore)
 			self.model_logger.bestfilter_history.append(self.current_beststate)
