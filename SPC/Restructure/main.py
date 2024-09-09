@@ -7,7 +7,8 @@ from SPC.Restructure.ml_models.MLModel import MLModel
 from SPC.Restructure.ml_models.RLNNModel_CorrectSequence import RLNNModel_CorrectSequence
 
 
-def main(partition, training_data_load_path, model_load_path, model_save_path, model_save_time, ml_training_algorithm_type, ml_model_type, core_generator_type, iteration_steps, plot_after_training):
+def main(partition, training_data_load_path, model_load_path, model_save_path, model_save_time, ml_training_algorithm_type, ml_model_type, 
+         core_generator_type, iteration_steps, plot_after_training, RL_n_graphs, condition_rows):
 
     uio_length = sum(partition)
     # core_data_type
@@ -29,7 +30,8 @@ def main(partition, training_data_load_path, model_load_path, model_save_path, m
 
     # 2) get Model
     print("[main - step 2 - get model]")
-    modelLogger = ModelLogger(partition, core_generator_type)
+    modelLogger = ModelLogger()
+    modelLogger.setParameters(partition, core_generator_type, RL_n_graphs, ml_training_algorithm_type, ml_model_type, condition_rows)
     model : MLModel
     if model_load_path != "":
         print("loading model...")
@@ -39,7 +41,7 @@ def main(partition, training_data_load_path, model_load_path, model_save_path, m
         print("creating new model...")
         class_ = getattr(importlib.import_module("SPC.Restructure.ml_models."+ml_model_type), ml_model_type)
         model = class_()
-        model.setParameters(partition, modelLogger.core_length, modelLogger.core_representation_length)
+        model.setParameters(partition, condition_rows, modelLogger.core_length, modelLogger.core_representation_length)
         model.build_model()
         modelLogger.set_model(model)
     model.summary()
@@ -65,24 +67,27 @@ def main(partition, training_data_load_path, model_load_path, model_save_path, m
         print("no model save path provided")
 
     # 5) plot
-    #if plot_after_training:
-    #    modelLogger.make_plots()
+    if plot_after_training:
+        modelLogger.make_plots()
 
 
      
 if __name__ == "__main__":
 
      # parameters
-    partition = (2,2,1,1) 
+    partition = (3,1,1) 
     training_data_load_path = "" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core_9_7_2024.bin"
     training_data_save_path = "" #"SPC/Saves,Tests/Trainingdata/partition_4_3_2_3rows.bin" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core.bin"
-    model_load_path = "" # "SPC/Saves,Tests/models/tripple_escher.keras"#"" #"SPC/Saves,Tests/models/my_newmodel.keras"
-    model_save_path = "" # "SPC/Saves,Tests/models/tripple_escher.keras"
+    model_load_path =  "" # "SPC/Saves,Tests/models/for_result_viewer_test.keras" #"SPC/Saves,Tests/models/for_result_viewer_test.keras" # "SPC/Saves,Tests/models/tripple_escher.keras"#"" #"SPC/Saves,Tests/models/my_newmodel.keras"
+    model_save_path = "SPC/Saves,Tests/models/testmodel.keras"
     model_save_time = 600 # how many seconds have to have elapsed before saving
     ml_training_algorithm_type = "RLAlgorithm" # exact name of the algorithm python class BruteForceAlgorithm or RLAlgorithm
-    ml_model_type =  "RLNNModel_Escher_TrippleNoEqual" # RLNNModel_Escher RLNNModel_CorrectSequence or RLNNModel_Escher or RLNNModel_Escher_Tripple - exact name of the model python class. The model is the component that contains the weights and perform computations, but the algorithm decides how the model is used
-    core_generator_type =  "EscherCoreGeneratorQuadruple" # "EscherCoreGeneratorBasic"   "EscherCoreGeneratorTripple"
-    iteration_steps = 500
+    ml_model_type =  "RLNNModel_Escher_Tripple" # RLNNModel_Escher RLNNModel_CorrectSequence or RLNNModel_Escher or RLNNModel_Escher_Tripple - exact name of the model python class. The model is the component that contains the weights and perform computations, but the algorithm decides how the model is used
+    core_generator_type =  "EscherCoreGeneratorTrippleSymmetricNoEqual" # "EscherCoreGeneratorBasic"   "EscherCoreGeneratorTripple" "EscherCoreGeneratorTrippleSymmetricNoEqual"
+    iteration_steps = 3
+    RL_n_graphs = 10
+    condition_rows = 3
     plot_after_training = True
 
-    main(partition, training_data_load_path, model_load_path, model_save_path, model_save_time, ml_training_algorithm_type, ml_model_type, core_generator_type, iteration_steps, plot_after_training)
+    main(partition, training_data_load_path, model_load_path, model_save_path, model_save_time, ml_training_algorithm_type, 
+         ml_model_type, core_generator_type, iteration_steps, plot_after_training, RL_n_graphs, condition_rows)

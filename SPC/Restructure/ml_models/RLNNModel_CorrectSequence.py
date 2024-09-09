@@ -18,14 +18,14 @@ class RLNNModel_CorrectSequence(MLModel):
     LEARNING_RATE = 0.1 #Increase this to make convergence faster, decrease if the algorithm gets stuck in local optima too often.
 
 
-    def setParameters(self, partition, core_length, corerep_length):
+    def setParameters(self, partition, condition_rows, core_length, corerep_length):
         print("model using", partition, "partition")
         self.partition = partition
 
         self.l,self.k = partition
         # k+2+2*p
         self.CORE_LENGTH = core_length # 2*self.p + 1 + self.k+1   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
-        self.ROWS_IN_CONDITIONMATRIX = 2
+        self.ROWS_IN_CONDITIONMATRIX = condition_rows
         self.ALPHABET_SIZE = 4
         print("CORE_LENGTH:", self.CORE_LENGTH)
         self.COLUMNS_IN_CONDITIONMATRIX = corerep_length

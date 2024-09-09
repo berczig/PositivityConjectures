@@ -9,18 +9,25 @@ import importlib
 
 class ModelLogger(PartiallyLoadable):
     
-    def __init__(self, partition, core_generator_type:str):
-        super().__init__(["step", "all_scores", "bestscore_history", "meanscore_history", "numgraph_history", "bestfilter_history", "calculationtime_history", "partition", "core_generator_type", "core_length", "core_representation_length"])
+    def __init__(self):
+        super().__init__(["step", "all_scores", "bestscore_history", "meanscore_history", "bestfilter_history", 
+                          "calculationtime_history", "partition", "core_generator_type", "core_length", "core_representation_length",
+                          "RL_n_graphs", "ml_model_type", "ml_training_algorithm_type", "condition_rows"])
         self.step = 0
-        self.partition = partition
         self.all_scores = {} # {filter_as_tuple:score}
         self.bestscore_history = [] # history of best score
         self.bestfilter_history = []
         self.meanscore_history = [] # history of mean score
-        self.numgraph_history = [] # history of number of graphs which we allready have calculated the score of
         self.calculationtime_history = []
         self.model : MLModel
+
+    def setParameters(self, partition, core_generator_type:str, RL_n_graphs:int, ml_training_algorithm_type:str, ml_model_type:str, condition_rows:int):
+        self.partition = partition
+        self.RL_n_graphs = RL_n_graphs
         self.core_generator_type = core_generator_type
+        self.ml_training_algorithm_type = ml_training_algorithm_type
+        self.ml_model_type = ml_model_type
+        self.condition_rows = condition_rows
 
         self.core_generator_class_ = getattr(importlib.import_module("SPC.Restructure.cores."+core_generator_type), core_generator_type)
         self.core_generator_class_ : CoreGenerator
@@ -32,7 +39,7 @@ class ModelLogger(PartiallyLoadable):
         assert model_path[len(model_path)-6:] == ".keras", "wrong file format"
         self.load(model_path[:len(model_path)-6]+".my_meta")
         self.model = load_model(model_path)
-        self.model.setParameters(self.partition, self.core_length, self.core_representation_length)
+        self.model.setParameters(self.partition, self.condition_rows, self.core_length, self.core_representation_length)
 
     def set_model(self, model):
         self.model = model
@@ -54,8 +61,6 @@ class ModelLogger(PartiallyLoadable):
         plt.plot(times, self.meanscore_history)
         plt.show()
         plt.title("number of different conditions checked")
-        plt.plot(times, self.numgraph_history)
-        plt.show()
         plt.title("computation time of the i'th step")
         plt.plot(times, self.calculationtime_history)
         plt.show()

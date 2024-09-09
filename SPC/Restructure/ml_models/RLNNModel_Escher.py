@@ -17,13 +17,13 @@ class RLNNModel_Escher(MLModel):
 
     LEARNING_RATE = 0.05 #Increase this to make convergence faster, decrease if the algorithm gets stuck in local optima too often.
 
-    def setParameters(self, partition, core_length, corerep_length):
+    def setParameters(self, partition, condition_rows, core_length, corerep_length):
         print("model using", partition, "partition")
         self.partition = partition
 
         # k+2+2*p
         self.CORE_LENGTH = core_length   #number of vertices in the graph. Only used in the reward function, not directly relevant to the algorithm 
-        self.ROWS_IN_CONDITIONMATRIX = 2
+        self.ROWS_IN_CONDITIONMATRIX = condition_rows
         self.ALPHABET_SIZE = 3
         self.COLUMNS_IN_CONDITIONMATRIX = corerep_length
         self.EDGES = self.COLUMNS_IN_CONDITIONMATRIX * self.ROWS_IN_CONDITIONMATRIX

@@ -24,7 +24,6 @@ os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE" # fix to omp: error #15 on my laptop
 class RLAlgorithm(LearningAlgorithm):
 
 	# PARAMETERS
-	n_sessions = 200 #number of new sessions per iteration
 	percentile = 93 #top 100-X percentile we are learning from
 	super_percentile = 94 #top 100-X percentile that survives to next iteration
 	reduce_uio = 0
@@ -69,13 +68,13 @@ class RLAlgorithm(LearningAlgorithm):
 			#performance can be improved with joblib
 			tic0 = time.time()
 			tic = time.time()
-			sessions = self.generate_session(self.model,self.n_sessions,0) #change 0 to 1 to print out how much time each step in generate_session takes 
+			sessions = self.generate_session(self.model,self.model_logger.RL_n_graphs,0) #change 0 to 1 to print out how much time each step in generate_session takes 
 			sessgen_time = time.time()-tic
 			tic = time.time()
 			
 			states_batch = np.array(sessions[0], dtype = int)
 			print("states_batch:", states_batch.shape)
-			for ii in range(self.n_sessions):
+			for ii in range(self.model_logger.RL_n_graphs):
 				first_graph = states_batch[ii][:, -1]
 				#print("graph {}:".format(ii), first_graph)
 				#print("{} graph:".format(ii),self.FE.convertConditionMatrixToText(self.convertStateToConditionMatrix(first_graph)))
@@ -122,7 +121,7 @@ class RLAlgorithm(LearningAlgorithm):
 
 			score_time = time.time()-tic
 			
-			print("\n" + str(i) +  ". Best individuals: " + str(np.flip(np.sort(super_rewards))))
+			print("\n" + str(i+1) +  ". Best individuals: " + str(np.flip(np.sort(super_rewards))))
 			print("best state:", self.current_bestscore, self.FE.convertConditionMatrixToText(self.convertStateToConditionMatrix(self.current_beststate)))
 			residuals = self.FE.evaluate(self.convertStateToConditionMatrix(self.current_beststate), return_residuals=True)
 			print("residuals:", residuals)
@@ -132,7 +131,6 @@ class RLAlgorithm(LearningAlgorithm):
 			self.model_logger.bestscore_history.append(self.current_bestscore)
 			self.model_logger.bestfilter_history.append(self.current_beststate)
 			self.model_logger.meanscore_history.append(np.mean(super_rewards))
-			#self.model_logger.numgraph_history.append(len(self.model_logger.all_scores))
 			self.model_logger.calculationtime_history.append(time.time()-tic0)
 			
 			#uncomment below line to print out how much time each step in this loop takes. 
@@ -397,7 +395,7 @@ class RLAlgorithm(LearningAlgorithm):
 
 		hard penalty: if more than 3 edges stop 
 		"""
-		counter = self.n_sessions * (100.0 - percentile) / 100.0
+		counter = self.model_logger.RL_n_graphs * (100.0 - percentile) / 100.0
 		reward_threshold = np.percentile(rewards_batch,percentile)
 		elite_states = []
 		elite_actions = []
@@ -423,7 +421,7 @@ class RLAlgorithm(LearningAlgorithm):
 		If this function is the bottleneck, it can easily be sped up using numba
 		"""
 		
-		counter = self.n_sessions * (100.0 - percentile) / 100.0
+		counter = self.model_logger.RL_n_graphs * (100.0 - percentile) / 100.0
 		reward_threshold = np.percentile(rewards_batch,percentile)
 
 		super_states = []
