@@ -132,6 +132,8 @@ class RLAlgorithm(LearningAlgorithm):
 			self.model_logger.bestfilter_history.append(self.current_beststate)
 			self.model_logger.meanscore_history.append(np.mean(super_rewards))
 			self.model_logger.calculationtime_history.append(time.time()-tic0)
+			self.model_logger.residuals = residuals
+			self.model_logger.current_bestgraph = self.FE.convertConditionMatrixToText(self.convertStateToConditionMatrix(self.current_beststate))
 			
 			#uncomment below line to print out how much time each step in this loop takes. 
 			print(	"Mean reward: " + str(mean_all_reward) + "\nSessgen: " + str(sessgen_time) + ", other: " + str(randomcomp_time) + ", select1: " + str(select1_time) + ", select2: " + str(select2_time) + ", select3: " + str(select3_time) +  ", fit: " + str(fit_time) + ", score: " + str(score_time)) 
@@ -167,7 +169,8 @@ class RLAlgorithm(LearningAlgorithm):
 					self.model_logger.save_model_logger(model_save_path)
 					print("done saving at ", datetime.fromtimestamp(time.time()).strftime("%A, %B %d, %Y %I:%M:%S"))
 					next_save_time = time.time() + model_save_time
-		self.model_logger.step += iterations
+					
+		self.model_logger.step = startstep+iterations
 
 			
 

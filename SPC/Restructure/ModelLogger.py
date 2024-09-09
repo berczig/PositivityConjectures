@@ -12,13 +12,15 @@ class ModelLogger(PartiallyLoadable):
     def __init__(self):
         super().__init__(["step", "all_scores", "bestscore_history", "meanscore_history", "bestfilter_history", 
                           "calculationtime_history", "partition", "core_generator_type", "core_length", "core_representation_length",
-                          "RL_n_graphs", "ml_model_type", "ml_training_algorithm_type", "condition_rows"])
+                          "RL_n_graphs", "ml_model_type", "ml_training_algorithm_type", "condition_rows",
+                          "residuals", "current_bestgraph"])
         self.step = 0
         self.all_scores = {} # {filter_as_tuple:score}
         self.bestscore_history = [] # history of best score
         self.bestfilter_history = []
         self.meanscore_history = [] # history of mean score
         self.calculationtime_history = []
+        self.residuals = []
         self.model : MLModel
 
     def setParameters(self, partition, core_generator_type:str, RL_n_graphs:int, ml_training_algorithm_type:str, ml_model_type:str, condition_rows:int):

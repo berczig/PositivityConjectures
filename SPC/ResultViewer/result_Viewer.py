@@ -1,9 +1,10 @@
 from nicegui import ui
 import os
-import json
+import numpy as np
 import plotly.graph_objects as go
 from SPC.Restructure.ModelLogger import ModelLogger
 from functools import lru_cache
+from pathlib import Path
 
 # "step", "all_scores", "bestscore_history", "meanscore_history", "bestfilter_history", "calculationtime_history", "partition", "core_generator_type", "core_length", "core_representation_length"
 ModelLogger_attributes = ["partition", "step"]
@@ -20,6 +21,9 @@ def load_model(model_file_path):
 
 # Function to read JSON files and extract the "name" field and file modification time (date)
 @lru_cache(maxsize=None)
+def load_json_files_cache(folder_path):
+    return load_json_files(folder_path)
+
 def load_json_files(folder_path):
     print("load_json_files")
     results = []
@@ -40,9 +44,11 @@ def display_details(result):
         # Display other fields if needed
         with ui.row():
             with ui.column():
-                ui.label(f"Model: {filename}").style('font-size: 18px; font-weight: bold;')
+                ui.label(f"Model: {filename}").style('font-size: 24px; font-weight: bold;')
                 ui.label(f"Partition: {model.partition}").style('font-size: 18px; font-weight: bold;')
-                ui.label(f"Final score: {model.bestscore_history[-1]}").style('font-size: 18px; font-weight: bold;')
+                ui.label(f"Final Graph score: {model.bestscore_history[-1]}").style('font-size: 18px; font-weight: bold;')
+                ui.label(f"Total Residual Absolute Sum: { np.sum(np.abs(model.residuals))}").style('font-size: 18px; font-weight: bold;')
+                ui.label(f"Perfect UIO coef. predictions: {np.sum(model.residuals == 0)}/{len(model.residuals)}").style('font-size: 18px; font-weight: bold;')
                 ui.label(f"Iterations: {model.step}").style('font-size: 18px; font-weight: bold;')
                 ui.label(f"core_generator_type: {model.core_generator_type}").style('font-size: 18px; font-weight: bold;')
                 ui.label(f"Graphs per RL session: {model.RL_n_graphs}").style('font-size: 18px; font-weight: bold;')
@@ -53,15 +59,31 @@ def display_details(result):
                 ui.label(f"Model type: {model.ml_model_type}").style('font-size: 18px; font-weight: bold;')
             
             with ui.column().classes('border bg-gray-250 p-4'):
-                ui.label(f"Best Score:").style('font-size: 18px; font-weight: bold;')
+                ui.label(f"Best Score:").style('font-size: 24px; font-weight: bold;')
                 fig = go.Figure(go.Scatter(
                     x=list(range(len(model.bestscore_history))), 
                     y=model.bestscore_history))
                 fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
                 ui.plotly(fig)
 
+            with ui.column().classes('border bg-blue-250 p-4'):
+                ui.label("Best Graph:").style('font-size: 24px; font-weight: bold;')
+                conditions = [text for i, text in enumerate(model.current_bestgraph.split("\n")) if i%2 == 1]
+                for condition in conditions:
+                    ui.label(f"{condition}").style('font: Courier; font-size: 18px; font-weight: bold;')
 
-        ui.button("Export data")
+
+        ui.button("Export data", on_click= lambda:export_data(result, fig))
+
+def export_data(result, fig):
+    filename, model = result
+    path = os.path.join(folder_input.value, os.path.splitext(filename)[0])
+    Path(path).mkdir(parents=True, exist_ok=True)
+
+    print(os.path.join(path, "score_plot.png"))
+    #fig.show()
+    #fig.write_image(os.path.join(path, "score_plot.png"))
+
 
 # Function to display results in a scrollable grid
 def display_results(results):
@@ -101,7 +123,7 @@ Sortoption = "by name"
 def sort_and_display_results(folder_path, option):
     global Sortoption
     Sortoption = option
-    results = load_json_files(folder_path)
+    results = load_json_files_cache(folder_path)
     if option == 'by name':
         results = sort_by_name(results)
     elif option == 'by partition':
@@ -136,7 +158,7 @@ with ui.row().classes('w-full gap-0'):  # Create a row layout for the grid and d
         details_container = ui.column().classes('w-128 h-fill border bg-gray-100 p-4')
 
     # Initial display of results
-    display_results(load_json_files(folder_input.value))
+    display_results(load_json_files_cache(folder_input.value))
 
 
 # Run the app
