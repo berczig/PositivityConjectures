@@ -147,6 +147,22 @@ class FilterEvaluator:
                 rowtexts.append(" AND ".join(rowtext))
         return 3*" " + 16*"-" + "\n" + "\nOR\n".join(rowtexts) + "\n"+ 3*" " + 16*"-"
     
+    def convertConditionMatrixTo_VerticesAndEdges(self, Condition_matrix) -> tuple:
+        # returns the corelabels (the vertices of the graph) and all edges of the connected components in the graph
+        V = self.core_labels
+        edges_all_rows = []
+
+        rows, columns = Condition_matrix.shape
+        for row in range(rows):
+            edges = []
+            for index, (i,j) in enumerate(self.comp_indices):
+                edge = int(Condition_matrix[row][index])
+                if edge != self.ignore_edge:
+                    edges.append((i,j, edge))
+            edges_all_rows.append(edges)
+
+        return V,edges_all_rows
+    
     def narrowCoreTypeSelection(self, random_uios):
         # only use a portion of the coreTypes corresponding to n_uios random uios when evaluating a conditionMatrix
         #print("n:", self.n, "C_n:", C_n(self.n))

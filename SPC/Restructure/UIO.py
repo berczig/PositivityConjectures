@@ -7,6 +7,7 @@ class UIO:
     GREATER = 102              # (i,j) is LE iff i > j     interval i is to the right of j
     EQUAL = 103              # (i,j) is EQ iff i = j     interval i and interval j are same interval
     RELATIONTEXT = {LESS:"<", EQUAL:"=", GREATER:">"}
+    RELATIONTEXT2 = {LESS:"LESS", EQUAL:"EQUAL", GREATER:"GREATER"}
 
     def __init__(self, uio_encoding):
         self.N = len(uio_encoding)

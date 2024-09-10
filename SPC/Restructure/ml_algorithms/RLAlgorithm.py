@@ -6,18 +6,15 @@ import random
 import numpy as np
 from keras.utils import to_categorical
 from statistics import mean
-import pickle
 import time
-import math
 import os
-import matplotlib.pyplot as plt
 import sys
 from SPC.Restructure.UIO import UIO
 from SPC.Restructure.ml_models import RLNNModel_Escher, RLNNModel_Escher_TrippleNoEqual
-from SPC.misc.extra import PartiallyLoadable
 from datetime import datetime
 from SPC.Restructure.FilterEvaluator import FilterEvaluator
 from SPC.Restructure.ml_models.RLNNModel_CorrectSequence import RLNNModel_CorrectSequence
+from keras.models import Sequential
 
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE" # fix to omp: error #15 on my laptop
 
@@ -34,7 +31,7 @@ class RLAlgorithm(LearningAlgorithm):
 
 	def train(self, iterations, model_save_path="", model_save_time=0):
 		self.model : RLNNModel_Escher_TrippleNoEqual #RLNNModel_Escher
-		self.model = self.model_logger.get_model()
+		self.model = self.model_logger.get_model_structure()
 
 		self.FE = FilterEvaluator(self.trainingdata_input, self.trainingdata_output, FilterEvaluator.DEFAULT_IGNORE_VALUE, self.model_logger)
 		for correp in self.trainingdata_input:
@@ -68,16 +65,18 @@ class RLAlgorithm(LearningAlgorithm):
 			#performance can be improved with joblib
 			tic0 = time.time()
 			tic = time.time()
-			sessions = self.generate_session(self.model,self.model_logger.RL_n_graphs,0) #change 0 to 1 to print out how much time each step in generate_session takes 
+			sessions = self.generate_session(self.model_logger.get_keras_model(), self.model_logger.RL_n_graphs,verbose=1) #change 0 to 1 to print out how much time each step in generate_session takes 
 			sessgen_time = time.time()-tic
 			tic = time.time()
 			
 			states_batch = np.array(sessions[0], dtype = int)
 			print("states_batch:", states_batch.shape)
-			for ii in range(self.model_logger.RL_n_graphs):
-				first_graph = states_batch[ii][:, -1]
+			
+			#for ii in range(self.model_logger.RL_n_graphs):
+				#first_graph = states_batch[ii][:, -1]
 				#print("graph {}:".format(ii), first_graph)
 				#print("{} graph:".format(ii),self.FE.convertConditionMatrixToText(self.convertStateToConditionMatrix(first_graph)))
+				
 			actions_batch = np.array(sessions[1], dtype = int)
 			rewards_batch = np.array(sessions[2])
 			states_batch = np.transpose(states_batch,axes=[0,2,1])
@@ -105,7 +104,7 @@ class RLAlgorithm(LearningAlgorithm):
 			tic = time.time()
 			#print("elite_states:", elite_states.shape, elite_states)
 			#print("elite_actions:", elite_actions.shape)
-			self.model.fit(elite_states, elite_actions) #learn from the elite sessions
+			self.model_logger.get_keras_model().fit(elite_states, elite_actions) #learn from the elite sessions
 			fit_time = time.time()-tic
 			
 			tic = time.time()
@@ -122,13 +121,21 @@ class RLAlgorithm(LearningAlgorithm):
 			score_time = time.time()-tic
 			
 			print("\n" + str(i+1) +  ". Best individuals: " + str(np.flip(np.sort(super_rewards))))
-			print("best state:", self.current_bestscore, self.FE.convertConditionMatrixToText(self.convertStateToConditionMatrix(self.current_beststate)))
-			residuals = self.FE.evaluate(self.convertStateToConditionMatrix(self.current_beststate), return_residuals=True)
+			bestmatrix = self.convertStateToConditionMatrix(self.current_beststate)
+			print("best state:", self.current_bestscore, self.FE.convertConditionMatrixToText(bestmatrix))
+			residuals = self.FE.evaluate(bestmatrix, return_residuals=True)
 			print("residuals:", residuals)
 			for j, res in enumerate(residuals):
 				if res != 0: print("residual:", res, self.UIO_preparer.getUIOs(j))
-			
+				
+			V, E = self.FE.convertConditionMatrixTo_VerticesAndEdges(bestmatrix)
+			print("V:", V)
+			print("E:", E)
+			self.model_logger.graph_vertices = V
+			self.model_logger.graph_edges = E
 			self.model_logger.bestscore_history.append(self.current_bestscore)
+			self.model_logger.residual_score_history.append(np.sum(np.abs(residuals)))
+			self.model_logger.perfect_coef_history.append(np.sum(residuals==0))
 			self.model_logger.bestfilter_history.append(self.current_beststate)
 			self.model_logger.meanscore_history.append(np.mean(super_rewards))
 			self.model_logger.calculationtime_history.append(time.time()-tic0)
@@ -200,11 +207,7 @@ class RLAlgorithm(LearningAlgorithm):
 
 
 	####No need to change anything below here. 
-		
-		
-							
-
-	def generate_session(self, agent, n_sessions, verbose = 1):
+	def generate_session(self, agent:Sequential, n_sessions, verbose = 1):
 		"""
 		Play n_session games using agent neural network.
 		Terminate when games finish 

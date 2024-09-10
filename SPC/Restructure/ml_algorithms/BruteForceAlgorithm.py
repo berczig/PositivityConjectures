@@ -12,7 +12,7 @@ from datetime import datetime
 class BruteForceAlgorithm(LearningAlgorithm):
     def train(self, iterations, model_save_path="", model_save_time=0):
         self.model : RLNNModel_CorrectSequence
-        self.model = self.model_logger.get_model()
+        self.model = self.model_logger.get_model_structure()
 
         self.FE = FilterEvaluator(self.trainingdata_input, self.trainingdata_output, FilterEvaluator.DEFAULT_IGNORE_VALUE, self.model_logger)
 

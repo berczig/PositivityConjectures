@@ -33,4 +33,8 @@ class PartiallyLoadable:
     def load(self, filename):
         self._savehelper.load(filename)
         for var in self.saveable_variables:
-            setattr(self, var, getattr(self._savehelper, var))
+            if hasattr(self._savehelper, var):
+                setattr(self, var, getattr(self._savehelper, var))
+            else:
+                print("\n"+5*"#"+"\n"+f"THE FILE \"{filename}\" IS OUTDATED!\nIT IS MISSING THE ATTRIBUTE \"{var}\""+"\n"+f"SETTING {var} = NONE"+"\n"+5*"#"+"\n")
+                setattr(self, var, None)

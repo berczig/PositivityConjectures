@@ -2,9 +2,7 @@ from SPC.Restructure.ml_models.MLModel import MLModel
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.optimizers import SGD, Adam
-from keras.utils import register_keras_serializable
 
-@register_keras_serializable()
 class RLNNModel_Escher_Tripple(MLModel):
     """
 
@@ -35,18 +33,22 @@ class RLNNModel_Escher_Tripple(MLModel):
                                 #Is there a better way to format the input to make it easier for the neural network to understand things?
 
         self.MAX_EXPECTED_EDGES = 9
-        self.len_game = self.EDGES 
+        self.len_game = self.EDGES  
         self.state_dim = (self.observation_space,)
         print("CORE_LENGTH:", self.CORE_LENGTH)
         print("self.ALPHABET_SIZE:", self.ALPHABET_SIZE)
         print("self.EDGES:", self.EDGES)
         print("self.MYN:", self.MYN)
         print("self.observation_space:", self.observation_space)
-    def build_model(self):
-        self.add(Dense(self.FIRST_LAYER_NEURONS,  activation="relu"))
-        self.add(Dense(self.SECOND_LAYER_NEURONS, activation="relu"))
-        self.add(Dense(self.THIRD_LAYER_NEURONS, activation="relu"))
-        self.add(Dense(self.ALPHABET_SIZE, activation="softmax"))
-        self.build((None, self.observation_space))
-        self.compile(loss="categorical_crossentropy", optimizer=SGD(learning_rate = self.LEARNING_RATE), run_eagerly=True) #Adam optimizer also works well, with lower learning rate
+    
+    def build_model(self) -> Sequential:
+        model = Sequential()
+        model.add(Dense(self.FIRST_LAYER_NEURONS,  activation="relu"))
+        model.add(Dense(self.SECOND_LAYER_NEURONS, activation="relu"))
+        model.add(Dense(self.THIRD_LAYER_NEURONS, activation="relu"))
+        model.add(Dense(self.ALPHABET_SIZE, activation="softmax"))
+        
+        model.build((None, self.observation_space))
+        model.compile(loss="categorical_crossentropy", optimizer=SGD(learning_rate = self.LEARNING_RATE), run_eagerly=True) #Adam optimizer also works well, with lower learning rate
 
+        return model

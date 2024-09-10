@@ -6,22 +6,28 @@ from SPC.Restructure.cores.CoreGenerator import CoreGenerator
 from keras.models import load_model
 from keras.utils import custom_object_scope
 import importlib
+import time
+from keras.models import Sequential
 
 class ModelLogger(PartiallyLoadable):
     
     def __init__(self):
-        super().__init__(["step", "all_scores", "bestscore_history", "meanscore_history", "bestfilter_history", 
-                          "calculationtime_history", "partition", "core_generator_type", "core_length", "core_representation_length",
+        super().__init__(["model_structure", "step", "all_scores", "bestscore_history", "meanscore_history", "bestfilter_history", 
+                          "calculationtime_history", "residual_score_history", "perfect_coef_history", "partition", "core_generator_type", "core_length", "core_representation_length",
                           "RL_n_graphs", "ml_model_type", "ml_training_algorithm_type", "condition_rows",
-                          "residuals", "current_bestgraph"])
+                          "residuals", "current_bestgraph", "graph_vertices", "graph_edges"])
         self.step = 0
         self.all_scores = {} # {filter_as_tuple:score}
         self.bestscore_history = [] # history of best score
         self.bestfilter_history = []
+        self.residual_score_history = []
+        self.perfect_coef_history = []
         self.meanscore_history = [] # history of mean score
         self.calculationtime_history = []
         self.residuals = []
-        self.model : MLModel
+        self.graph_vertices = []
+        self.graph_edges = []
+        self.model_structure : MLModel
 
     def setParameters(self, partition, core_generator_type:str, RL_n_graphs:int, ml_training_algorithm_type:str, ml_model_type:str, condition_rows:int):
         self.partition = partition
@@ -40,18 +46,27 @@ class ModelLogger(PartiallyLoadable):
     def load_model_logger(self, model_path:str):
         assert model_path[len(model_path)-6:] == ".keras", "wrong file format"
         self.load(model_path[:len(model_path)-6]+".my_meta")
-        self.model = load_model(model_path)
-        self.model.setParameters(self.partition, self.condition_rows, self.core_length, self.core_representation_length)
+        self.keras_model = load_model(model_path)
+        if self.model_structure: # remove this, this is only to support some older models
+            self.model_structure.setParameters(self.partition, self.condition_rows, self.core_length, self.core_representation_length)
 
-    def set_model(self, model):
-        self.model = model
+    def set_keras_model(self, keras_model:Sequential):
+        self.keras_model = keras_model
 
-    def get_model(self):
-        return self.model
+    def get_keras_model(self) -> Sequential:
+        return self.keras_model
+    
+    def set_model_structure(self, model_structure:MLModel):
+        self.model_structure = model_structure
+
+    def get_model_structure(self) -> MLModel:
+        return self.model_structure
     
     def save_model_logger(self, model_path):
-        self.model.save(model_path)
+        t = time.time()
+        self.keras_model.save(model_path)
         self.save(model_path[:len(model_path)-6]+".my_meta")
+        print(f"elapsed save time: {time.time()-t}")
 
     def make_plots(self):
         n = len(self.bestscore_history)

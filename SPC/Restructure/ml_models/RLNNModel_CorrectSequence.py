@@ -2,9 +2,7 @@ from SPC.Restructure.ml_models.MLModel import MLModel
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.optimizers import SGD, Adam
-from keras.utils import register_keras_serializable
 
-@register_keras_serializable()
 class RLNNModel_CorrectSequence(MLModel):
     """
 
@@ -13,7 +11,7 @@ class RLNNModel_CorrectSequence(MLModel):
 
     FIRST_LAYER_NEURONS = 128 #Number of neurons in the hidden layers.
     SECOND_LAYER_NEURONS = 64
-    THIRD_LAYER_NEURONS = 4
+    THIRD_LAYER_NEURONS = 4  
 
     LEARNING_RATE = 0.1 #Increase this to make convergence faster, decrease if the algorithm gets stuck in local optima too often.
 
@@ -40,11 +38,14 @@ class RLNNModel_CorrectSequence(MLModel):
         self.len_game = self.EDGES 
         self.state_dim = (self.observation_space,)
 
-    def build_model(self):
-        self.add(Dense(self.FIRST_LAYER_NEURONS,  activation="relu"))
-        self.add(Dense(self.SECOND_LAYER_NEURONS, activation="relu"))
-        self.add(Dense(self.THIRD_LAYER_NEURONS, activation="relu"))
-        self.add(Dense(self.ALPHABET_SIZE, activation="softmax"))
-        self.build((None, self.observation_space))
-        self.compile(loss="categorical_crossentropy", optimizer=SGD(learning_rate = self.LEARNING_RATE), run_eagerly=True) #Adam optimizer also works well, with lower learning rate
+    def build_model(self) -> Sequential:
+        model = Sequential()
+        model.add(Dense(self.FIRST_LAYER_NEURONS,  activation="relu"))
+        model.add(Dense(self.SECOND_LAYER_NEURONS, activation="relu"))
+        model.add(Dense(self.THIRD_LAYER_NEURONS, activation="relu"))
+        model.add(Dense(self.ALPHABET_SIZE, activation="softmax"))
+        
+        model.build((None, self.observation_space))
+        model.compile(loss="categorical_crossentropy", optimizer=SGD(learning_rate = self.LEARNING_RATE), run_eagerly=True) #Adam optimizer also works well, with lower learning rate
 
+        return model

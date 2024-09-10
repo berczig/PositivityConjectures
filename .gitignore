@@ -4,6 +4,7 @@ saves/*
 *.keras
 *.my_meta
 *.mybin
+*.png
 *.pb
 .idea/*
 *.DS_Store
