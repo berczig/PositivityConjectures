@@ -137,6 +137,7 @@ class RLAlgorithm(LearningAlgorithm):
 			self.model_logger.residual_score_history.append(np.sum(np.abs(residuals)))
 			self.model_logger.perfect_coef_history.append(np.sum(residuals==0))
 			self.model_logger.bestfilter_history.append(self.current_beststate)
+			self.model_logger.graphsize_history.append(np.sum(bestmatrix!=self.FE.ignore_edge))
 			self.model_logger.meanscore_history.append(np.mean(super_rewards))
 			self.model_logger.calculationtime_history.append(time.time()-tic0)
 			self.model_logger.residuals = residuals

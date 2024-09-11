@@ -7,6 +7,7 @@ from SPC.Restructure.UIO import UIO
 from functools import lru_cache
 from pathlib import Path
 import asyncio
+import time
 import networkx as nx
 from matplotlib import pyplot as plt
 
@@ -115,61 +116,79 @@ def display_details(result):
                     ui.button("Export data", on_click= lambda:export_data(result, figs)).style('font-size: 22px; font-weight: bold;')
 
                 # PLots
-                with ui.pyplot(figsize=(8, 6)) as nicefig:
-                    x = list(range(len(model.bestscore_history)))
-                    y = model.bestscore_history
-                    fig = nicefig.fig
-                    plt.plot(x, y, '-')
-
-                    ax = nicefig.fig.gca()
-                    ax.set_xlabel("iteration step")
-                    ax.set_ylabel("Penalized Score")
-                    ax.set_title("Best Penalized Score")
-                    figs.append(("score", fig))
-
-                if model.residual_score_history != None and model.perfect_coef_history != None:
+                if quickswitch_checkbox.value == False:
                     with ui.pyplot(figsize=(8, 6)) as nicefig:
                         x = list(range(len(model.bestscore_history)))
-                        y = model.residual_score_history
+                        y = model.bestscore_history
                         fig = nicefig.fig
                         plt.plot(x, y, '-')
 
                         ax = nicefig.fig.gca()
                         ax.set_xlabel("iteration step")
-                        ax.set_ylabel("Residual Absolute Sum")
-                        ax.set_title("Residual Absolute Sum")
-                        figs.append(("residual", fig))
+                        ax.set_ylabel("Penalized Score")
+                        ax.set_title("Best Penalized Score")
+                        figs.append(("score", fig))
 
-                    with ui.pyplot(figsize=(8, 6)) as nicefig:
-                        x = list(range(len(model.bestscore_history)))
-                        y = model.perfect_coef_history
-                        fig = nicefig.fig
-                        plt.plot(x, y, '-')
+                    if model.residual_score_history != None:
+                        with ui.pyplot(figsize=(8, 6)) as nicefig:
+                            x = list(range(len(model.bestscore_history)))
+                            y = model.residual_score_history
+                            fig = nicefig.fig
+                            plt.plot(x, y, '-')
 
-                        ax = nicefig.fig.gca()
-                        ax.set_xlabel("iteration step")
-                        ax.set_ylabel("Perfect Coef. Predictions")
-                        ax.set_title("Perfect Coef. Predictions")
-                        figs.append(("perfect_coef", fig))
+                            ax = nicefig.fig.gca()
+                            ax.set_xlabel("iteration step")
+                            ax.set_ylabel("Residual Absolute Sum")
+                            ax.set_title("Residual Absolute Sum")
+                            figs.append(("residual", fig))
+
+                    if model.perfect_coef_history != None:
+                        with ui.pyplot(figsize=(8, 6)) as nicefig:
+                            x = list(range(len(model.bestscore_history)))
+                            y = model.perfect_coef_history
+                            fig = nicefig.fig
+                            plt.plot(x, y, '-')
+
+                            ax = nicefig.fig.gca()
+                            ax.set_xlabel("iteration step")
+                            ax.set_ylabel("Perfect Coef. Predictions")
+                            ax.set_title("Perfect Coef. Predictions")
+                            figs.append(("perfect_coef", fig))
+
+                    if model.graphsize_history != None:
+                        with ui.pyplot(figsize=(8, 6)) as nicefig:
+                            x = list(range(len(model.bestscore_history)))
+                            y = model.graphsize_history
+                            fig = nicefig.fig
+                            plt.plot(x, y, '-')
+
+                            ax = nicefig.fig.gca()
+                            ax.set_xlabel("iteration step")
+                            ax.set_ylabel("best graph #edges")
+                            ax.set_title("Number of edges in best graph")
+                            figs.append(("graph_size", fig))
+
+                        
 
             # networkx Graphs
-            with ui.column():
-                ui.label("Best Graph:").style('font-size: 24px; font-weight: bold;')
-                with ui.row():
-                    with ui.column().classes('border bg-blue-250 p-4'):
-                        ui.label("Graph Conditions:").style('font-size: 22px; font-weight: bold;')
-                        conditions = [text for i, text in enumerate(model.current_bestgraph.split("\n")) if i%2 == 1]
-                        for condition in conditions:
-                            ui.label(f"{condition}").style('font: Courier; font-size: 18px; font-weight: bold;')
-                    if model.graph_edges != None and model.graph_vertices != None:
+            if quickswitch_checkbox.value == False:
+                with ui.column():
+                    ui.label("Best Graph:").style('font-size: 24px; font-weight: bold;')
+                    with ui.row():
                         with ui.column().classes('border bg-blue-250 p-4'):
-                            for graphID, E in enumerate(model.graph_edges):
-                                with ui.pyplot(figsize=(10, 10)) as nicefig:
-                                    fig = nicefig.fig
-                                    ax = nicefig.fig.gca()
-                                    ax.set_title(f"Graph {graphID+1}/{len(model.graph_edges)}")
-                                    figs.append((f"graph {graphID+1}", fig))
-                                    plot_directed_graph(V = model.graph_vertices, E = E)
+                            ui.label("Graph Conditions:").style('font-size: 22px; font-weight: bold;')
+                            conditions = [text for i, text in enumerate(model.current_bestgraph.split("\n")) if i%2 == 1]
+                            for condition in conditions:
+                                ui.label(f"{condition}").style('font: Courier; font-size: 18px; font-weight: bold;')
+                        if model.graph_edges != None and model.graph_vertices != None:
+                            with ui.column().classes('border bg-blue-250 p-4'):
+                                for graphID, E in enumerate(model.graph_edges):
+                                    with ui.pyplot(figsize=(10, 10)) as nicefig:
+                                        fig = nicefig.fig
+                                        ax = nicefig.fig.gca()
+                                        ax.set_title(f"Graph {graphID+1}/{len(model.graph_edges)}")
+                                        figs.append((f"graph {graphID+1}", fig))
+                                        plot_directed_graph(V = model.graph_vertices, E = E)
 
 
             
@@ -274,8 +293,10 @@ def sort_and_display_results(folder_path, option):
 
 
 # Main UI layout
-folder_input = ui.input(label='Model Input Path', placeholder='Enter or select a folder...',
+with ui.row():
+    folder_input = ui.input(label='Model Input Path', placeholder='Enter or select a folder...',
                                 value=os.path.join(os.getcwd(), "SPC", "Saves,Tests", "models"))
+    quickswitch_checkbox = ui.checkbox('quick model switch (no graphs)', value=False)
 ui.label('Models:').style('font-size: 24px; margin-bottom: 10px;')
 
 with ui.row().classes('w-full gap-0'):  # Create a row layout for the grid and detail section to be side by side

@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 from SPC.misc.extra import PartiallyLoadable
+from SPC.misc.misc import getUnusedFilepath
 from SPC.Restructure.ml_models.MLModel import MLModel
 from SPC.Restructure.ml_models.RLNNModel_CorrectSequence import RLNNModel_CorrectSequence
 from SPC.Restructure.cores.CoreGenerator import CoreGenerator
@@ -7,6 +8,7 @@ from keras.models import load_model
 from keras.utils import custom_object_scope
 import importlib
 import time
+import os
 from keras.models import Sequential
 
 class ModelLogger(PartiallyLoadable):
@@ -15,7 +17,7 @@ class ModelLogger(PartiallyLoadable):
         super().__init__(["model_structure", "step", "all_scores", "bestscore_history", "meanscore_history", "bestfilter_history", 
                           "calculationtime_history", "residual_score_history", "perfect_coef_history", "partition", "core_generator_type", "core_length", "core_representation_length",
                           "RL_n_graphs", "ml_model_type", "ml_training_algorithm_type", "condition_rows",
-                          "residuals", "current_bestgraph", "graph_vertices", "graph_edges"])
+                          "residuals", "current_bestgraph", "graph_vertices", "graph_edges", "graphsize_history"])
         self.step = 0
         self.all_scores = {} # {filter_as_tuple:score}
         self.bestscore_history = [] # history of best score
@@ -25,6 +27,7 @@ class ModelLogger(PartiallyLoadable):
         self.meanscore_history = [] # history of mean score
         self.calculationtime_history = []
         self.residuals = []
+        self.graphsize_history = []
         self.graph_vertices = []
         self.graph_edges = []
         self.model_structure : MLModel
@@ -64,8 +67,11 @@ class ModelLogger(PartiallyLoadable):
     
     def save_model_logger(self, model_path):
         t = time.time()
+        model_path = getUnusedFilepath(model_path)
+        print("model_path:", model_path)
+        print(os.path.splitext(model_path)[0]+".my_meta")
         self.keras_model.save(model_path)
-        self.save(model_path[:len(model_path)-6]+".my_meta")
+        self.save(os.path.splitext(model_path)[0]+".my_meta")
         print(f"elapsed save time: {time.time()-t}")
 
     def make_plots(self):
