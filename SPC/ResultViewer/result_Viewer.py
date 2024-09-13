@@ -198,7 +198,7 @@ def display_details(result):
             if quickswitch_checkbox.value == False:
                 with ui.column():
                     ui.label("Best Graph:").style('font-size: 24px; font-weight: bold;')
-                    with ui.row():
+                    with ui.column():
                         with ui.column().classes('border bg-blue-250 p-4'):
                             ui.label("Graph Conditions:").style('font-size: 22px; font-weight: bold;')
                             conditions = [text for i, text in enumerate(model.current_bestgraph.split("\n")) if i%2 == 1]
