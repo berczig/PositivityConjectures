@@ -24,7 +24,7 @@ class GlobalUIODataPreparer(PartiallyLoadable):
         return self.extractors[i].uio.encoding
     
     def getAllUIOEncodings(self):
-        return [extractor.uio.encoding for extractor in self.extractors]
+        return self.generate_all_uio_encodings(self.n)
 
 
     def computeTrainingData(self, partition:tuple, core_generator_type:str) -> tuple:

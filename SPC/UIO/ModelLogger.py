@@ -18,7 +18,7 @@ class ModelLogger(PartiallyLoadable):
                           "calculationtime_history", "residual_score_history", "perfect_coef_history", "partition", "core_generator_type", "core_length", "core_representation_length",
                           "RL_n_graphs", "ml_model_type", "ml_training_algorithm_type", "condition_rows",
                           "residuals", "current_bestgraph", "graph_vertices", "graph_edges", "graphsize_history",
-                          "last_modified"], 
+                          "last_modified", "edgePenalty"], 
                           default_values = {"last_modified":0})
         self.step = 0
         self.all_scores = {} # {filter_as_tuple:score}
@@ -37,13 +37,14 @@ class ModelLogger(PartiallyLoadable):
 
         self.overwrite_filenames = {}
 
-    def setParameters(self, partition, core_generator_type:str, RL_n_graphs:int, ml_training_algorithm_type:str, ml_model_type:str, condition_rows:int):
+    def setParameters(self, partition, core_generator_type:str, RL_n_graphs:int, ml_training_algorithm_type:str, ml_model_type:str, condition_rows:int, edgePenalty:float):
         self.partition = partition
         self.RL_n_graphs = RL_n_graphs
         self.core_generator_type = core_generator_type
         self.ml_training_algorithm_type = ml_training_algorithm_type
         self.ml_model_type = ml_model_type
         self.condition_rows = condition_rows
+        self.edgePenalty = edgePenalty
 
         self.core_generator_class_ = getattr(importlib.import_module("SPC.UIO.cores."+core_generator_type), core_generator_type)
         self.core_generator_class_ : CoreGenerator

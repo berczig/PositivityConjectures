@@ -25,7 +25,6 @@ class RLAlgorithm(LearningAlgorithm):
 	super_percentile = 94 #top 100-X percentile that survives to next iteration
 	reduce_uio = 0
 	INF = 1000000
-	edgePenalty = 0.5
 	#########################
  
 
@@ -125,8 +124,10 @@ class RLAlgorithm(LearningAlgorithm):
 			print("best state:", self.current_bestscore, self.FE.convertConditionMatrixToText(bestmatrix))
 			residuals = self.FE.evaluate(bestmatrix, return_residuals=True)
 			print("residuals:", residuals)
+			encodings = self.UIO_preparer.getAllUIOEncodings()
 			for j, res in enumerate(residuals):
-				if res != 0: print("residual:", res, self.UIO_preparer.getUIOs(j))
+				if res != 0: 
+					print("residual:", res, encodings[j])
 				
             
 			V, E = self.FE.convertConditionMatrixTo_VerticesAndEdges(bestmatrix)

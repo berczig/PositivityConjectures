@@ -33,6 +33,7 @@ class FilterEvaluator:
         self.core_labels = model_logger.core_generator_class_.getCoreLabels(model_logger.partition)
         model_logger.core_generator_class_.calculate_comp_indices(model_logger.partition)
         self.comp_indices = model_logger.core_generator_class_.comp_indices
+        self.edgePenalty = model_logger.edgePenalty
 
     def coreFitsConditions(self, correp, Conditions): # ANDs conditions in row together
 
@@ -97,7 +98,7 @@ class FilterEvaluator:
     
         has_trivial_row = np.any([np.all(row==self.DEFAULT_IGNORE_VALUE) for row in filter])
 
-        return -sum(abs(residuals)) - RLAlgorithm.edgePenalty*num_edges + (-1000 if has_trivial_row else 0)
+        return -sum(abs(residuals)) - self.edgePenalty*num_edges + (-1000 if has_trivial_row else 0)
     
     def getCorrectUIOs(self, filter, verbose=False):
         residuals = self.evaluate(filter, verbose, return_residuals=True)

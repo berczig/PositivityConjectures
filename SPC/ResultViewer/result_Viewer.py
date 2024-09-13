@@ -134,6 +134,7 @@ def display_details(result):
                     ui.label(f"Condition rows per graph: {model.condition_rows}").style('font-size: 18px; font-weight: bold;')
                     ui.label(f"Core length: {model.core_length}").style('font-size: 18px; font-weight: bold;')
                     ui.label(f"Core representation length: {model.core_representation_length}").style('font-size: 18px; font-weight: bold;')
+                    ui.label(f"Edge Penalty: {model.edgePenalty}").style('font-size: 18px; font-weight: bold;')
                     ui.label(f"Training algorithm: {model.ml_training_algorithm_type}").style('font-size: 18px; font-weight: bold;')
                     ui.label(f"Model type: {model.ml_model_type}").style('font-size: 18px; font-weight: bold;')
                     d = datetime.fromtimestamp(model.last_modified)
@@ -326,6 +327,64 @@ def sort_and_display_results(folder_path, option):
         results = sort_by_date(results)
     display_results(results)
 
+def get_table_data():
+
+    def is_better_score(scoretuple1, scoretuple2): # is 1 better than 2?
+        return scoretuple1["res"] < scoretuple2["res"]
+    
+    models = load_json_files_cache(folder_input.value)
+
+    data = {} # {partition:{#rows:scoretuple}}   
+    for _, modellogger in models:
+        modellogger:ModelLogger
+        partition = modellogger.partition 
+        rows = modellogger.condition_rows
+
+        scoretuple = {
+                "score":modellogger.bestscore_history[-1], 
+                "res":modellogger.residual_score_history[-1], 
+                "perfect":modellogger.perfect_coef_history[-1],
+                "totaluios":len(modellogger.residuals)
+        }
+
+        if partition in data:
+            if rows in data[partition]:
+                # better than previous?
+                if is_better_score(scoretuple, data[partition][rows]):
+                    data[partition][rows] = scoretuple
+            else:
+                data[partition][rows] = scoretuple
+        else:
+            data[partition] = {rows:scoretuple}
+
+
+    tabledata = []
+    for partition in data:
+        for scorename in ["score", "res", "perfect"]:
+            if scorename == "score":
+                item = {"partition":str(partition)}
+            else:
+                item = {"partition":""}
+
+            for row in data[partition]:
+                if scorename == "perfect":
+                    totaluios = data[partition][row]["totaluios"]
+                    item[f"{row}row"] = f"{data[partition][row][scorename]}/{totaluios}"
+                else:
+                    item[f"{row}row"] = str(data[partition][row][scorename])
+            tabledata.append(item)
+    
+    return tabledata
+
+def display_table(data):
+    print("here", data)
+    ui.table(rows=data, columns=[
+        {'name': 'partition', 'label': 'Partition', 'field': 'partition'},
+        {'name': '1row', 'label': '1 row', 'field': '1row'},
+        {'name': '2row', 'label': '2 row', 'field': '2row'},
+        {'name': '3row', 'label': '3 row', 'field': '3row'},
+        {'name': '4row', 'label': '4 row', 'field': '4row'},
+    ], title="Results")
 
 # Main UI layout
 with ui.row():
@@ -334,7 +393,7 @@ with ui.row():
     quickswitch_checkbox = ui.checkbox('quick model switch (no graphs)', value=False)
 ui.label('Models:').style('font-size: 24px; margin-bottom: 10px;')
 
-with ui.row().classes('w-full gap-0'):  # Create a row layout for the grid and detail section to be side by side
+with ui.column().classes():  # Create a row layout for the grid and detail section to be side by side
     with ui.column().classes('w-full gap-0'):
 
         result_container = ui.scroll_area().classes('w-512')  # Scrollable area to display results
@@ -346,9 +405,13 @@ with ui.row().classes('w-full gap-0'):  # Create a row layout for the grid and d
 
         ui.button('Load Results', on_click=lambda: display_results(load_json_files(folder_input.value)))
 
-    # Create a section on the right to display details of a selected result
-    with ui.column().classes('w-full gap-0'):
-        details_container = ui.column().classes('w-128 h-fill border bg-gray-100 p-4')
+    with ui.row():
+        # Create a section on the right to display details of a selected result
+        with ui.column().classes():
+            details_container = ui.column().classes('w-128 h-fill border bg-gray-100 p-4')
+
+        display_table(get_table_data())
+
 
     # Initial display of results
     display_results(load_json_files_cache(folder_input.value))

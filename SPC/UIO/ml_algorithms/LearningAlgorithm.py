@@ -1,4 +1,5 @@
 from SPC.UIO.ModelLogger import ModelLogger
+from SPC.UIO.GlobalUIODataPreparer import GlobalUIODataPreparer
 
 class LearningAlgorithm:
 
@@ -15,7 +16,7 @@ class LearningAlgorithm:
     def predict(self, input):
         pass
 
-    def UIO_preparer(self, GLobalUIODataPreparer):
+    def UIO_preparer(self, GLobalUIODataPreparer:GlobalUIODataPreparer):
         self.UIO_preparer = GLobalUIODataPreparer
         pass
 

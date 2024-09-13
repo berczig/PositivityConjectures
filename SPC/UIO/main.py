@@ -12,7 +12,7 @@ import os
 
 
 def main(partition, training_data_load_path, training_data_save_path, model_load_path, model_save_path, model_save_time, ml_training_algorithm_type, ml_model_type, 
-         core_generator_type, iteration_steps, plot_after_training, RL_n_graphs, condition_rows):
+         core_generator_type, iteration_steps, plot_after_training, RL_n_graphs, condition_rows, edgePenalty):
 
     # Let all relative paths start in the folder containing SPC
     training_data_load_path = "" if training_data_load_path == "" else os.path.join(refpath, training_data_load_path)
@@ -47,7 +47,7 @@ def main(partition, training_data_load_path, training_data_save_path, model_load
     # 2) get Model
     print("[main - step 2 - get model]")
     modelLogger = ModelLogger()
-    modelLogger.setParameters(partition, core_generator_type, RL_n_graphs, ml_training_algorithm_type, ml_model_type, condition_rows)
+    modelLogger.setParameters(partition, core_generator_type, RL_n_graphs, ml_training_algorithm_type, ml_model_type, condition_rows, edgePenalty)
     
     if model_load_path != "":
         print("loading model...")
@@ -93,19 +93,20 @@ def main(partition, training_data_load_path, training_data_save_path, model_load
 if __name__ == "__main__":
 
      # parameters
-    partition = (3,2,1) 
-    training_data_load_path = "" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core_9_7_2024.bin"
-    training_data_save_path = "" #"SPC/Saves,Tests/Trainingdata/partition_4_3_2_3rows.bin" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core.bin"
+    partition = (5,2,2) 
+    training_data_load_path = "SPC/Saves,Tests/5_2_2.bin" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core_9_7_2024.bin"
+    training_data_save_path = "" # "SPC/Saves,Tests/5_2_2.bin" # "SPC/Saves,Tests/Trainingdata/partition_4_3_2_3rows.bin" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core.bin"
     model_load_path =  "" # "SPC/Saves,Tests/models/Quadruple6.keras" # "SPC/Saves,Tests/models/for_result_viewer_test.keras" #"SPC/Saves,Tests/models/for_result_viewer_test.keras" # "SPC/Saves,Tests/models/tripple_escher.keras"#"" #"SPC/Saves,Tests/models/my_newmodel.keras"
-    model_save_path = "SPC/Saves,Tests/models/model.keras"
-    model_save_time = 1 # how many seconds have to have elapsed before saving
+    model_save_path = "SPC/Saves,Tests/models/model5_2_2again.keras"
+    model_save_time = 1800 # how many seconds have to have elapsed before saving
     ml_training_algorithm_type = "RLAlgorithm" # exact name of the algorithm python class BruteForceAlgorithm or RLAlgorithm
     ml_model_type =  "RLNNModel_Escher_TrippleNoEqual" # RLNNModel_Escher_TrippleNoEqual RLNNModel_CorrectSequence or RLNNModel_Escher or RLNNModel_Escher_Tripple - exact name of the model python class. The model is the component that contains the weights and perform computations, but the algorithm decides how the model is used
     core_generator_type =  "EscherCoreGeneratorTrippleSymmetricNoEqual" # "EscherCoreGeneratorQuadruple "EscherCoreGeneratorBasic"   "EscherCoreGeneratorTripple" "EscherCoreGeneratorTrippleSymmetricNoEqual"
-    iteration_steps = 200
-    RL_n_graphs = 400
+    iteration_steps = 3
+    RL_n_graphs = 200
     condition_rows = 3
+    edgePenalty = 10
     plot_after_training = False
 
     main(partition, training_data_load_path, training_data_save_path, model_load_path, model_save_path, model_save_time, ml_training_algorithm_type, 
-         ml_model_type, core_generator_type, iteration_steps, plot_after_training, RL_n_graphs, condition_rows)
+         ml_model_type, core_generator_type, iteration_steps, plot_after_training, RL_n_graphs, condition_rows, edgePenalty)
