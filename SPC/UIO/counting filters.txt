@@ -1,0 +1,29 @@
+filter: k conditions, to be count it has to satisfy one of them. 
+A condition is requiring some entries to have specific values
+
+
+Predictions = []
+for correp in X:
+	if filter(correp):
+		counts = X[correps]
+		for UIOID in counts:
+			Predictions[UIOID] += counts[UIOID]
+			
+Alternative:
+filteredcorreps
+for UIOID in range(uio_n):
+	counts = X[UIOID]
+	for correp in counts:
+		if correp in filteredcorreps:
+			Predictions[UIOID] += counts[correp]
+			
+			
+			
+n : number of UIOS
+m : number of distinct core reps
+q : quotient of how many correps the average UIOS has
+p : quotient how many UIOs the average correp has
+
+m * p * q
+
+n * q * m

@@ -20,7 +20,7 @@ pip install -e .
 Make sure you have flit installed.
 
 ## Usage
-Run [SPC/Restructure/main.py](main.py). You can change multiple parameters in main.py e.g. the partition or core generator.
+Run [SPC/UIO/main.py](main.py). You can change multiple parameters in main.py e.g. the partition or core generator.
 
 ## Project Overview
 Overview of the classes:

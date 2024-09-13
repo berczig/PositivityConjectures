@@ -2,8 +2,9 @@ from nicegui import ui
 import os
 import numpy as np
 import plotly.graph_objects as go
-from SPC.Restructure.ModelLogger import ModelLogger
-from SPC.Restructure.UIO import UIO
+from SPC.UIO.ModelLogger import ModelLogger
+from SPC.UIO.UIO import UIO
+from SPC.UIO.cores.CoreGenerator import CoreGenerator
 from functools import lru_cache
 from pathlib import Path
 import asyncio
@@ -11,6 +12,7 @@ import time
 import SPC
 from datetime import datetime
 from pathlib import Path
+import importlib
 import networkx as nx
 from matplotlib import pyplot as plt
 
@@ -59,21 +61,30 @@ def prepVE(V, edges):
     return V_new, edges_new
 
 
-def plot_directed_graph(V, E):
+def plot_directed_graph(V, E, V_groups, colors):
     """
     Plots multiple directed graphs with the same vertices but different edges in a single figure.
     
     Parameters:
-    - fig: A pre-defined matplotlib figure.
     - V: List of vertices (nodes).
     - edges_list: A list of lists, where each inner list is a set of directed edges.
+    - V_groups classifing nodes into groups to color them
+    - colors: color of each group
     """
-
+    
     # Remove vertices without edges and translate edge from ID to labels
     V, E = prepVE(V, E)
 
     edges = [x[:2] for x in E]
-    edges_labels = dict([((a,b), UIO.RELATIONTEXT2[edgetype]) for (a,b,edgetype) in E])
+    edges_labels = dict([((a,b), UIO.RELATIONTEXT2[edgetype]) for (a,b,edgetype) in E if edgetype == UIO.EQUAL])
+    
+    # get label for each vertex
+    vert_labels = {}
+    for vertex in V:
+        for group in V_groups:
+            if vertex in V_groups[group]:
+                vert_labels[vertex] = V_groups[group][vertex]
+                break
 
     # Create a directed graph
     G = nx.DiGraph()
@@ -82,10 +93,17 @@ def plot_directed_graph(V, E):
 
     pos = nx.circular_layout(G)
 
-    nx.draw(G, pos, with_labels=True, node_size=700, node_color='skyblue', edgelist = edges,
-                edge_color='black', arrows=True, arrowstyle='-|>', arrowsize=25, font_size=16, font_color='black')
+    for group in V_groups:
+        NL = [vertex_name for vertex_name in V_groups[group].keys() if vertex_name in V]
+        nx.draw_networkx_nodes(G, pos, nodelist=NL, node_color=colors[group], label=group, node_size=700)
+        #nx.draw(G, pos, with_labels=False, node_size=700, node_color='skyblue', edgelist = edges,
+                    #edge_color='black', arrows=True, arrowstyle='-|>', arrowsize=25, font_size=16, font_color='black')
+    nx.draw_networkx_edges(G, pos, edgelist = edges,node_size=700,
+                    edge_color='black', arrows=True, arrowstyle='-|>', arrowsize=30)
+    nx.draw_networkx_labels(G, pos,labels=vert_labels,font_color='black', font_size=16)
     nx.draw_networkx_edge_labels(G, pos,edge_labels=edges_labels,font_color='red', font_size=16)
     
+    plt.legend()
     plt.tight_layout()
 
 
@@ -196,7 +214,12 @@ def display_details(result):
                                         ax = nicefig.fig.gca()
                                         ax.set_title(f"Graph {graphID+1}/{len(model.graph_edges)}")
                                         figs.append((f"graph {graphID+1}", fig))
-                                        plot_directed_graph(V = model.graph_vertices, E = E)
+
+                                        core_generator_class_ = getattr(importlib.import_module("SPC.UIO.cores."+model.core_generator_type), model.core_generator_type)
+                                        core_generator_class_ : CoreGenerator
+                                        labelgroups = core_generator_class_.getCoreLabelGroups(model.partition)
+                                        
+                                        plot_directed_graph(V = model.graph_vertices, E = E, V_groups= labelgroups, colors=core_generator_class_.getCoreLabelGroupColors(model.partition))
 
 
             

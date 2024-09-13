@@ -1,7 +1,0 @@
-Sure we can talk. The general steps I do are
-1) stash
-2) pull
-3) apply stash - visual studio code has a merge manager, there "incoming change" is the one from the stash, i.e. the thing you had on your computer
-4) stage
-5) commit
-6) push

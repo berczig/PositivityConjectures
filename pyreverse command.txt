@@ -1,0 +1,8 @@
+pyreverse -o png -m y .
+pyreverse -o png ./Restructure ./misc --colorized 
+
+.keras
+.my_meta
+.mybin
+.bin
+.pb
