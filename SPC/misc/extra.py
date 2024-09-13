@@ -21,8 +21,9 @@ class PartiallyLoadable:
     """
     pickles, saves, loads some attributes of the superclass
     """
-    def __init__(self, saveable_variables):
+    def __init__(self, saveable_variables, default_values = None):
         self.saveable_variables = saveable_variables
+        self.default_values = {} if default_values == None else default_values
         self._savehelper = Loadable()
 
     def save(self, filename):
@@ -36,5 +37,6 @@ class PartiallyLoadable:
             if hasattr(self._savehelper, var):
                 setattr(self, var, getattr(self._savehelper, var))
             else:
-                print("\n"+5*"#"+"\n"+f"THE FILE \"{filename}\" IS OUTDATED!\nIT IS MISSING THE ATTRIBUTE \"{var}\""+"\n"+f"SETTING {var} = NONE"+"\n"+5*"#"+"\n")
-                setattr(self, var, None)
+                value = self.default_values.get(var, None)
+                print("\n"+5*"#"+"\n"+f"THE FILE \"{filename}\" IS OUTDATED!\nIT IS MISSING THE ATTRIBUTE \"{var}\""+"\n"+f"SETTING {var} = {value}"+"\n"+5*"#"+"\n")
+                setattr(self, var, value)

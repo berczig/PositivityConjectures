@@ -122,7 +122,34 @@ Gergely's  list on 07.09.2024
         b) Quadruples: (2,1,1,1), (2,2,1,1), (3,2,1,1),(3,2,2,1),(3,3,2,1) (maybe 6 rows?)
         TODAY JONAA: (3,2,1,1) with 6 rows 
         TODAY Gergely: Triple cases (3,2,1)?
-1.5) Saving test data in a file (JONAS TODAY)        
-2) Save results of tests in a visual way. Diagrams: a) steps vs graph size b) steps vs score c) steps vs residual table (resudialtable means either number of nonzero entries or sum of nonzero entries)
-3) Draw the final best graph 
+1.5) Saving test data in a file (JONAS TODAY)        DONE
+2) Save results of tests in a visual way. Diagrams: 
+    a) steps vs graph size  DONE
+    b) steps vs score       DONE
+    c) steps vs residual table (resudialtable means either number of nonzero entries or sum of nonzero entries) DONE
+3) Draw the final best graph                DONE
 4) Table on best results sorted by number of rows.
+
+11.09.24:
+- check if reload of model works
+- get back to -34 with (3,2,1,1)                                            DONE, needed NOEQUAL Model 
+- multipartite
+- edge penalty to parameters
+- make checkSpecificGraph "learning algo"
+- make a corerep data viewer
+- sort by date                                                              DONE
+- colored/shaped vertex
+- to git: main.py is important
+-when saving the save model multiple timwes do OVERWRITE the file           DONE
+-result viewer: draw up to iteration X
+- global data collecctor to make tables etc
+- maybe add requirements
+
+-generate session takes too long
+- when drawing the graph plot check if there are only 2 edges
+
+
+4,3,2
+3,2,2
+5,2,2
+3,2,2,1

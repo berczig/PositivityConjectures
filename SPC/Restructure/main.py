@@ -5,12 +5,21 @@ from SPC.Restructure.ml_algorithms.LearningAlgorithm import LearningAlgorithm
 from SPC.Restructure.ml_algorithms.RLAlgorithm import RLAlgorithm
 from SPC.Restructure.ml_models.MLModel import MLModel
 from SPC.Restructure.ml_models.RLNNModel_CorrectSequence import RLNNModel_CorrectSequence
+from SPC.misc.misc import refpath
 from keras.models import Sequential
 import tensorflow as tf
+import os
 
 
-def main(partition, training_data_load_path, model_load_path, model_save_path, model_save_time, ml_training_algorithm_type, ml_model_type, 
+def main(partition, training_data_load_path, training_data_save_path, model_load_path, model_save_path, model_save_time, ml_training_algorithm_type, ml_model_type, 
          core_generator_type, iteration_steps, plot_after_training, RL_n_graphs, condition_rows):
+
+    # Let all relative paths start in the folder containing SPC
+    training_data_load_path = "" if training_data_load_path == "" else os.path.join(refpath, training_data_load_path)
+    training_data_save_path = "" if training_data_save_path == "" else os.path.join(refpath, training_data_save_path)
+    model_load_path = "" if model_load_path == "" else os.path.join(refpath, model_load_path)
+    model_save_path = "" if model_save_path == "" else os.path.join(refpath, model_save_path)
+
 
     print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
     print("gpu:", tf.test.is_gpu_available())
@@ -79,6 +88,7 @@ def main(partition, training_data_load_path, model_load_path, model_save_path, m
         modelLogger.make_plots()
 
 
+
      
 if __name__ == "__main__":
 
@@ -86,16 +96,16 @@ if __name__ == "__main__":
     partition = (3,2,1) 
     training_data_load_path = "" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core_9_7_2024.bin"
     training_data_save_path = "" #"SPC/Saves,Tests/Trainingdata/partition_4_3_2_3rows.bin" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core.bin"
-    model_load_path =  "" # "SPC/Saves,Tests/models/for_result_viewer_test.keras" #"SPC/Saves,Tests/models/for_result_viewer_test.keras" # "SPC/Saves,Tests/models/tripple_escher.keras"#"" #"SPC/Saves,Tests/models/my_newmodel.keras"
-    model_save_path = "SPC/Saves,Tests/models/testmodel_.keras"
-    model_save_time = 600 # how many seconds have to have elapsed before saving
+    model_load_path =  "" # "SPC/Saves,Tests/models/Quadruple6.keras" # "SPC/Saves,Tests/models/for_result_viewer_test.keras" #"SPC/Saves,Tests/models/for_result_viewer_test.keras" # "SPC/Saves,Tests/models/tripple_escher.keras"#"" #"SPC/Saves,Tests/models/my_newmodel.keras"
+    model_save_path = ""
+    model_save_time = 1 # how many seconds have to have elapsed before saving
     ml_training_algorithm_type = "RLAlgorithm" # exact name of the algorithm python class BruteForceAlgorithm or RLAlgorithm
-    ml_model_type =  "RLNNModel_Escher_TrippleNoEqual" #RLNNModel_Escher_Tripple" # RLNNModel_Escher RLNNModel_CorrectSequence or RLNNModel_Escher or RLNNModel_Escher_Tripple - exact name of the model python class. The model is the component that contains the weights and perform computations, but the algorithm decides how the model is used
-    core_generator_type =  "EscherCoreGeneratorTrippleSymmetricNoEqual" # "EscherCoreGeneratorQuadruple" "EscherCoreGeneratorBasic"   "EscherCoreGeneratorTripple" "EscherCoreGeneratorTrippleSymmetricNoEqual"
-    iteration_steps = 500
+    ml_model_type =  "RLNNModel_Escher_TrippleNoEqual" # RLNNModel_Escher_TrippleNoEqual RLNNModel_CorrectSequence or RLNNModel_Escher or RLNNModel_Escher_Tripple - exact name of the model python class. The model is the component that contains the weights and perform computations, but the algorithm decides how the model is used
+    core_generator_type =  "EscherCoreGeneratorTrippleSymmetricNoEqual" # "EscherCoreGeneratorQuadruple "EscherCoreGeneratorBasic"   "EscherCoreGeneratorTripple" "EscherCoreGeneratorTrippleSymmetricNoEqual"
+    iteration_steps = 200
     RL_n_graphs = 400
     condition_rows = 3
-    plot_after_training = True
+    plot_after_training = False
 
-    main(partition, training_data_load_path, model_load_path, model_save_path, model_save_time, ml_training_algorithm_type, 
+    main(partition, training_data_load_path, training_data_save_path, model_load_path, model_save_path, model_save_time, ml_training_algorithm_type, 
          ml_model_type, core_generator_type, iteration_steps, plot_after_training, RL_n_graphs, condition_rows)

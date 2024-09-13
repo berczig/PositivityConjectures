@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 from SPC.misc.extra import PartiallyLoadable
-from SPC.misc.misc import getUnusedFilepath
+from SPC.misc.misc import getUnusedFilepath, refpath
 from SPC.Restructure.ml_models.MLModel import MLModel
 from SPC.Restructure.ml_models.RLNNModel_CorrectSequence import RLNNModel_CorrectSequence
 from SPC.Restructure.cores.CoreGenerator import CoreGenerator
@@ -17,7 +17,9 @@ class ModelLogger(PartiallyLoadable):
         super().__init__(["model_structure", "step", "all_scores", "bestscore_history", "meanscore_history", "bestfilter_history", 
                           "calculationtime_history", "residual_score_history", "perfect_coef_history", "partition", "core_generator_type", "core_length", "core_representation_length",
                           "RL_n_graphs", "ml_model_type", "ml_training_algorithm_type", "condition_rows",
-                          "residuals", "current_bestgraph", "graph_vertices", "graph_edges", "graphsize_history"])
+                          "residuals", "current_bestgraph", "graph_vertices", "graph_edges", "graphsize_history",
+                          "last_modified"], 
+                          default_values = {"last_modified":0})
         self.step = 0
         self.all_scores = {} # {filter_as_tuple:score}
         self.bestscore_history = [] # history of best score
@@ -29,8 +31,11 @@ class ModelLogger(PartiallyLoadable):
         self.residuals = []
         self.graphsize_history = []
         self.graph_vertices = []
+        self.last_modified = 0
         self.graph_edges = []
         self.model_structure : MLModel
+
+        self.overwrite_filenames = {}
 
     def setParameters(self, partition, core_generator_type:str, RL_n_graphs:int, ml_training_algorithm_type:str, ml_model_type:str, condition_rows:int):
         self.partition = partition
@@ -66,10 +71,12 @@ class ModelLogger(PartiallyLoadable):
         return self.model_structure
     
     def save_model_logger(self, model_path):
+        # Only Get new name once, only overwrite files which didn't exist before starting the python instance
+        if model_path not in self.overwrite_filenames:
+            self.overwrite_filenames[model_path] = getUnusedFilepath(model_path)
+        model_path = self.overwrite_filenames[model_path]
+
         t = time.time()
-        model_path = getUnusedFilepath(model_path)
-        print("model_path:", model_path)
-        print(os.path.splitext(model_path)[0]+".my_meta")
         self.keras_model.save(model_path)
         self.save(os.path.splitext(model_path)[0]+".my_meta")
         print(f"elapsed save time: {time.time()-t}")

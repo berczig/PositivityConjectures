@@ -8,6 +8,9 @@ from functools import lru_cache
 from pathlib import Path
 import asyncio
 import time
+import SPC
+from datetime import datetime
+from pathlib import Path
 import networkx as nx
 from matplotlib import pyplot as plt
 
@@ -41,15 +44,18 @@ def load_json_files(folder_path):
     return results
 
 def prepVE(V, edges):
-    # Remove vertices without edges and translate edge from ID to labels
+    # Remove vertices without edges and translate edge from ID to labels and turn GR to LE
     edges_new = []
     V_new = []
     for (i,j,edgetype) in edges:
-        edges_new.append((V[i], V[j], edgetype))
         if V[i] not in V_new:
             V_new.append(V[i])
         if V[j] not in V_new:
             V_new.append(V[j])
+        if edgetype == UIO.GREATER:
+            edges_new.append((V[j], V[i], UIO.LESS))
+        else:
+            edges_new.append((V[i], V[j], edgetype))
     return V_new, edges_new
 
 
@@ -112,6 +118,8 @@ def display_details(result):
                     ui.label(f"Core representation length: {model.core_representation_length}").style('font-size: 18px; font-weight: bold;')
                     ui.label(f"Training algorithm: {model.ml_training_algorithm_type}").style('font-size: 18px; font-weight: bold;')
                     ui.label(f"Model type: {model.ml_model_type}").style('font-size: 18px; font-weight: bold;')
+                    d = datetime.fromtimestamp(model.last_modified)
+                    ui.label(f"Last modified: {d.day}.{d.month}.{d.year} {d.hour}:{d.minute}:{d.second}").style('font-size: 18px; font-weight: bold;')
 
                     ui.button("Export data", on_click= lambda:export_data(result, figs)).style('font-size: 22px; font-weight: bold;')
 
@@ -259,6 +267,9 @@ def display_results(results):
                         ui.label(f"{model.step}").style('text-align: center; font-weight: bold;')
                     elif Sortoption == "by score":
                         ui.label(f"{model.bestscore_history[-1]}").style('text-align: center; font-weight: bold;')
+                    elif Sortoption == "by date":
+                        d = datetime.fromtimestamp(model.last_modified)
+                        ui.label(f"{d.day}.{d.month}.{d.year}").style('text-align: center; font-weight: bold;')
                     #ui.label(f"{model.step}").style('text-align: center; font-weight: bold;')
 
 # Sorting functions
@@ -274,6 +285,9 @@ def sort_by_iteration(results, reverse=True):
 def sort_by_score(results, reverse=True):
     return sorted(results, key=lambda x: x[1].bestscore_history[-1], reverse=True)
 
+def sort_by_date(results, reverse=True):
+    return sorted(results, key=lambda x: x[1].last_modified, reverse=True)
+
 # Function to sort and display results based on the selected option
 Sortoption = "by name"
 def sort_and_display_results(folder_path, option):
@@ -288,14 +302,15 @@ def sort_and_display_results(folder_path, option):
         results = sort_by_iteration(results)
     elif option == 'by score':
         results = sort_by_score(results)
+    elif option == 'by date':
+        results = sort_by_date(results)
     display_results(results)
-
 
 
 # Main UI layout
 with ui.row():
     folder_input = ui.input(label='Model Input Path', placeholder='Enter or select a folder...',
-                                value=os.path.join(os.getcwd(), "SPC", "Saves,Tests", "models"))
+                                value=os.path.join(Path(SPC.__file__).parent, "Saves,Tests", "models"))
     quickswitch_checkbox = ui.checkbox('quick model switch (no graphs)', value=False)
 ui.label('Models:').style('font-size: 24px; margin-bottom: 10px;')
 
@@ -306,7 +321,7 @@ with ui.row().classes('w-full gap-0'):  # Create a row layout for the grid and d
 
         # Sorting dropdown and button
         with ui.row():
-            sorting_option = ui.select(["by name", 'by partition', "by iteration", "by score"], label='Sort by', value="by name")
+            sorting_option = ui.select(["by name", 'by partition', "by iteration", "by score", "by date"], label='Sort by', value="by name")
             ui.button('Sort', on_click=lambda: sort_and_display_results(folder_input.value, sorting_option.value))
 
         ui.button('Load Results', on_click=lambda: display_results(load_json_files(folder_input.value)))

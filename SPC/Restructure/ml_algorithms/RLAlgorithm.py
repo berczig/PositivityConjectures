@@ -128,21 +128,20 @@ class RLAlgorithm(LearningAlgorithm):
 			for j, res in enumerate(residuals):
 				if res != 0: print("residual:", res, self.UIO_preparer.getUIOs(j))
 				
+            
 			V, E = self.FE.convertConditionMatrixTo_VerticesAndEdges(bestmatrix)
-			print("V:", V)
-			print("E:", E)
 			self.model_logger.graph_vertices = V
 			self.model_logger.graph_edges = E
 			self.model_logger.bestscore_history.append(self.current_bestscore)
 			self.model_logger.residual_score_history.append(np.sum(np.abs(residuals)))
 			self.model_logger.perfect_coef_history.append(np.sum(residuals==0))
 			self.model_logger.bestfilter_history.append(self.current_beststate)
+			self.model_logger.last_modified = time.time()
 			self.model_logger.graphsize_history.append(np.sum(bestmatrix!=self.FE.ignore_edge))
 			self.model_logger.meanscore_history.append(np.mean(super_rewards))
 			self.model_logger.calculationtime_history.append(time.time()-tic0)
 			self.model_logger.residuals = residuals
 			self.model_logger.current_bestgraph = self.FE.convertConditionMatrixToText(self.convertStateToConditionMatrix(self.current_beststate))
-			
 			#uncomment below line to print out how much time each step in this loop takes. 
 			print(	"Mean reward: " + str(mean_all_reward) + "\nSessgen: " + str(sessgen_time) + ", other: " + str(randomcomp_time) + ", select1: " + str(select1_time) + ", select2: " + str(select2_time) + ", select3: " + str(select3_time) +  ", fit: " + str(fit_time) + ", score: " + str(score_time)) 
 			

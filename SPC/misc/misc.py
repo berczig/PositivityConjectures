@@ -1,6 +1,8 @@
 from functools import lru_cache
 from itertools import permutations
 import os
+import SPC
+from pathlib import Path
 
 # COMBINATORIC FUNCTIONS
 #@lru_cache(maxsize=None)
@@ -19,3 +21,5 @@ def getUnusedFilepath(filepath):
         newfilename = f"{base_filename}_{i:03d}{extension}"
         i += 1
     return os.path.join(folder, newfilename)
+
+refpath = Path(SPC.__file__).parent.parent
