@@ -142,9 +142,9 @@ def display_details(result):
                     ui.button("Export data", on_click= lambda:export_data(result, figs)).style('font-size: 22px; font-weight: bold;')
 
                 # PLots
+                x = list(range(1, len(model.bestscore_history)+1))
                 if quickswitch_checkbox.value == False:
                     with ui.pyplot(figsize=(8, 6)) as nicefig:
-                        x = list(range(len(model.bestscore_history)))
                         y = model.bestscore_history
                         fig = nicefig.fig
                         plt.plot(x, y, '-')
@@ -157,7 +157,6 @@ def display_details(result):
 
                     if model.residual_score_history != None:
                         with ui.pyplot(figsize=(8, 6)) as nicefig:
-                            x = list(range(len(model.bestscore_history)))
                             y = model.residual_score_history
                             fig = nicefig.fig
                             plt.plot(x, y, '-')
@@ -170,7 +169,6 @@ def display_details(result):
 
                     if model.perfect_coef_history != None:
                         with ui.pyplot(figsize=(8, 6)) as nicefig:
-                            x = list(range(len(model.bestscore_history)))
                             y = model.perfect_coef_history
                             fig = nicefig.fig
                             plt.plot(x, y, '-')
@@ -183,7 +181,6 @@ def display_details(result):
 
                     if model.graphsize_history != None:
                         with ui.pyplot(figsize=(8, 6)) as nicefig:
-                            x = list(range(len(model.bestscore_history)))
                             y = model.graphsize_history
                             fig = nicefig.fig
                             plt.plot(x, y, '-')
