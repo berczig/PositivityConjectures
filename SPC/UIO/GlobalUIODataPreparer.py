@@ -50,13 +50,12 @@ class GlobalUIODataPreparer(PartiallyLoadable):
 
         print("Calculating coefficients...")
         n = len(self.extractors)
-        n_10 = n//10
+        n_10 = min(1, n//10)
         self.coefficients = []
         for uioID, extractor in enumerate(self.extractors):
             if uioID % n_10 == 0:
                 print(" > current UIO: {}/{}".format(uioID+1, n))
             self.coefficients.append(extractor.getCoefficient(partition))
-        #self.coefficients = [extractor.getCoefficient(partition) for extractor in self.extractors]
     
     def loadTrainingData(self, filepath:str) -> tuple:
         self.load(filepath)
@@ -99,7 +98,7 @@ class GlobalUIODataPreparer(PartiallyLoadable):
         ID = 0
         total_corereps = 0
         n = len(corerep_generators)
-        n_10 = n//10
+        n_10 = min(1, n//10)
         for uioID, corerep_generator in enumerate(corerep_generators):
             if uioID % n_10 == 0:
                 print(" > current UIO: {}/{}".format(uioID+1, n))
