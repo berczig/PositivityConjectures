@@ -25,7 +25,7 @@ class EscherCoreGeneratorBasic(EscherCoreGeneratorAbstract):
         #        "subescher start interval":["1.insert", "n-1"], 
         #        "subescher end interval":["1.insert", "n-1"],
         #        "1.insert":["n-1"]}
-        return {"0": ["subescher start interval","1. insert"],
+        return {"0": ["subescher start interval","1.insert"],
                 "subescher end interval":["1.insert"],}
     
 
