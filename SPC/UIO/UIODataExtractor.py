@@ -77,7 +77,7 @@ class UIODataExtractor:
             return count(self.getEschers(partition))
 
         elif len(partition) == 2:
-            return count(self.getEschers(partition)) - count(self.getEschers((self.uio.N,)))
+            return count(self.countEschers(partition)) - count(self.countEschers((self.uio.N,)))
         
         elif len(partition) == 3:
             n,k,l = partition

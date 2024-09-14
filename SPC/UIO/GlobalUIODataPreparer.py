@@ -48,9 +48,9 @@ class GlobalUIODataPreparer(PartiallyLoadable):
         self.partition = partition # remember what partition was used to calculate the most recent training data
         self.countCoreRepresentations(partition)
 
-        print("Calculating coefficients...")
         n = len(self.extractors)
         n_10 = max(1, n//10)
+        print(f"Calculating coefficients... (print every {n_10} iterations)")
         self.coefficients = []
         for uioID, extractor in enumerate(self.extractors):
             if uioID % n_10 == 0:
@@ -90,7 +90,6 @@ class GlobalUIODataPreparer(PartiallyLoadable):
         return countmatrix
     
     def countCoreRepresentations(self, partition):
-        print("Categorizing core representations...")
         core_rep_categories = {} # coreRepresentation:ID
         counter = {} # corerepID:dict(uioID1:occurrences1, uioID2:occurrences2)
         corerep_generators = [extractor.getCoreRepresentations(partition) for extractor in self.extractors]
@@ -99,6 +98,7 @@ class GlobalUIODataPreparer(PartiallyLoadable):
         total_corereps = 0
         n = len(corerep_generators)
         n_10 = max(1, n//10)
+        print(f"Categorizing core representations... (print every {n_10} iterations)")
         for uioID, corerep_generator in enumerate(corerep_generators):
             if uioID % n_10 == 0:
                 print(" > current UIO: {}/{}".format(uioID+1, n))
