@@ -21,7 +21,6 @@ class UIODataExtractor:
         self.core_generator_class = core_generator_class
 
 
-    @lru_cache(maxsize=None)
     def getCorrectSequences(self, partition):
         P = getPermutationsOfN(self.uio.N)
         if len(partition) == 1:
@@ -39,11 +38,11 @@ class UIODataExtractor:
         if isinstance(GEN, EscherCoreGeneratorAbstract):
             for escher in self.getEschers(partition):
                 yield GEN.generateCore(escher)
-        elif isinstance(GEN, CorrectSequenceCoreGenerator):
+        elif isinstance(GEN, CorrectSequenceCoreGeneratorAbstract):
             for corseq in self.getCorrectSequences(partition):
                 yield GEN.generateCore(corseq)
         else:
-            assert False==True, "{} is not a subclass of EscherCoreGeneratorAbstract or CorrectSequenceCoreGenerator".format(str(self.core_generator_class))
+            assert False==True, "{} is not a subclass of EscherCoreGeneratorAbstract or CorrectSequenceCoreGeneratorAbstract".format(str(self.core_generator_class))
 
     def getCoreRepresentations(self, partition):
         GEN = self.core_generator_class(self.uio, partition)
@@ -75,10 +74,10 @@ class UIODataExtractor:
 
     def getCoefficient(self, partition):
         if len(partition) == 1:
-            return count(self.getCorrectSequences(partition))
+            return count(self.getEschers(partition))
 
         elif len(partition) == 2:
-            return count(self.getCorrectSequences(partition)) - count(self.getCorrectSequences((self.uio.N,)))
+            return count(self.getEschers(partition)) - count(self.getEschers((self.uio.N,)))
         
         elif len(partition) == 3:
             n,k,l = partition
