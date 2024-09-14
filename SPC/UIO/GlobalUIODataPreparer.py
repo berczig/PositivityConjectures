@@ -56,7 +56,7 @@ class GlobalUIODataPreparer(PartiallyLoadable):
             if uioID % n_10 == 0:
                 print(" > current UIO: {}/{}".format(uioID+1, n))
             self.coefficients.append(extractor.getCoefficient(partition))
-        self.coefficients = [extractor.getCoefficient(partition) for extractor in self.extractors]
+        #self.coefficients = [extractor.getCoefficient(partition) for extractor in self.extractors]
     
     def loadTrainingData(self, filepath:str) -> tuple:
         self.load(filepath)
