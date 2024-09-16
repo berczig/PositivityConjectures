@@ -148,6 +148,9 @@ Gergely's  list on 07.09.2024
 - when drawing the graph plot check if there are only 2 edges               DONE GR to LE and rev
 - animation
 
+- pip create environment
+- create models folder
+- when generating coef, UIO and training expected time of complition --> loading bar
 
 4,3,2
 3,2,2
