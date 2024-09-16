@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 from SPC.UIO.ModelLogger import ModelLogger
 from SPC.UIO.UIO import UIO
 from SPC.UIO.cores.CoreGenerator import CoreGenerator
+from SPC.UIO.GlobalUIODataPreparer import GlobalUIODataPreparer
 from functools import lru_cache
 from pathlib import Path
 import asyncio
@@ -21,6 +22,13 @@ ModelLogger_attributes = ["partition", "step"]
 last_sort = ""
 last_toggle = False
 
+def load_trainingdata(trainingdata_file_path):
+    preparer = GlobalUIODataPreparer(0)
+    if trainingdata_file_path != "":
+        print("loading model...")
+        preparer.loadTrainingData(trainingdata_file_path)
+    return preparer
+
 def load_model(model_file_path):
     modelLogger = ModelLogger()
     if model_file_path != "":
@@ -34,6 +42,10 @@ def load_model(model_file_path):
 def load_json_files_cache(folder_path):
     return load_json_files(folder_path)
 
+@lru_cache(maxsize=None)
+def load_json_files_cache2(folder_path):
+    return load_json_files2(folder_path)
+
 def load_json_files(folder_path):
     print("load_json_files")
     results = []
@@ -43,6 +55,17 @@ def load_json_files(folder_path):
             print("file_name:", file_name)
             modelLogger = load_model(file_path)
             results.append((file_name, modelLogger))
+    return results
+
+def load_json_files2(folder_path):
+    print("load_json_files2")
+    results = []
+    for file_name in os.listdir(folder_path):
+        if file_name.endswith(".bin"):
+            file_path = os.path.join(folder_path, file_name)
+            print("file_name:", file_name)
+            trainingdata = load_trainingdata(file_path)
+            results.append((file_name, trainingdata))
     return results
 
 def prepVE(V, edges):
@@ -247,6 +270,31 @@ def display_details(result):
 
 
 
+# Function to display the details of a selected result
+def display_details2(result):
+    filename, data = result
+    data : GlobalUIODataPreparer
+    details_container2.clear()  # Clear previous details
+    figs = []
+
+    with details_container2:
+        #ui.label(f"Name: {result['name']}").style('font-size: 18px; font-weight: bold;')
+        # Display other fields if needed
+        
+        with ui.column():
+
+            with ui.row():
+                # Info Text
+                with ui.column():
+                    ui.label(f"Training Data: {filename}").style('font-size: 24px; font-weight: bold;')
+                    ui.label(f"UIO length: {sum(data.partition)}").style('font-size: 18px; font-weight: bold;')
+                    ui.label(f"Partition: {data.partition}").style('font-size: 18px; font-weight: bold;')
+                    ui.label(f"UIOs: {len(data.coefficients)}").style('font-size: 18px; font-weight: bold;')
+                    ui.label(f"Distinct Core Representations: {len(data.coreRepresentationsCategorizer)}").style('font-size: 18px; font-weight: bold;')
+
+
+
+
 
 async def export_data(result, figs):
     # notification
@@ -291,6 +339,20 @@ def display_results(results):
                     elif Sortoption == "by date":
                         d = datetime.fromtimestamp(model.last_modified)
                         ui.label(f"{d.day}.{d.month}.{d.year}").style('text-align: center; font-weight: bold;')
+                    #ui.label(f"{model.step}").style('text-align: center; font-weight: bold;')
+
+# Function to display results in a scrollable grid
+def display_results2(results):
+    global option
+    result_container2.clear()  # Clear previous results
+    # Create a scrollable grid of results (4 squares per row)
+    with result_container2:
+        with ui.row():
+            for index, result in enumerate(results):
+                filename, data = result
+                with ui.card().on('click', lambda _, r=result: display_details2(r)):  # Make each card clickable
+                    ui.label(f"{filename}").style('text-align: center; font-weight: bold;')
+                    ui.label(f"{data.partition}").style('text-align: center; font-weight: bold;')
                     #ui.label(f"{model.step}").style('text-align: center; font-weight: bold;')
 
 # Sorting functions
@@ -386,35 +448,47 @@ def display_table(data):
         {'name': '4row', 'label': '4 row', 'field': '4row'},
     ], title="Results")
 
+def refresh_page():
+    display_results(load_json_files(folder_input.value))
+    display_results2(load_json_files2(folder_input2.value))
+
 # Main UI layout
 with ui.row():
     folder_input = ui.input(label='Model Input Path', placeholder='Enter or select a folder...',
                                 value=os.path.join(Path(SPC.__file__).parent, "Saves,Tests", "models"))
+    folder_input2 = ui.input(label='Training Data Input Path', placeholder='Enter or select a folder...',
+                                value=os.path.join(Path(SPC.__file__).parent, "Saves,Tests", "Trainingdata"))
     quickswitch_checkbox = ui.checkbox('quick model switch (no graphs)', value=False)
 ui.label('Models:').style('font-size: 24px; margin-bottom: 10px;')
 
-with ui.row().classes():  # Create a row layout for the grid and detail section to be side by side
-    with ui.column().classes("w-96"):
+with ui.column():
+    with ui.row().classes():  # Create a row layout for the grid and detail section to be side by side
+        with ui.column().classes("w-96"):
 
-        result_container = ui.scroll_area().classes('w-512')  # Scrollable area to display results
+            result_container = ui.scroll_area().classes('w-512')  # Scrollable area to display results
 
-        # Sorting dropdown and button
+            # Sorting dropdown and button
+            with ui.row():
+                sorting_option = ui.select(["by name", 'by partition', "by iteration", "by score", "by date"], label='Sort by', value="by name")
+                ui.button('Sort', on_click=lambda: sort_and_display_results(folder_input.value, sorting_option.value))
+
+            ui.button('Load Results', on_click=lambda: refresh_page())
+
+        # Initial display of results
+        display_table(get_table_data())
+
         with ui.row():
-            sorting_option = ui.select(["by name", 'by partition', "by iteration", "by score", "by date"], label='Sort by', value="by name")
-            ui.button('Sort', on_click=lambda: sort_and_display_results(folder_input.value, sorting_option.value))
+            # Create a section on the right to display details of a selected result
+            with ui.column().classes():
+                details_container = ui.column().classes('w-128 h-fill border bg-gray-100 p-4')
 
-        ui.button('Load Results', on_click=lambda: display_results(load_json_files(folder_input.value)))
-
-    # Initial display of results
-    display_results(load_json_files_cache(folder_input.value))
-    display_table(get_table_data())
-
-    with ui.row():
-        # Create a section on the right to display details of a selected result
-        with ui.column().classes():
-            details_container = ui.column().classes('w-128 h-fill border bg-gray-100 p-4')
-
-        
+    
+    ui.label("Training data:")
+    result_container2 = ui.scroll_area().classes('w-512')  # Scrollable area to display results
+    details_container2 = ui.column().classes('w-128 h-fill border bg-gray-100 p-4')
+            
+display_results(load_json_files_cache(folder_input.value))
+display_results2(load_json_files_cache2(folder_input2.value))
 
 
 
