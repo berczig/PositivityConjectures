@@ -393,8 +393,8 @@ with ui.row():
     quickswitch_checkbox = ui.checkbox('quick model switch (no graphs)', value=False)
 ui.label('Models:').style('font-size: 24px; margin-bottom: 10px;')
 
-with ui.column().classes():  # Create a row layout for the grid and detail section to be side by side
-    with ui.column().classes('w-full gap-0'):
+with ui.row().classes():  # Create a row layout for the grid and detail section to be side by side
+    with ui.column().classes("w-96"):
 
         result_container = ui.scroll_area().classes('w-512')  # Scrollable area to display results
 
@@ -405,16 +405,17 @@ with ui.column().classes():  # Create a row layout for the grid and detail secti
 
         ui.button('Load Results', on_click=lambda: display_results(load_json_files(folder_input.value)))
 
+    # Initial display of results
+    display_results(load_json_files_cache(folder_input.value))
+    display_table(get_table_data())
+
     with ui.row():
         # Create a section on the right to display details of a selected result
         with ui.column().classes():
             details_container = ui.column().classes('w-128 h-fill border bg-gray-100 p-4')
 
-        display_table(get_table_data())
+        
 
-
-    # Initial display of results
-    display_results(load_json_files_cache(folder_input.value))
 
 
 # Run the app
