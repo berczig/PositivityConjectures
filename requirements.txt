@@ -9,7 +9,7 @@ numpy==1.23.5
 pandas==2.0.1
 plotly==5.24.0
 scikit_learn==1.4.2
-tensorflow==2.17.0
-tensorflow_intel==2.17.0
+tensorflow==2.10
+tensorflow_intel==2.10
 torch==2.2.1+cu121
 torchvision==0.17.1+cu121
