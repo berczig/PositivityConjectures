@@ -51,7 +51,7 @@ class UIODataExtractor:
 
 
     def getEschers(self, partition):
-        P = getPermutationsOfN(self.uio.N)
+        P = getKPermutationsOfN(self.uio.N, sum(partition))
         if len(partition) == 1:
             for seq in P:
                 if self.uio.isescher(seq):
@@ -77,7 +77,7 @@ class UIODataExtractor:
             return count(self.getEschers(partition))
 
         elif len(partition) == 2:
-            return count(self.countEschers(partition)) - count(self.countEschers((self.uio.N,)))
+            return self.countEschers(partition) - self.countEschers((self.uio.N,))
         
         elif len(partition) == 3:
             n,k,l = partition
