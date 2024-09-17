@@ -1,43 +1,57 @@
+module miscextraJulia
+
 using Serialization
 
-abstract type Loadable end
+abstract type AbstractLoadable end
 
-function save(instance::Loadable, filename::String)
-    # saves all currently present attributes of the instance
+mutable struct Loadable <: AbstractLoadable
+end
+
+function save(self::AbstractLoadable, filename::String)
     open(filename, "w") do f
-        serialize(f, instance)
+        serialize(f, self)
     end
 end
 
-function load(instance::Loadable, filename::String)
-    # loads dump and sets all attributes of dump as attributes of the current instance
+function load(self::AbstractLoadable, filename::String)
     open(filename, "r") do f
         loaded_instance = deserialize(f)
         for var in fieldnames(typeof(loaded_instance))
-            setfield!(instance, var, getfield(loaded_instance, var))
+            setfield!(self, var, getfield(loaded_instance, var))
         end
     end
 end
 
-mutable struct PartiallyLoadable <: Loadable
+abstract type AbstractPartiallyLoadable end
+
+mutable struct PartiallyLoadable <: AbstractPartiallyLoadable
     saveable_variables::Vector{Symbol}
-    _savehelper::Loadable
+    default_values::Dict{Symbol, Any}
+    _savehelper::AbstractLoadable
 
-    function PartiallyLoadable(saveable_variables::Vector{Symbol})
-        new(saveable_variables, Loadable())
+    function PartiallyLoadable(saveable_variables::Vector{Symbol}, default_values::Dict{Symbol, Any} = Dict{Symbol, Any}())
+        new(saveable_variables, default_values, Loadable())
     end
 end
 
-function save(instance::PartiallyLoadable, filename::String)
-    for var in instance.saveable_variables
-        setfield!(instance._savehelper, var, getfield(instance, var))
+function save(self::PartiallyLoadable, filename::String)
+    for var in self.saveable_variables
+        setfield!(self._savehelper, var, getfield(self, var))
     end
-    save(instance._savehelper, filename)
+    save(self._savehelper, filename)
 end
 
-function load(instance::PartiallyLoadable, filename::String)
-    load(instance._savehelper, filename)
-    for var in instance.saveable_variables
-        setfield!(instance, var, getfield(instance._savehelper, var))
+function load(self::PartiallyLoadable, filename::String)
+    load(self._savehelper, filename)
+    for var in self.saveable_variables
+        if hasfield(typeof(self._savehelper), var)
+            setfield!(self, var, getfield(self._savehelper, var))
+        else
+            value = get(self.default_values, var, nothing)
+            println("\n#####\nTHE FILE \"$filename\" IS OUTDATED!\nIT IS MISSING THE ATTRIBUTE \"$var\"\nSETTING $var = $value\n#####\n")
+            setfield!(self, var, value)
+        end
     end
 end
+
+end  # module miscextraJulia

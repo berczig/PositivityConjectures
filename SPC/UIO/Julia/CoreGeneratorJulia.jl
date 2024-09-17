@@ -2,7 +2,7 @@ module CoreGeneratorJulia
 
 include("UIOJulia.jl")
 
-using UIOJulia
+import .UIOJulia: AbstractUIO
 
 abstract type CoreGenerator end
 
@@ -35,10 +35,10 @@ function getCoreLabels(partition)
 end
 
 mutable struct CoreGeneratorImpl <: CoreGenerator
-    uio::UIO
+    uio::AbstractUIO
     partition::Any
 
-    function CoreGeneratorImpl(uio::UIO, partition)
+    function CoreGeneratorImpl(uio::AbstractUIO, partition)
         obj = new(uio, partition)
         calculate_comp_indices(CoreGeneratorImpl, partition)
         return obj
@@ -110,4 +110,4 @@ function convertCorerepToText(cls::Type{CoreGeneratorImpl}, corerep, partition)
     return join(s, "\n")
 end
 
-end # module SPC.UIO
+end # module CoreGeneratorJulia

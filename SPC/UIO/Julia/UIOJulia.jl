@@ -2,25 +2,27 @@ module UIOJulia
 
 using LinearAlgebra
 
+abstract type AbstractUIO end
+
 const INCOMPARABLE = 100    # (i,j) is INCOMPARABLE if neither i < j nor j < i nor i = j -- connected in the incomparability graph -- intersecting intervals
 const LESS = 101            # (i,j) is LE iff i < j     interval i is to the left of j 
 const GREATER = 102         # (i,j) is LE iff i > j     interval i is to the right of j
 const EQUAL = 103           # (i,j) is EQ iff i = j     interval i and interval j are same interval
 const RELATIONTEXT = Dict(LESS => "<", EQUAL => "=", GREATER => ">")
+const RELATIONTEXT2 = Dict(LESS => "LE", EQUAL => "EQ", GREATER => "GR")
 
-mutable struct UIO
+struct ConcreteUIO <: AbstractUIO
     N::Int
     encoding::Vector{Int}
     repr::String
     comparison_matrix::Matrix{Int}
 
-    function UIO(uio_encoding::Vector{Int})
+    function ConcreteUIO(uio_encoding::Vector{Int})
         N = length(uio_encoding)
         encoding = uio_encoding
         repr = string(encoding)
+        comparison_matrix = fill(EQUAL, N, N)
 
-        # decode encoding to get comparison matrix
-        comparison_matrix = fill(EQUAL, N, N) # (i,j)'th index says how i is in relation to j
         for i in 1:N
             for j in i+1:N
                 if uio_encoding[j] <= i
@@ -37,31 +39,35 @@ mutable struct UIO
     end
 end
 
-function Base.show(io::IO, uio::UIO)
-    print(io, uio.repr)
+
+
+
+
+function Base.show(io::IO, uio::ConcreteUIO)
+    println(io, uio.repr)
 end
 
 ### POSET STRUCTURE ###
 
-function isescher(self::UIO, seq::Vector{Int})
+function isescher(uio::ConcreteUIO, seq::Vector{Int})
     for i in 1:length(seq)-1
-        if !isarrow(self, seq, i, i+1)
+        if !isarrow(uio, seq, i, i+1)
             return false
         end
     end
-    return isarrow(self, seq, length(seq), 1)
+    return isarrow(uio, seq, length(seq), 1)
 end
 
-function iscorrect(self::UIO, seq::Vector{Int})
+function iscorrect(uio::ConcreteUIO, seq::Vector{Int})
     for i in 2:length(seq)
         # 1) arrow condition
-        if !isarrow(self, seq, i-1, i)
+        if !isarrow(uio, seq, i-1, i)
             return false
         end
         # 2) intersects with some previous interval
         intersects = false
         for j in 1:i-1
-            if self.comparison_matrix[seq[i], seq[j]] in [LESS, INCOMPARABLE]
+            if uio.comparison_matrix[seq[i], seq[j]] in [LESS, INCOMPARABLE]
                 intersects = true
                 break
             end
@@ -73,29 +79,29 @@ function iscorrect(self::UIO, seq::Vector{Int})
     return true
 end
 
-function isarrow(self::UIO, escher::Vector{Int}, i::Int, j::Int, verbose::Bool=false)
+function isarrow(uio::ConcreteUIO, escher::Vector{Int}, i::Int, j::Int, verbose::Bool=false)
     if verbose
-        println("arrow", escher, i, j, self.comparison_matrix[escher[i], escher[j]] != GREATER)
+        println("arrow", escher, i, j, uio.comparison_matrix[escher[i], escher[j]] != GREATER)
     end
-    return self.comparison_matrix[escher[i], escher[j]] != GREATER # EQUAL also intersects
+    return uio.comparison_matrix[escher[i], escher[j]] != GREATER  # EQUAL also intersects
 end
 
-function intervalsAreIntersecting(self::UIO, i::Int, j::Int)
-    return self.comparison_matrix[i, j] == INCOMPARABLE
+function intervalsAreIntersecting(uio::ConcreteUIO, i::Int, j::Int)
+    return uio.comparison_matrix[i, j] == INCOMPARABLE
 end
 
-function intervalIsToTheRight(self::UIO, i::Int, j::Int)
-    return self.comparison_matrix[i, j] == GREATER
+function intervalIsToTheRight(uio::ConcreteUIO, i::Int, j::Int)
+    return uio.comparison_matrix[i, j] == GREATER
 end
 
-function toPosetData(self::UIO, seq::Vector{Int})
+function toPosetData(uio::ConcreteUIO, seq::Vector{Int})
     k = length(seq)
-    return tuple([self.comparison_matrix[seq[i], seq[j]] for i in 1:k for j in i+1:k]...)
+    return Tuple([uio.comparison_matrix[seq[i], seq[j]] for i in 1:k for j in i+1:k])
 end
 
 ### SUB-UIO ###
 
-function getsubuioencoding(self::UIO, seq::Vector{Int})
+function getsubuioencoding(uio::ConcreteUIO, seq::Vector{Int})
 
     function addupto(List::Vector{Int}, element::Int, uptoindex::Int)
         # adds element to List up to index uptoindex (exclusive)
@@ -110,40 +116,40 @@ function getsubuioencoding(self::UIO, seq::Vector{Int})
     encod = Int[]
     for i in 1:N
         for j in i+1:N
-            if self.comparison_matrix[seq[i], seq[j]] != INCOMPARABLE
+            if uio.comparison_matrix[seq[i], seq[j]] != INCOMPARABLE  # not intersect
                 encod = addupto(encod, i, j)
                 break
             elseif j == N
                 encod = addupto(encod, i, N)
         end
     end
-    if self.comparison_matrix[seq[end], seq[end-1]] != INCOMPARABLE
+    end
+    if uio.comparison_matrix[seq[end], seq[end-1]] != INCOMPARABLE
         push!(encod, N)
     end
 
     return encod
 end
 
-function getsubUIO(self::UIO, seq::Vector{Int})
-    return SubUIO(getsubuioencoding(self, seq), seq)
+function getsubUIO(uio::ConcreteUIO, seq::Vector{Int})
+    return SubUIO(getsubuioencoding(uio, seq), seq)
 end
 
-mutable struct SubUIO <: UIO
+struct SubUIO <: AbstractUIO
     rename::Dict{Int, Int}
 
     function SubUIO(uio_encoding::Vector{Int}, subseq::Vector{Int})
-        obj = new(UIO(uio_encoding))
-        obj.rename = Dict{Int, Int}()
+        super(uio_encoding)
+        rename = Dict{Int, Int}()
         for (ID, globalID) in enumerate(subseq)
-            obj.rename[globalID] = ID
+            rename[globalID] = ID
         end
-        return obj
+        new(uio_encoding, subseq, rename)
+    end
+
+    function to_internal_indexing(subuio::SubUIO, seq::Vector{Int})
+        return Tuple([subuio.rename[w] for w in seq])
     end
 end
 
-function to_internal_indexing(self::SubUIO, seq::Vector{Int})
-    return tuple([self.rename[w] for w in seq]...)
-end
-
-end # module UIOJulia
-end
+end  # module UIOJulia
