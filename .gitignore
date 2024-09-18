@@ -1,9 +1,6 @@
 __pycache__/
 best_*.txt
 saves/*
-*.keras
-*.my_meta
-*.mybin
 *.png
 *.pb
 .idea/*
