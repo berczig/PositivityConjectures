@@ -10,6 +10,7 @@ import time
 import os
 import sys
 from SPC.UIO.UIO import UIO
+from SPC.UIO.ModelLogger import ModelLogger
 from SPC.UIO.ml_models import RLNNModel_Escher, RLNNModel_Escher_TrippleNoEqual
 from datetime import datetime
 from SPC.UIO.FilterEvaluator import FilterEvaluator
@@ -26,13 +27,16 @@ class RLAlgorithm(LearningAlgorithm):
 	reduce_uio = 0
 	INF = 1000000
 	#########################
+
+	def __init__(self, model_logger:ModelLogger):
+		super().__init__(model_logger)
+		self.saveable_model = True
  
 
 	def train(self, iterations, model_save_path="", model_save_time=0):
 		self.model : RLNNModel_Escher_TrippleNoEqual #RLNNModel_Escher
 		self.model = self.model_logger.get_model_structure()
 
-		self.FE = FilterEvaluator(self.trainingdata_input, self.trainingdata_output, FilterEvaluator.DEFAULT_IGNORE_VALUE, self.model_logger)
 		for correp in self.trainingdata_input:
 			uiocounts = self.trainingdata_input[correp]
 			if 2379 in uiocounts:
@@ -122,27 +126,38 @@ class RLAlgorithm(LearningAlgorithm):
 			print("\n" + str(i+1) +  ". Best individuals: " + str(np.flip(np.sort(super_rewards))))
 			bestmatrix = self.convertStateToConditionMatrix(self.current_beststate)
 			print("best state:", self.current_bestscore, self.FE.convertConditionMatrixToText(bestmatrix))
+
+			
 			residuals = self.FE.evaluate(bestmatrix, return_residuals=True)
-			print("residuals:", residuals)
+			res_score = np.sum(np.abs(residuals))
+			print("residual score:", f"{res_score}/{len(residuals)}")
+
 			encodings = self.UIO_preparer.getAllUIOEncodings()
+			some_wrong_uios = []
+			print("A selection of UIOs with non-zero residual:\n-----")
 			for j, res in enumerate(residuals):
 				if res != 0: 
-					print("residual:", res, encodings[j])
+					some_wrong_uios.append((encodings[j], res))
+					print(f"{encodings[j]} has residual = {res}")
+					# Collect max 5 UIOs with incorrect coef predictio
+					if len(some_wrong_uios) == 5:
+						break
+			print("-----")
 				
             
-			V, E = self.FE.convertConditionMatrixTo_VerticesAndEdges(bestmatrix)
-			self.model_logger.graph_vertices = V
-			self.model_logger.graph_edges = E
-			self.model_logger.bestscore_history.append(self.current_bestscore)
-			self.model_logger.residual_score_history.append(np.sum(np.abs(residuals)))
-			self.model_logger.perfect_coef_history.append(np.sum(residuals==0))
-			self.model_logger.bestfilter_history.append(self.current_beststate)
-			self.model_logger.last_modified = time.time()
-			self.model_logger.graphsize_history.append(np.sum(bestmatrix!=self.FE.ignore_edge))
-			self.model_logger.meanscore_history.append(np.mean(super_rewards))
-			self.model_logger.calculationtime_history.append(time.time()-tic0)
-			self.model_logger.residuals = residuals
-			self.model_logger.current_bestgraph = self.FE.convertConditionMatrixToText(self.convertStateToConditionMatrix(self.current_beststate))
+			# self.model_logger.graph_vertices = V
+			# self.model_logger.graph_edges = E
+			# self.model_logger.bestscore_history.append(self.current_bestscore)
+			# self.model_logger.residual_score_history.append(res_score)
+			# self.model_logger.perfect_coef_history.append(np.sum(residuals==0))
+			# self.model_logger.last_modified = time.time()
+			# self.model_logger.graphsize_history.append(np.sum(bestmatrix!=self.FE.ignore_edge))
+			# self.model_logger.meanscore_history.append(np.mean(super_rewards))
+			# self.model_logger.calculationtime_history.append(time.time()-tic0)
+			# self.model_logger.residuals = residuals
+			# self.model_logger.current_bestgraph = self.FE.convertConditionMatrixToText(bestmatrix)
+
+			self.updateModelLogger(self.current_bestscore, res_score, residuals, bestmatrix, super_rewards, tic0, some_wrong_uios)
 			#uncomment below line to print out how much time each step in this loop takes. 
 			print(	"Mean reward: " + str(mean_all_reward) + "\nSessgen: " + str(sessgen_time) + ", other: " + str(randomcomp_time) + ", select1: " + str(select1_time) + ", select2: " + str(select2_time) + ", select3: " + str(select3_time) +  ", fit: " + str(fit_time) + ", score: " + str(score_time)) 
 			

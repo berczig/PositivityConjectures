@@ -156,3 +156,20 @@ Gergely's  list on 07.09.2024
 3,2,2
 5,2,2
 3,2,2,1
+
+
+
+
+18.09.24:
+- time test with c++ in python                      DONE
+- if UIOs < 5 : add printout + save                 DONE
+- check for partitions on uio_size = sum(partition)
+- check (a,b,b) with specificchecker                DONE
+- make specificchecker saveable                     DONE
+- make animation
+- julia or c++ approach
+- update drawio diagram
+- add all getLabels etc. function
+in the drawio diagram
+- add network draw graph in coregenerator for 
+double partition (will not draw at resultviewer)

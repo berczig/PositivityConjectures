@@ -35,6 +35,25 @@ class FilterEvaluator:
         self.comp_indices = model_logger.core_generator_class_.comp_indices
         self.edgePenalty = model_logger.edgePenalty
 
+        self.model_logger:ModelLogger
+        self.model_logger = model_logger
+
+    def getTestMatrix(self):
+        desc = self.model_logger.core_generator_class_.getTestMatrixDescription(self.model_logger.partition)
+        rows = len(desc)
+        columns = self.model_logger.core_generator_class_.getCoreRepresentationLength(self.model_logger.partition)
+        print(f"getTestMatrix create a {rows}x{columns} matrix")
+        matrix = np.empty((rows, columns), dtype=int)
+        matrix.fill(FilterEvaluator.DEFAULT_IGNORE_VALUE)
+
+        ordered_cc = self.model_logger.core_generator_class_.getOrderedCoreComparisions(self.model_logger.partition)
+        for rowindex, comparisons in enumerate(desc):
+            for edgecomp in comparisons:
+                colindex = ordered_cc.index(edgecomp)
+                matrix[rowindex][colindex] = comparisons[edgecomp]
+                print("edge:", edgecomp, comparisons[edgecomp], colindex)
+        return matrix
+
     def coreFitsConditions(self, correp, Conditions): # ANDs conditions in row together
 
         for rowcondition in Conditions:

@@ -2,8 +2,6 @@ from functools import lru_cache
 from itertools import permutations
 import os
 import numpy as np
-import SPC
-from pathlib import Path
 
 #### Parameters Start ########
 uio_partition = (3,2)
@@ -237,7 +235,6 @@ class UIODataExtractor:
             6*self.countEschers((a+b+c+d,))
         
 
-    @lru_cache(maxsize=None) # while calculating the coefficient the same partition can appear multiple times
     def countEschers(self, partition):
         return count(self.getEschers(partition))
         
@@ -410,3 +407,6 @@ if __name__ == "__main__":
 # no subclasses
 # no importlib
 # only 1 file
+# no lre cache
+# no yield
+# no function inside function

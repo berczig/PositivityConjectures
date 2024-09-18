@@ -112,6 +112,14 @@ class EscherCoreGeneratorTrippleSymmetricNoEqual(EscherCoreGeneratorAbstract):
                 "vw_u 1. insert":"vw_u",
             }
         }
+
+    @staticmethod
+    def getTestMatrixDescription(partition):
+        return [
+            {("subescher uv end", "uv 1. insert") : UIO.LESS, ("subescher vw end", "vw 1. insert") : UIO.LESS, ("subescher uw end", "uw 1. insert") : UIO.LESS},
+            {("subescher uv end", "uv 1. insert") : UIO.LESS, ("subescher vw end", "vw 1. insert") : UIO.LESS, ("subescher uw end", "uw 1. insert") : UIO.LESS},
+            {("subescher uv end", "uv 1. insert") : UIO.LESS, ("subescher vw end", "vw 1. insert") : UIO.LESS, ("subescher uw end", "uw 1. insert") : UIO.LESS}
+        ]
     
     def getCoreLabelGroupColors(partition):
         return {

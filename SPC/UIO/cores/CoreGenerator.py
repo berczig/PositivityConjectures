@@ -22,7 +22,15 @@ class CoreGenerator:
         pass
 
     @staticmethod
-    def getCoreLabels(partition):
+    def getCoreLabels(partition) -> list:
+        """
+        abstract function
+        """
+        pass
+
+    
+    @staticmethod
+    def getTestMatrixDescription(partition):
         """
         abstract function
         """
@@ -50,6 +58,19 @@ class CoreGenerator:
 
     @classmethod
     def calculate_comp_indices(cls, partition):
+        """
+        How is the core representation ordered?
+        First all the comparisons with the first vertex, then the second and so and
+
+        What is the first vertex?
+        The vertex order is given by the labels list
+
+        How are the comparisons ordered?
+        As given by the return dict of getCoreComparisions. That means the first entry in the corerep is 
+        the comparison between the first vertex and whatever vertex is the first to be mentioned in 
+        getCoreComparisions when asking for the comparisons to the first vertex. 
+        The first entry in corerep is not necessarily comparison between first and second vertex
+        """
 
         # this attribute is common for all coregenerator even when they have different UIO. So it should be a class attribute
         if not hasattr(cls, "comp_indices"):
@@ -88,6 +109,20 @@ class CoreGenerator:
     def getCoreLength(cls, partition):
         assert len(cls.getCoreLabels(partition)) == len(set(cls.getCoreLabels(partition))), "the labels are not unique"
         return len(cls.getCoreLabels(partition))
+
+
+    
+    @classmethod
+    def getOrderedCoreComparisions(cls, partition):
+        order = []
+        comps = cls.getCoreComparisions(partition)
+        # the labels list give the order of first label
+        for first_label in cls.getCoreLabels(partition):
+            if first_label in comps:
+                # the comparisons give the order of the second labels
+                for second_label in comps[first_label]:
+                    order.append((first_label, second_label))
+        return order
     
     @classmethod
     def getAllCoreComparisions(cls, partition):

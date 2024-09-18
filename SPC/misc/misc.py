@@ -9,6 +9,9 @@ from pathlib import Path
 def getPermutationsOfN(n):
     return permutations(range(n))
 
+def getKPermutationsOfN(n,k):
+    return permutations(range(n), k)
+
 def count(iterable):
     return sum((1 for _ in iterable))
 

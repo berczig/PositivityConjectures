@@ -78,7 +78,7 @@ class GlobalUIODataPreparer(PartiallyLoadable):
         A = []
         generate_uio_encoding_rec(A, [0], n, 1)
         #print("this is the one 2379:", A[2379])
-        print("Generated", len(A), "unit order intervals encodings")
+        print("Generated", len(A), "unit interval order encodings")
         return A
     
     def getInputdataAsCountsMatrix(self):

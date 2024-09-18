@@ -14,17 +14,17 @@ from keras.models import Sequential
 class ModelLogger(PartiallyLoadable):
     
     def __init__(self):
-        super().__init__(["model_structure", "step", "all_scores", "bestscore_history", "meanscore_history", "bestfilter_history", 
+        super().__init__(["model_structure", "step", "all_scores", "bestscore_history", "meanscore_history",  
                           "calculationtime_history", "residual_score_history", "perfect_coef_history", "partition", "core_generator_type", "core_length", "core_representation_length",
                           "RL_n_graphs", "ml_model_type", "ml_training_algorithm_type", "condition_rows",
                           "residuals", "current_bestgraph", "graph_vertices", "graph_edges", "graphsize_history",
-                          "last_modified", "edgePenalty"], 
+                          "last_modified", "edgePenalty", "some_wrong_uios"], 
                           default_values = {"last_modified":0})
         self.step = 0
         self.all_scores = {} # {filter_as_tuple:score}
         self.bestscore_history = [] # history of best score
-        self.bestfilter_history = []
         self.residual_score_history = []
+        self.current_bestgraph = None
         self.perfect_coef_history = []
         self.meanscore_history = [] # history of mean score
         self.calculationtime_history = []
@@ -34,6 +34,7 @@ class ModelLogger(PartiallyLoadable):
         self.last_modified = 0
         self.graph_edges = []
         self.model_structure : MLModel
+        self.some_wrong_uios = []
 
         self.overwrite_filenames = {}
 

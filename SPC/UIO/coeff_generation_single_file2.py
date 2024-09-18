@@ -1,10 +1,8 @@
-from functools import lru_cache
 from itertools import permutations
-import os
 import numpy as np
 
 #### Parameters Start ########
-uio_partition = (3,2)
+uio_partition = (3,1)
 escher_core_generatpr = "Escher"
 uio_max_size = 4
 #### Parameters End   ########

@@ -70,7 +70,7 @@ def main(partition, training_data_load_path, training_data_save_path, model_load
     algorithm : LearningAlgorithm
     class_ = getattr(importlib.import_module("SPC.UIO.ml_algorithms."+ml_training_algorithm_type), ml_training_algorithm_type)
     algorithm = class_(modelLogger)
-    algorithm.UIO_preparer(Preparer)
+    algorithm.setUIO_preparer(Preparer)
     algorithm.setTrainingData(*Preparer.getTrainingData())
     algorithm.train(iteration_steps, model_save_path, model_save_time)
 
@@ -78,8 +78,11 @@ def main(partition, training_data_load_path, training_data_save_path, model_load
     # 4) save model
     print("[main - step 4 - save model]")
     if model_save_path != "":
-        print("saving model...")
-        modelLogger.save_model_logger(model_save_path)
+        if algorithm.saveable_model:
+            print("saving model...")
+            modelLogger.save_model_logger(model_save_path)
+        else:
+            print("Algorithm not saveable")
     else:
         print("no model save path provided")
 
@@ -93,13 +96,13 @@ def main(partition, training_data_load_path, training_data_save_path, model_load
 if __name__ == "__main__":
 
      # parameters
-    partition = (5,2,2) 
-    training_data_load_path = "SPC/Saves,Tests/5_2_2.bin" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core_9_7_2024.bin"
-    training_data_save_path = "" # "SPC/Saves,Tests/5_2_2.bin" # "SPC/Saves,Tests/Trainingdata/partition_4_3_2_3rows.bin" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core.bin"
+    partition = (3,3,1) 
+    training_data_load_path = "SPC/Saves,Tests/Trainingdata/partition_3_3_1.bin" # "SPC/Saves,Tests/Trainingdata/5_2_2.bin" # "SPC/Saves,Tests/5_2_2.bin" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core_9_7_2024.bin"
+    training_data_save_path = "" # "SPC/Saves,Tests/Trainingdata/partition_2_2_1.bin" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core.bin"
     model_load_path =  "" # "SPC/Saves,Tests/models/Quadruple6.keras" # "SPC/Saves,Tests/models/for_result_viewer_test.keras" #"SPC/Saves,Tests/models/for_result_viewer_test.keras" # "SPC/Saves,Tests/models/tripple_escher.keras"#"" #"SPC/Saves,Tests/models/my_newmodel.keras"
-    model_save_path = "SPC/Saves,Tests/models/model5_2_2again.keras"
+    model_save_path = "SPC/Saves,Tests/models/some_3_3_1_check.keras"
     model_save_time = 1800 # how many seconds have to have elapsed before saving
-    ml_training_algorithm_type = "RLAlgorithm" # exact name of the algorithm python class BruteForceAlgorithm or RLAlgorithm
+    ml_training_algorithm_type = "CheckSpecificAlgorithm" # exact name of the algorithm python class BruteForceAlgorithm or RLAlgorithm
     ml_model_type =  "RLNNModel_Escher_TrippleNoEqual" # RLNNModel_Escher_TrippleNoEqual RLNNModel_CorrectSequence or RLNNModel_Escher or RLNNModel_Escher_Tripple - exact name of the model python class. The model is the component that contains the weights and perform computations, but the algorithm decides how the model is used
     core_generator_type =  "EscherCoreGeneratorTrippleSymmetricNoEqual" # "EscherCoreGeneratorQuadruple "EscherCoreGeneratorBasic"   "EscherCoreGeneratorTripple" "EscherCoreGeneratorTrippleSymmetricNoEqual"
     iteration_steps = 3

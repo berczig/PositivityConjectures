@@ -17,8 +17,6 @@ import importlib
 import networkx as nx
 from matplotlib import pyplot as plt
 
-# "step", "all_scores", "bestscore_history", "meanscore_history", "bestfilter_history", "calculationtime_history", "partition", "core_generator_type", "core_length", "core_representation_length"
-ModelLogger_attributes = ["partition", "step"]
 last_sort = ""
 last_toggle = False
 
@@ -163,7 +161,13 @@ def display_details(result):
                     d = datetime.fromtimestamp(model.last_modified)
                     ui.label(f"Last modified: {d.day}.{d.month}.{d.year} {d.hour}:{d.minute}:{d.second}").style('font-size: 18px; font-weight: bold;')
 
+                    if model.some_wrong_uios != None:
+                        text = "<br>".join([f"{encod} has res = {res}" for (encod, res) in model.some_wrong_uios])
+                        ui.html(f"Non-zero UIOs: <br> {text}").style('font-size: 18px; font-weight: bold;')
+                        #ui.label(f"Non-zero UIOs: {text}").style('font-size: 18px; font-weight: bold;')
+
                     ui.button("Export data", on_click= lambda:export_data(result, figs)).style('font-size: 22px; font-weight: bold;')
+
 
                 # PLots
                 x = list(range(1, len(model.bestscore_history)+1))
@@ -421,7 +425,7 @@ def get_table_data():
 
 
     tabledata = []
-    for partition in data:
+    for partition in sorted(data, key=lambda x: (len(x), x)):
         for scorename in ["score", "res", "perfect"]:
             if scorename == "score":
                 item = {"partition":str(partition)}

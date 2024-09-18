@@ -14,8 +14,6 @@ class BruteForceAlgorithm(LearningAlgorithm):
         self.model : RLNNModel_CorrectSequence
         self.model = self.model_logger.get_model_structure()
 
-        self.FE = FilterEvaluator(self.trainingdata_input, self.trainingdata_output, FilterEvaluator.DEFAULT_IGNORE_VALUE, self.model_logger)
-
         total_filters = self.getTotalNumberOfFilters(self.model.ALPHABET_SIZE, self.model.ROWS_IN_CONDITIONMATRIX, self.model.COLUMNS_IN_CONDITIONMATRIX, self.model.MAX_EXPECTED_EDGES)
         print("will generate {} matrices".format(total_filters))
         MatrixGenerator = self.generate_matrices(self.model.ROWS_IN_CONDITIONMATRIX, self.model.COLUMNS_IN_CONDITIONMATRIX, self.model.MAX_EXPECTED_EDGES, 
