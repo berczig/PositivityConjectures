@@ -1,7 +1,7 @@
 # PositivityConjectures
 A RL approach to study the Stanley conjecture on chromatic symmetric polynomials
 
-![alt text](https://github.com/berczig/PositivityConjectures/blob/main/escher_stairs.jpg?raw=true)
+![alt text](https://github.com/berczig/PositivityConjectures/blob/main/escher_stairs.jpg?raw=true =100x20)
 
 ## Features
 - Generate all UIOs of length n using the area sequence encoding
