@@ -1,6 +1,7 @@
 # PositivityConjectures
 A RL approach to study the Stanley conjecture on chromatic symmetric polynomials
 
+<img src="https://github.com/berczig/PositivityConjectures/blob/main/escher_stairs.jpg?raw=true" alt="drawing" width="200"/>
 ![alt text](https://github.com/berczig/PositivityConjectures/blob/main/escher_stairs.jpg?raw=true =100x20)
 
 ## Features
