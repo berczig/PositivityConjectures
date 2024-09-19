@@ -27,7 +27,7 @@ Run [SPC/UIO/main.py](main.py) to
 You can change multiple parameters in main.py e.g. the partition or core generator.
 
 Run [SPC/ResultViewer/result_Viewer.py](result_Viewer.py) to open a GUI to display the saved training data and saved models.
-![alt text](https://github.com/berczig/PositivityConjectures/blob/main/result_viewer_preview.png?raw=true)
+![alt text](https://github.com/berczig/PositivityConjectures/blob/main/result_viewer_preview.PNG?raw=true)
 
 ## Project Overview
 Overview of the classes:
