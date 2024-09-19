@@ -20,7 +20,14 @@ pip install -e .
 Make sure you have flit installed.
 
 ## Usage
-Run [SPC/UIO/main.py](main.py). You can change multiple parameters in main.py e.g. the partition or core generator.
+Run [SPC/UIO/main.py](main.py) to 
+- generate the UIOs and the cores
+- calculate the coefficients
+- train a model on the data
+You can change multiple parameters in main.py e.g. the partition or core generator.
+
+Run [SPC/ResultViewer/result_Viewer.py](result_Viewer.py) to open a GUI to display the saved training data and saved models.
+![alt text](https://github.com/berczig/PositivityConjectures/blob/main/result_viewer_preview.png?raw=true)
 
 ## Project Overview
 Overview of the classes:
