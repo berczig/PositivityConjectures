@@ -24,7 +24,9 @@ git clone https://github.com/berczig/PositivityConjectures.git
 cd PositivityConjectures
 pip install -r requirements.txt
 ```
-This will install the project and the required python modules. Next install the project as a python package - navigate to the directory containing [pyproject.toml](pyproject.toml) (Make sure you have flit installed) and run
+This will install the project and the required python modules. If you have issues with installing the requirements you can try to change the versions in [requirements.txt](requirements.txt).
+
+Next install the project as a python package - navigate to the directory containing [pyproject.toml](pyproject.toml) (Make sure you have flit installed) and run
 ```
 pip install -e .
 ```
