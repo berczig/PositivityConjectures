@@ -41,7 +41,7 @@ Unit interval graphs on n intervals are in 1-1 correspondence with sequences $(1
 where $a_i \le i$ integers. 
 Two main directions:
 1) Supervised learning of the function $(a_1,\ldots, a_n) \mapsto c_\lambda$, or more generally $(a_1,\ldots, a_n) \mapsto (c_{\lambda_1},\ldots, c_{\lambda_k})$, followed by saliency/interpretability analysis in [SPC/Transformers] we have a small GPT model with promising results.
-2) Learning Stanley coefficients as number of Escher-tuples satidsfying certasin condtitions. The condition graphs are found using RL. This approach based on recent results of Szenes-Rok, and lots of math intuition.
+2) Learning Stanley coefficients as number of Escher-tuples satisfying certain conditions. The conditions are encoded by condition graphs, which we find using graph RL. This approach is based on recent results of Szenes-Rok, and it uses lots of math intuition.
 This repo focuses on this result.  
 
 ## Features
