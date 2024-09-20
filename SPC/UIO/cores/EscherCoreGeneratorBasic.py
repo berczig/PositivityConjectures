@@ -45,6 +45,14 @@ class EscherCoreGeneratorBasic(EscherCoreGeneratorAbstract):
             }
         }
     
+    @staticmethod
+    # ["0", "subescher start interval", "subescher end interval", "1.insert"]
+    def getTestMatrixDescription(partition):
+        return [
+            {("subescher end interval", "1.insert") : UIO.LESS},
+            
+        ]
+    
     def getCoreLabelGroupColors(partition):
         return {
             "0":"skyblue",
@@ -55,6 +63,11 @@ class EscherCoreGeneratorBasic(EscherCoreGeneratorAbstract):
     
 
     def generateCore(self, escherpair):
+        def add_half(L):
+            return L[:-1]+[L[-1]+0.5]
+        u,v = escherpair
+        return [0] + add_half(self.get_shortb_insertion_and_subescher_of_2_eschers(u,v))
+    
         n,k = self.partition  # maybe have to switch n and k
         u,v = escherpair
         core = self.getInsertionsSubeshers(u,v)
@@ -87,6 +100,43 @@ class EscherCoreGeneratorBasic(EscherCoreGeneratorAbstract):
 
             #points.append(n-1)
             #points.append(n+k-1)
+        return points
+    
+    def get_shortb_insertion_and_subescher_of_2_eschers(self, u,v): 
+        #Let uu be the longer, vv the shorter escher
+        # n,k = max(len(u),len(v)), min(len(u),len(v))
+        # if len(u) == n:
+        #     uu = u
+        #     vv = v
+        # else:
+        #     uu = v
+        #     vv = u
+        # core = self.getInsertionsSubeshers(uu,vv)
+        n,k = len(u), len(v)
+        core = self.getInsertionsSubeshers(u,v)
+        insertions, escherstartpoints = core
+        if len(insertions) == 0:
+            return [-1, -1, -1]
+        else:
+            points = []
+            has_bigger_than_0_startpoint = False
+            for escherstartpoint in escherstartpoints:
+                if escherstartpoint > 0:
+                    points.append(escherstartpoint)
+                    points.append(escherstartpoint+k-1)
+                    has_bigger_than_0_startpoint = True
+                    break
+            if not has_bigger_than_0_startpoint:
+                points.append(-1)
+                points.append(insertions[0]+1)
+            points.append(insertions[0])
+            # if len(escherstartpoints) == 0:
+            #     points.append(-1)
+            #     points.append(-1)
+            # else:
+            #     points.append(escherstartpoints[0])
+            #     points.append(escherstartpoints[0]+k-1)
+            # points.append(insertions[0])
         return points
     
     """ def getCoreRepresentation(self, core):

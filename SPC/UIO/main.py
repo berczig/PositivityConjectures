@@ -96,19 +96,19 @@ def main(partition, training_data_load_path, training_data_save_path, model_load
 if __name__ == "__main__":
 
      # parameters
-    uio_size = 4
-    partition = (2,1,1) 
+    uio_size = 7
+    partition = (4,3) 
     training_data_load_path = "" #"SPC/Saves,Tests/Trainingdata/partition_2_1_1_n5.bin" # "SPC/Saves,Tests/Trainingdata/5_2_2.bin" # "SPC/Saves,Tests/5_2_2.bin" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core_9_7_2024.bin"
     training_data_save_path = "" # "SPC/Saves,Tests/Trainingdata/partition_2_1_1_n8.bin" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core.bin"
     model_load_path =  "" # "SPC/Saves,Tests/models/Quadruple6.keras" # "SPC/Saves,Tests/models/for_result_viewer_test.keras" #"SPC/Saves,Tests/models/for_result_viewer_test.keras" # "SPC/Saves,Tests/models/tripple_escher.keras"#"" #"SPC/Saves,Tests/models/my_newmodel.keras"
-    model_save_path = "SPC/Saves,Tests/models/new_2_1_1.keras"
+    model_save_path = "" # "SPC/Saves,Tests/models/new_2_1_1.keras"
     model_save_time = 1800 # how many seconds have to have elapsed before saving
     ml_training_algorithm_type = "CheckSpecificAlgorithm" # CheckSpecificAlgorithm/BruteForceAlgorithm/RLAlgorithm - exact name of the algorithm python class
-    ml_model_type =  "RLNNModel_Escher_TrippleNoEqual" # RLNNModel_Escher_TrippleNoEqual RLNNModel_CorrectSequence or RLNNModel_Escher or RLNNModel_Escher_Tripple - exact name of the model python class. The model is the component that contains the weights and perform computations, but the algorithm decides how the model is used
-    core_generator_type =  "EscherCoreGeneratorTrippleSymmetricNoEqual" # "EscherCoreGeneratorQuadruple "EscherCoreGeneratorBasic"   "EscherCoreGeneratorTripple" "EscherCoreGeneratorTrippleSymmetricNoEqual"
-    iteration_steps = 10
-    RL_n_graphs = 200
-    condition_rows = 4
+    ml_model_type =  "RLNNModel_Escher" # EscherCoreGeneratorBasic RLNNModel_Escher_TrippleNoEqual RLNNModel_CorrectSequence or RLNNModel_Escher or RLNNModel_Escher_Tripple - exact name of the model python class. The model is the component that contains the weights and perform computations, but the algorithm decides how the model is used
+    core_generator_type =  "EscherCoreGeneratorBasic" # "EscherCoreGeneratorQuadruple "EscherCoreGeneratorBasic"   "EscherCoreGeneratorTripple" "EscherCoreGeneratorTrippleSymmetricNoEqual"
+    iteration_steps = 100
+    RL_n_graphs = 400
+    condition_rows = 1
     edgePenalty = 1
     plot_after_training = False
 
