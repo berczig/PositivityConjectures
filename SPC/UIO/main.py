@@ -12,7 +12,7 @@ import os
 
 
 def main(partition, training_data_load_path, training_data_save_path, model_load_path, model_save_path, model_save_time, ml_training_algorithm_type, ml_model_type, 
-         core_generator_type, iteration_steps, plot_after_training, RL_n_graphs, condition_rows, edgePenalty):
+         core_generator_type, iteration_steps, plot_after_training, RL_n_graphs, condition_rows, edgePenalty, uio_size):
 
     # Let all relative paths start in the folder containing SPC
     training_data_load_path = "" if training_data_load_path == "" else os.path.join(refpath, training_data_load_path)
@@ -26,12 +26,11 @@ def main(partition, training_data_load_path, training_data_save_path, model_load
     device_name = tf.test.gpu_device_name()
     print(device_name)
 
-    uio_length = sum(partition)
     # core_data_type
 
     # 1) get Training Data
     print("[main - step 1 - get data]")
-    Preparer = GlobalUIODataPreparer(uio_length)
+    Preparer = GlobalUIODataPreparer(uio_size)
     if training_data_load_path != "":
         print("loading training data...")
         Preparer.loadTrainingData(training_data_load_path)
@@ -47,7 +46,8 @@ def main(partition, training_data_load_path, training_data_save_path, model_load
     # 2) get Model
     print("[main - step 2 - get model]")
     modelLogger = ModelLogger()
-    modelLogger.setParameters(partition, core_generator_type, RL_n_graphs, ml_training_algorithm_type, ml_model_type, condition_rows, edgePenalty)
+    modelLogger.setParameters(partition, core_generator_type, RL_n_graphs, ml_training_algorithm_type, 
+    ml_model_type, condition_rows, edgePenalty, uio_size)
     
     if model_load_path != "":
         print("loading model...")
@@ -96,20 +96,21 @@ def main(partition, training_data_load_path, training_data_save_path, model_load
 if __name__ == "__main__":
 
      # parameters
-    partition = (3,3,1) 
-    training_data_load_path = "SPC/Saves,Tests/Trainingdata/partition_3_3_1.bin" # "SPC/Saves,Tests/Trainingdata/5_2_2.bin" # "SPC/Saves,Tests/5_2_2.bin" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core_9_7_2024.bin"
-    training_data_save_path = "" # "SPC/Saves,Tests/Trainingdata/partition_2_2_1.bin" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core.bin"
+    uio_size = 4
+    partition = (2,1,1) 
+    training_data_load_path = "" #"SPC/Saves,Tests/Trainingdata/partition_2_1_1_n5.bin" # "SPC/Saves,Tests/Trainingdata/5_2_2.bin" # "SPC/Saves,Tests/5_2_2.bin" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core_9_7_2024.bin"
+    training_data_save_path = "" # "SPC/Saves,Tests/Trainingdata/partition_2_1_1_n8.bin" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core.bin"
     model_load_path =  "" # "SPC/Saves,Tests/models/Quadruple6.keras" # "SPC/Saves,Tests/models/for_result_viewer_test.keras" #"SPC/Saves,Tests/models/for_result_viewer_test.keras" # "SPC/Saves,Tests/models/tripple_escher.keras"#"" #"SPC/Saves,Tests/models/my_newmodel.keras"
-    model_save_path = "SPC/Saves,Tests/models/some_3_3_1_check.keras"
+    model_save_path = "SPC/Saves,Tests/models/new_2_1_1.keras"
     model_save_time = 1800 # how many seconds have to have elapsed before saving
-    ml_training_algorithm_type = "CheckSpecificAlgorithm" # exact name of the algorithm python class BruteForceAlgorithm or RLAlgorithm
+    ml_training_algorithm_type = "CheckSpecificAlgorithm" # CheckSpecificAlgorithm/BruteForceAlgorithm/RLAlgorithm - exact name of the algorithm python class
     ml_model_type =  "RLNNModel_Escher_TrippleNoEqual" # RLNNModel_Escher_TrippleNoEqual RLNNModel_CorrectSequence or RLNNModel_Escher or RLNNModel_Escher_Tripple - exact name of the model python class. The model is the component that contains the weights and perform computations, but the algorithm decides how the model is used
     core_generator_type =  "EscherCoreGeneratorTrippleSymmetricNoEqual" # "EscherCoreGeneratorQuadruple "EscherCoreGeneratorBasic"   "EscherCoreGeneratorTripple" "EscherCoreGeneratorTrippleSymmetricNoEqual"
-    iteration_steps = 3
+    iteration_steps = 10
     RL_n_graphs = 200
-    condition_rows = 3
-    edgePenalty = 10
+    condition_rows = 4
+    edgePenalty = 1
     plot_after_training = False
 
     main(partition, training_data_load_path, training_data_save_path, model_load_path, model_save_path, model_save_time, ml_training_algorithm_type, 
-         ml_model_type, core_generator_type, iteration_steps, plot_after_training, RL_n_graphs, condition_rows, edgePenalty)
+         ml_model_type, core_generator_type, iteration_steps, plot_after_training, RL_n_graphs, condition_rows, edgePenalty, uio_size)

@@ -6,14 +6,14 @@ import importlib
 
 class GlobalUIODataPreparer(PartiallyLoadable):
 
-    def __init__(self, n):
-        super().__init__(["coreRepresentationsCategorizer", "coefficients", "partition"])
-        self.n = n
+    def __init__(self, uio_size):
+        super().__init__(["coreRepresentationsCategorizer", "coefficients", "uio_size", "partition"])
+        self.uio_size = uio_size
         self.coreRepresentationsCategorizer = {} # {coreRepresentation1:{UIOID1:occurences_in_UIOID1, UIOID2:occurences_in_UIOID2,...}, ...}
         self.coefficients = [] # list of all coefficients (for the partition given to getTrainingData)
 
     def initUIOs(self, core_generator_type):
-        encodings = self.generate_all_uio_encodings(self.n)
+        encodings = self.generate_all_uio_encodings(self.uio_size)
         #encodings = [encodings[2379]]
         self.extractors = [UIODataExtractor(UIO(enc), core_generator_type) for enc in encodings]
         print("Initialized {} UIOs".format(len(encodings)))
@@ -24,7 +24,7 @@ class GlobalUIODataPreparer(PartiallyLoadable):
         return self.extractors[i].uio.encoding
     
     def getAllUIOEncodings(self):
-        return self.generate_all_uio_encodings(self.n)
+        return self.generate_all_uio_encodings(self.uio_size)
 
 
     def computeTrainingData(self, partition:tuple, core_generator_type:str) -> tuple:

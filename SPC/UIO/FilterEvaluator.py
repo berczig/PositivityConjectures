@@ -11,17 +11,18 @@ class FilterEvaluator:
     INF = 9999999999
     DEFAULT_IGNORE_VALUE = -1
 
-    def __init__(self, coreRepresentationsCategorizer:dict, true_coefficients, ignore_edge:int, model_logger:ModelLogger):
+    def __init__(self, coreRepresentationsCategorizer:dict, true_coefficients, ignore_edge:int, model_logger:ModelLogger, verbose=True):
         """
         coreRepresentationsCategorizer: {coreRepresentation1:{UIOID1:occurences_in_UIOID1, UIOID2:occurences_in_UIOID2}, ...}
         """
         self.coreRepresentationsCategorizer = coreRepresentationsCategorizer # {coreRepresentation1:{UIOID1:occurences_in_UIOID1, UIOID2:occurences_in_UIOID2}}
         self.true_coefficients = np.array(true_coefficients)
         self.ignore_edge = ignore_edge
-        print("true coefficients:", true_coefficients)
-        print("true coefficients length:", len(true_coefficients))
-        print("true coefficients max coef:", max(true_coefficients))
-        print(np.sum(true_coefficients))
+        if verbose:
+            print("true coefficients:", true_coefficients)
+            print("true coefficients length:", len(true_coefficients))
+            print("true coefficients max coef:", max(true_coefficients))
+            print(np.sum(true_coefficients))
         self.coreRep2 = {}
         for primerep in coreRepresentationsCategorizer:
             counts = np.zeros(len(true_coefficients))

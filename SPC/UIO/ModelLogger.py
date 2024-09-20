@@ -18,13 +18,15 @@ class ModelLogger(PartiallyLoadable):
                           "calculationtime_history", "residual_score_history", "perfect_coef_history", "partition", "core_generator_type", "core_length", "core_representation_length",
                           "RL_n_graphs", "ml_model_type", "ml_training_algorithm_type", "condition_rows",
                           "residuals", "current_bestgraph", "graph_vertices", "graph_edges", "graphsize_history",
-                          "last_modified", "edgePenalty", "some_wrong_uios"], 
+                          "last_modified", "edgePenalty", "some_wrong_uios", "coeffsum", "uio_size",
+                          "current_bestgraph_matrix"], 
                           default_values = {"last_modified":0})
         self.step = 0
         self.all_scores = {} # {filter_as_tuple:score}
         self.bestscore_history = [] # history of best score
         self.residual_score_history = []
         self.current_bestgraph = None
+        self.current_bestgraph_matrix = None
         self.perfect_coef_history = []
         self.meanscore_history = [] # history of mean score
         self.calculationtime_history = []
@@ -35,10 +37,11 @@ class ModelLogger(PartiallyLoadable):
         self.graph_edges = []
         self.model_structure : MLModel
         self.some_wrong_uios = []
+        self.coeffsum = 0
 
         self.overwrite_filenames = {}
 
-    def setParameters(self, partition, core_generator_type:str, RL_n_graphs:int, ml_training_algorithm_type:str, ml_model_type:str, condition_rows:int, edgePenalty:float):
+    def setParameters(self, partition, core_generator_type:str, RL_n_graphs:int, ml_training_algorithm_type:str, ml_model_type:str, condition_rows:int, edgePenalty:float, uio_size:int):
         self.partition = partition
         self.RL_n_graphs = RL_n_graphs
         self.core_generator_type = core_generator_type
@@ -46,6 +49,7 @@ class ModelLogger(PartiallyLoadable):
         self.ml_model_type = ml_model_type
         self.condition_rows = condition_rows
         self.edgePenalty = edgePenalty
+        self.uio_size = uio_size
 
         self.core_generator_class_ = getattr(importlib.import_module("SPC.UIO.cores."+core_generator_type), core_generator_type)
         self.core_generator_class_ : CoreGenerator
@@ -59,6 +63,8 @@ class ModelLogger(PartiallyLoadable):
         self.keras_model = load_model(model_path)
         if self.model_structure: # remove this, this is only to support some older models
             self.model_structure.setParameters(self.partition, self.condition_rows, self.core_length, self.core_representation_length)
+        self.core_generator_class_ = getattr(importlib.import_module("SPC.UIO.cores."+self.core_generator_type), self.core_generator_type)
+        
 
     def set_keras_model(self, keras_model:Sequential):
         self.keras_model = keras_model

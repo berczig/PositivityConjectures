@@ -169,7 +169,23 @@ Gergely's  list on 07.09.2024
 - make animation
 - julia or c++ approach
 - update drawio diagram
-- add all getLabels etc. function
+- add all getLabels etc. function                   
 in the drawio diagram
-- add network draw graph in coregenerator for 
+- add network draw graph in coregenerator for       DONE
 double partition (will not draw at resultviewer)
+
+
+19.09.24:
+- best data for double partition
+- sum of real coefficient                               DONE
+- bigger table ? or different plo                       DONE, 2 tables
+- save table
+- green if all res positive, blue if all res negative
+- our best graphs is res > 0 or res < 0
+- In repo "make sure you have flit installed"? kann man das einfach in requirements.txt reintun?
+-change result viewer:
+    - group the training data by partition
+    - Select the best models and then use the saved training data to calulate the scores 
+    for the different uio_sizes on the fly (maybe make save file for the result viewer)
+    This way both tables use the same models
+    - make a tab for training data and models

@@ -39,7 +39,9 @@ class LearningAlgorithm:
         self.model_logger.calculationtime_history.append(time.time()-tic0)
         self.model_logger.residuals = residuals
         self.model_logger.current_bestgraph = self.FE.convertConditionMatrixToText(bestmatrix)
+        self.model_logger.current_bestgraph_matrix = bestmatrix
         self.model_logger.some_wrong_uios = some_wrong_uios
+        self.model_logger.coeffsum = np.sum(self.FE.true_coefficients)
         
 
     # Changes from previous version before restructure:

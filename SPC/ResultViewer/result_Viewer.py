@@ -6,6 +6,7 @@ from SPC.UIO.ModelLogger import ModelLogger
 from SPC.UIO.UIO import UIO
 from SPC.UIO.cores.CoreGenerator import CoreGenerator
 from SPC.UIO.GlobalUIODataPreparer import GlobalUIODataPreparer
+from SPC.UIO.FilterEvaluator import FilterEvaluator
 from functools import lru_cache
 from pathlib import Path
 import asyncio
@@ -145,6 +146,7 @@ def display_details(result):
                 # Info Text
                 with ui.column():
                     ui.label(f"Model: {filename}").style('font-size: 24px; font-weight: bold;')
+                    ui.label(f"Uio length: {model.uio_size}").style('font-size: 18px; font-weight: bold;')
                     ui.label(f"Partition: {model.partition}").style('font-size: 18px; font-weight: bold;')
                     ui.label(f"Final Graph score: {model.bestscore_history[-1]}").style('font-size: 18px; font-weight: bold;')
                     ui.label(f"Final Total Residual Absolute Sum: { np.sum(np.abs(model.residuals))}").style('font-size: 18px; font-weight: bold;')
@@ -291,9 +293,10 @@ def display_details2(result):
                 # Info Text
                 with ui.column():
                     ui.label(f"Training Data: {filename}").style('font-size: 24px; font-weight: bold;')
-                    ui.label(f"UIO length: {sum(data.partition)}").style('font-size: 18px; font-weight: bold;')
+                    ui.label(f"UIO length: {data.uio_size}").style('font-size: 18px; font-weight: bold;')
                     ui.label(f"Partition: {data.partition}").style('font-size: 18px; font-weight: bold;')
-                    ui.label(f"UIOs: {len(data.coefficients)}").style('font-size: 18px; font-weight: bold;')
+                    ui.label(f"UIOs: {len(data.coefficients)}").style('font-size: 18px; font-weight: bold;')        
+                    ui.label(f"Coeff. Sum: {np.sum(data.coefficients)}").style('font-size: 18px; font-weight: bold;')
                     ui.label(f"Distinct Core Representations: {len(data.coreRepresentationsCategorizer)}").style('font-size: 18px; font-weight: bold;')
 
 
@@ -375,6 +378,69 @@ def sort_by_score(results, reverse=True):
 def sort_by_date(results, reverse=True):
     return sorted(results, key=lambda x: x[1].last_modified, reverse=True)
 
+
+# Select the models with the best residual score
+# Any distinct attributes tuple (dictated by distinctAttributes) gets its own row in the table
+def selectModels(distinctAttributes):
+    models = load_json_files_cache(folder_input.value)
+
+    data = {} # {attr-tuple:(model, filename)}   
+    for filename, modellogger in models:
+        modellogger:ModelLogger
+
+        # We want to use the same model in a row, so models with bigger uio sizes will be 
+        # filtered away
+        if modellogger.uio_size > sum(modellogger.partition):
+            continue
+
+        attributes = tuple([getattr(modellogger, attr) for attr in distinctAttributes])
+
+        if attributes in data:
+            # better than previous?
+            if modellogger.residual_score_history[-1] < data[attributes][0].residual_score_history[-1]:
+                data[attributes] = (modellogger, filename)
+        else:
+            data[attributes] = (modellogger, filename)
+    return data
+
+def getTrainingdatasets():
+    trainingdatasets = load_json_files_cache2(folder_input2.value)
+    tds_ordered = {} # {partition: {uio_size:trainingdataset}}
+    for filename, tds in trainingdatasets:
+        tds:GlobalUIODataPreparer
+        if tds.partition in tds_ordered:
+            tds_ordered[tds.partition][tds.uio_size] = tds
+        else:
+            tds_ordered[tds.partition] = {tds.uio_size:tds}
+    return tds_ordered
+
+def EvaluateModelOnTrainingData():
+    models = selectModels(["partition", "condition_rows"])
+    trainingdatasets = getTrainingdatasets()
+
+    for (part, rows) in models:
+        model, modelname = models[(part, rows)]
+        if part in trainingdatasets:
+            tdsp = trainingdatasets[part]
+            for uio_size in tdsp:
+                tds = tdsp[uio_size]
+                tds:GlobalUIODataPreparer
+                FE = FilterEvaluator(coreRepresentationsCategorizer=tds.coreRepresentationsCategorizer,
+                    true_coefficients=tds.coefficients, 
+                    ignore_edge=FilterEvaluator.DEFAULT_IGNORE_VALUE,
+                    model_logger=model, verbose=False)
+                if not model.current_bestgraph_matrix is None:
+                    print("yo")
+                    residuals = FE.evaluate(filter=model.current_bestgraph_matrix, return_residuals=True)
+                    print(part, rows, uio_size, np.sum(np.abs(residuals)))
+                else:
+                    print(f"model {modelname} has no attribute \"current_bestgraph_matrix\"")
+        else:
+            print(f"No dataset found for {part}")
+
+
+
+
 # Function to sort and display results based on the selected option
 Sortoption = "by name"
 def sort_and_display_results(folder_path, option):
@@ -393,10 +459,10 @@ def sort_and_display_results(folder_path, option):
         results = sort_by_date(results)
     display_results(results)
 
-def get_table_data():
+def get_table_data(attribute = "res"):
 
     def is_better_score(scoretuple1, scoretuple2): # is 1 better than 2?
-        return scoretuple1["res"] < scoretuple2["res"]
+        return scoretuple1[attribute] < scoretuple2[attribute]
     
     models = load_json_files_cache(folder_input.value)
 
@@ -404,53 +470,54 @@ def get_table_data():
     for _, modellogger in models:
         modellogger:ModelLogger
         partition = modellogger.partition 
+        uio_size = modellogger.uio_size
         rows = modellogger.condition_rows
 
         scoretuple = {
-                "score":modellogger.bestscore_history[-1], 
                 "res":modellogger.residual_score_history[-1], 
                 "perfect":modellogger.perfect_coef_history[-1],
-                "totaluios":len(modellogger.residuals)
+                "totaluios":len(modellogger.residuals),
+                "totalcoeff":modellogger.coeffsum
         }
 
-        if partition in data:
-            if rows in data[partition]:
+        if (partition, rows) in data:
+            if uio_size in data[(partition, rows)]:
                 # better than previous?
-                if is_better_score(scoretuple, data[partition][rows]):
-                    data[partition][rows] = scoretuple
+                if is_better_score(scoretuple, data[(partition, rows)][uio_size]):
+                    data[(partition, rows)][uio_size] = scoretuple
             else:
-                data[partition][rows] = scoretuple
+                data[(partition,rows)][uio_size] = scoretuple
         else:
-            data[partition] = {rows:scoretuple}
+            data[(partition, rows)] = {uio_size:scoretuple}
 
 
     tabledata = []
-    for partition in sorted(data, key=lambda x: (len(x), x)):
-        for scorename in ["score", "res", "perfect"]:
-            if scorename == "score":
-                item = {"partition":str(partition)}
-            else:
-                item = {"partition":""}
+    smallest_uio_size = 99999
+    biggest_uio_size = 0
+    for partition, rows in sorted(data, key=lambda x: (len(x[0]), x[0], x[1])):
+        scores = data[((partition, rows))]
+        for scorename in [attribute]:
+            item = {"partition":f"{partition} ({rows} rows)"}
 
-            for row in data[partition]:
+            for uio_size in scores:
                 if scorename == "perfect":
-                    totaluios = data[partition][row]["totaluios"]
-                    item[f"{row}row"] = f"{data[partition][row][scorename]}/{totaluios}"
-                else:
-                    item[f"{row}row"] = str(data[partition][row][scorename])
+                    totaluios = scores[uio_size]["totaluios"]
+                    item[f"{uio_size}uio_size"] = f"{scores[uio_size][scorename]:.0f}/{totaluios}"
+                elif scorename == "res":
+                    totalcoeff = scores[uio_size]["totalcoeff"]
+                    item[f"{uio_size}uio_size"] = f"{scores[uio_size][scorename]:.0f}/{totalcoeff}"
+                biggest_uio_size = max(biggest_uio_size, uio_size)
+                smallest_uio_size = min(smallest_uio_size, uio_size)
             tabledata.append(item)
     
-    return tabledata
+    return tabledata, smallest_uio_size, biggest_uio_size
 
-def display_table(data):
+def display_table(data, smallest_uio_size, biggest_uio_size, title):
     print("here", data)
-    ui.table(rows=data, columns=[
-        {'name': 'partition', 'label': 'Partition', 'field': 'partition'},
-        {'name': '1row', 'label': '1 row', 'field': '1row'},
-        {'name': '2row', 'label': '2 row', 'field': '2row'},
-        {'name': '3row', 'label': '3 row', 'field': '3row'},
-        {'name': '4row', 'label': '4 row', 'field': '4row'},
-    ], title="Results")
+    columns=[{'name': 'partition', 'label': 'Partition', 'field': 'partition'}]
+    for uio_size in range(smallest_uio_size, biggest_uio_size+1):
+        columns.append({'name': f'{uio_size}uio_size', 'label': f'{uio_size} uio_size', 'field': f'{uio_size}uio_size'})
+    ui.table(rows=data, columns=columns, title=title)
 
 def refresh_page():
     display_results(load_json_files(folder_input.value))
@@ -466,26 +533,25 @@ with ui.row():
 ui.label('Models:').style('font-size: 24px; margin-bottom: 10px;')
 
 with ui.column():
-    with ui.row().classes():  # Create a row layout for the grid and detail section to be side by side
-        with ui.column().classes("w-96"):
+    with ui.column().classes("w-full"):
 
-            result_container = ui.scroll_area().classes('w-512')  # Scrollable area to display results
+        result_container = ui.scroll_area().classes('w-512')  # Scrollable area to display results
 
-            # Sorting dropdown and button
-            with ui.row():
-                sorting_option = ui.select(["by name", 'by partition', "by iteration", "by score", "by date"], label='Sort by', value="by name")
-                ui.button('Sort', on_click=lambda: sort_and_display_results(folder_input.value, sorting_option.value))
-
-            ui.button('Load Results', on_click=lambda: refresh_page())
-
-        # Initial display of results
-        display_table(get_table_data())
-
+        # Sorting dropdown and button
         with ui.row():
-            # Create a section on the right to display details of a selected result
-            with ui.column().classes():
-                details_container = ui.column().classes('w-128 h-fill border bg-gray-100 p-4')
+            sorting_option = ui.select(["by name", 'by partition', "by iteration", "by score", "by date"], label='Sort by', value="by name")
+            ui.button('Sort', on_click=lambda: sort_and_display_results(folder_input.value, sorting_option.value))
 
+        ui.button('Load Results', on_click=lambda: refresh_page())
+        ui.button("Load TrainingData", on_click=lambda: EvaluateModelOnTrainingData())
+
+    
+        details_container = ui.column().classes('w-128 h-fill border bg-gray-100 p-4')
+
+    
+    # Initial display of results
+    display_table(*get_table_data("res"), "Residual scores")
+    display_table(*get_table_data("perfect"), "Perfect coef. predictions")
     
     ui.label("Training data:")
     result_container2 = ui.scroll_area().classes('w-512')  # Scrollable area to display results

@@ -27,6 +27,31 @@ class EscherCoreGeneratorBasic(EscherCoreGeneratorAbstract):
         #        "1.insert":["n-1"]}
         return {"0": ["subescher start interval","1.insert"],
                 "subescher end interval":["1.insert"],}
+
+    
+    def getCoreLabelGroups(partition):
+        return {
+            "0":{
+                "0":"0"
+            },
+            "subescher start":{
+                "subescher start interval":"uv",
+            },
+            "subescher end":{
+                "subescher end end":"uv",
+            },
+            "1. insertion":{
+                "1. insert":"uv",
+            }
+        }
+    
+    def getCoreLabelGroupColors(partition):
+        return {
+            "0":"skyblue",
+            "subescher start":"hotpink",
+            "subescher end":"silver",
+            "1. insertion":"limegreen",
+            }
     
 
     def generateCore(self, escherpair):
