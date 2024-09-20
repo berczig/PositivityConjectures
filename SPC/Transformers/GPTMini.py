@@ -1,22 +1,39 @@
+# An adapted version of the small GPT model of Karpathy, which is a transformer model with a multihead self-attention mechanism.
+# A linear layer is added to predict integer scalars.
+
+# The model is trained on pairs (X, Y) where X=(a_1,...,a_n) is a list of integers between 0 and n, and Y is the predicted integer invairant, 
+# e.g Stanley coefficient. 
+
+# In this version we do not use tokenization, but we use embeddings. The input is a (a_1,...,a_n) is meant to be an integer vector, so the vocabulary size 
+# is the number of unique integers in the input array. 
+
+# The output is an integer y, so the model learns one specific group invariant y from other group invariants a_1,...,a_n.
+
+
+
+
 import torch
 import os 
 import torch.nn as nn
 from torch.nn import functional as F
-from UIODataGenerator import getUIOTrainingVectors
+from DataGenerator import getTrainingDataFromFile
 import matplotlib.pyplot as plt
 import random
 
 # hyperparameters
+filename = "SPC/Transformers/uio_data_3_2_n=5.csv" # file with training data
+X, Y = getTrainingDataFromFile(filename) # read in training data
 batch_size = 16 # how many independent sequences will we processed in parallel?
-block_size = 6 # length of the UIO
-vocab_size = 6 # number of possible values for each element of the UIO 
-max_iters = 2000
+block_size = X.shape[1] # length of the input array, that is the number of invariants from which we want to predict the # of subgroups
+# vocab_size is the number of unique integers in X and Y
+vocab_size = len(set(X.flatten().tolist()))
+max_iters = 1000
 eval_interval = 100
 learning_rate = 1e-3
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print("device:", device)
 eval_iters = 100
-n_embd = 64
+n_embd = 128
 n_head = 4
 n_layer = 4
 dropout = 0.0
@@ -24,45 +41,50 @@ dropout = 0.0
 
 torch.manual_seed(1337)
 
+# Print the parameters 
 
-# Data generation
+print('Hyperparameters:')
+print('batch_size:', batch_size)
+print('block_size:', block_size)
+print('vocab_size:', vocab_size)
+print('max_iters:', max_iters)
+print('eval_interval:', eval_interval)
+print('learning_rate:', learning_rate)
+print('device:', device)
+print('eval_iters:', eval_iters)
+print('n_embd:', n_embd)
+print('n_head:', n_head)
+print('n_layer:', n_layer)
+print('dropout:', dropout)
 
-#def generate_vectors(n_vectors,length_vectors, start, end):
-#    vectors = []
-#    for _ in range(n_vectors):
-#        vector = torch.sort(torch.randint(start, end+1, (length_vectors,)))[0]
-#        vectors.append(vector)
-#    return torch.stack(vectors)
 
-
-
-
-
-# Train and test splits: UIO=[unit interval order,Stanley coeff]  
-UIOin, UIOout = getUIOTrainingVectors(block_size)
-n = int(0.9*len(UIOin)) # first 90% will be train, rest val
+# Split the data into training and test sets
+  
+n = int(0.8*len(X)) # first 90% will be train, rest val
 #Random shuffle
 # Pair the elements of the two lists
-paired = list(zip(UIOin, UIOout))
+paired = list(zip(X, Y))
 # Shuffle the pairs
 random.shuffle(paired)
 # Unzip the pairs
-UIOin, UIOout = zip(*paired)
-UIOintrain_data = UIOin[:n]
-UIOouttrain_data = UIOout[:n]
-UIOinval_data = UIOin[n:]
-UIOoutval_data = UIOout[n:]
+X, Y = zip(*paired)
+X_train = X[:n]
+Y_train = Y[:n]
+X_test = X[n:]
+Y_test = Y[n:]
+
+print('Training data:', len(X_train), 'Test data:', len(X_test))
 
 
 # data loading 
 def get_batch(split):
     # generate a small batch of data of inputs x and targets y
     if split == 'train':
-        datain = UIOintrain_data 
-        dataout = UIOouttrain_data  
+        datain = X_train
+        dataout = Y_train    
     else:
-        datain = UIOinval_data 
-        dataout = UIOoutval_data
+        datain = X_test
+        dataout = Y_test
     batch_indexes = torch.randint(len(datain), (batch_size,))
     x = torch.stack([datain[i] for i in batch_indexes])
     y = torch.stack([dataout[i] for i in batch_indexes])
@@ -73,7 +95,7 @@ def get_batch(split):
 def estimate_loss():
     out = {}
     model.eval()
-    for split in ['train', 'val']:
+    for split in ['train', 'test']:
         losses = torch.zeros(eval_iters)
         for k in range(eval_iters):
             X, Y = get_batch(split)
@@ -156,11 +178,10 @@ class Block(nn.Module):
         x = x + self.ffwd(self.ln2(x))
         return x
 
-# First attempt: multihead transformer encoder with embeddings. That is, instead of working with
-# the UIO integer vectors directly, we first embed them into a continuous space of dimension n_embd.
+# First model: multihead transformer encoder with embeddings. Input is a (a_1,...,a_n) output is scalar y.
+# So the model learns one specific group invariant y from other group invariants a_1,...,a_n. 
+# MSE loss on (B,1) tensor, input is (B,T) tensor of integers, output is (B,1) tensor of floats.
 
-# Version 1 (default) MSE loss on (B,1,1) tensor, where the training pair is (UIOVector, Coeff), so the network learns one 
-#specific Stanley coefficient of lenth n=length of UIO. UIOVector has shape (B,T), Coeffs has size (B). 
 
 class GPTStanleywithEmbed(nn.Module):
 
@@ -194,8 +215,9 @@ class GPTStanleywithEmbed(nn.Module):
 
     
 
-# Version 2: MSE loss on (B,T,1) tensor, where the training pair is (UIOVector, CoeffVector)
-# Here CoeffVector[i]=StanleyCoeff(length i partition), so the network learns n coefficients simultaneously. 
+    # Version 2: The model learns n invariants simultaneously from the group invariants a_1,...,a_n.
+    # The input is a (a_1,...,a_n) output is a vector y=(y_1,...,y_n).
+
 
 class GPTStanleywithEmbed2(nn.Module):
 
@@ -243,7 +265,7 @@ for iter in range(max_iters):
     # every once in a while evaluate the loss on train and val sets
     if iter % eval_interval == 0 or iter == max_iters - 1:
         losses = estimate_loss()
-        print(f"step {iter}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}")
+        print(f"step {iter}: train loss {losses['train']:.4f}, test loss {losses['test']:.4f}")
 
     # sample a batch of data
     xb, yb = get_batch('train')
@@ -253,34 +275,33 @@ for iter in range(max_iters):
     loss.backward()
     optimizer.step()
 
-#Print model parameters
+#Plot all test points in the plane (predicted, real value)
 
-#for name, param in model.named_parameters():
-#    print(name, param)
+import matplotlib.pyplot as plt
+import torch
 
-# Print predicted (1,2,3) coefficients
 
-model.eval()  # Set the model to evaluation mode
-with torch.no_grad():  # Disable gradient calculation
-    #for i in range(len(UIOinval_data)-batch_size):
-    #    xb = torch.stack(UIOinval_data[i:i+batch_size])
-    #    yb = torch.stack(UIOoutval_data[i:i+batch_size])  
-    xb, yb = get_batch('val')       
-    logits, loss = model(xb,yb)  # Get the model's predictions
-    paired = list(zip(logits.tolist(),yb.tolist()))
+# Set the model to evaluation mode
+model.eval()
 
-    x_coords = []
-    y_coords = []
+# Initialize lists to store predictions and real values
+x_coords = []
+y_coords = []
 
-    for pair in paired:
-        print('Predicted:', pair[0], 'Real value:', pair[1])
-        x_coords.append(pair[0])
-        y_coords.append(pair[1])
-
-    # Plot the points
-    plt.scatter(x_coords, y_coords)
-    plt.xlabel('Predicted')
-    plt.ylabel('Real value')
-    plt.show()
-    #for pair in paired:
-    #    print('Predicted:', pair[0], 'Real value:', pair[1])
+# Disable gradient calculation
+with torch.no_grad():
+    # Iterate over the entire test dataset
+    for i in range(0, len(X_test), batch_size):
+        xb = torch.stack(X_test[i:i+batch_size])
+        yb = torch.stack(Y_test[i:i+batch_size])
+        logits, loss = model(xb, yb)  # Get the model's predictions
+        paired = list(zip(logits.tolist(), yb.tolist()))
+        for pair in paired:
+            x_coords.append(pair[0])
+            y_coords.append(pair[1])
+# Plot the points
+plt.scatter(x_coords, y_coords)
+plt.xlabel('Predicted')
+plt.ylabel('Real value')
+plt.title('Predicted vs Real Values')
+plt.show()
