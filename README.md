@@ -11,24 +11,19 @@ Let $G$ be a finite graph, with $V(G)$ representing its vertices and $E(G)$ repr
 A **proper coloring** $c$ of $G$ is a function $c : V(G) \rightarrow \mathbb{N}$, such that no two adjacent vertices share the same color, i.e., for all $\{u, v\} \in E(G)$, we have $c(u) \neq c(v)$.
 
 For a given coloring $c$, we can associate a monomial:
-$$
-x_c = \prod_{v \in V(G)} x_{c(v)},
-$$
+$x_c = \prod_{v \in V(G)} x_{c(v)}$,
 where $x_1, x_2, \dots$ are commuting variables. Let $\Pi(G)$ denote the set of all proper colorings of $G$, and let $\Lambda$ represent the ring of symmetric functions in the infinite set of variables $\{x_1, x_2, \dots\}$.
 
 Stanley introduced the following polynomial:
 
 ### Definition
 The **chromatic symmetric polynomial** $X_G \in \Lambda$ of a graph $G$ is defined as the sum of the monomials $x_c$ over all proper colorings $c \in \Pi(G)$:
-$$
-X_G = \sum_{c \in \Pi(G)} x_c.
-$$
+$X_G = \sum_{c \in \Pi(G)} x_c.$
 
 ### Definition
-The $m$-th **elementary symmetric polynomial** $e_m$ is defined as:
-$$
-e_m = \sum_{i_1 < i_2 < \dots < i_m} x_{i_1} x_{i_2} \dots x_{i_m},
-$$
+The $m$-th **elementary symmetric polynomial** $e_m$ is defined as
+$e_m = \sum_{i_1 < i_2 < \dots < i_m} x_{i_1} x_{i_2} \dots x_{i_m},
+$
 where $i_1, \dots, i_m \in \mathbb{N}$. Given a partition $\lambda = (\lambda_1 \geq \lambda_2 \geq \dots \geq \lambda_k)$, we define the elementary symmetric function $e_\lambda$ as $e_\lambda = \prod_{i=1}^k e_{\lambda_i}$. These functions form a basis for $\Lambda$, the ring of symmetric functions.
 
 ### Definition
@@ -37,9 +32,8 @@ A **unit interval graph** (UIG) is a graph whose vertices correspond to unit int
 Stanley posed the following conjecture in [Stanley1995], which is simplified here from the original formulation involving incomparability graphs:
 
 ### Conjecture (Stanley-Stembridge, 1993)
-The chromatic symmetric polynomial of a unit interval graph is $e$-positive, that is, if written in the elementary symmetric bases as 
-$$ X^G = \sum_{\lambda} c_\lambda e_\lambda$$ 
-then $c_\lambda \ge 0$ for all partition $\lambda$.
+The chromatic symmetric polynomial of a unit interval graph is $e$-positive, that is, if written in the elementary symmetric bases as $X^G = \sum_{\lambda} c_\lambda e_\lambda
+$, then $c_\lambda \ge 0$ for all partition $\lambda$.
 
 ## The ML approach 
 
