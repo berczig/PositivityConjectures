@@ -5,7 +5,7 @@ using LinearAlgebra
 
 #### Parameters Start ########
 uio_partition = (3, 2)
-uio_max_size = 5
+uio_max_size = 9
 #### Parameters End   ########
 
 #### Calculate constants ########
@@ -219,7 +219,8 @@ function getCoefficient(self::UIODataExtractor, partition::Tuple{Vararg{Int}})
     if length(partition) == 1
         return count(getEschers(self, partition))
     elseif length(partition) == 2
-        return countEschers(self, partition) - countEschers(self, (self.uio.N,))
+        n,k = partition
+        return countEschers(self, partition) - countEschers(self, (n+k,))
     elseif length(partition) == 3
         n, k, l = partition
         return 2 * countEschers(self, (n+k+l,)) + countEschers(self, partition) - countEschers(self, (n+l, k)) - countEschers(self, (n+k, l)) - countEschers(self, (l+k, n))
@@ -417,14 +418,25 @@ function getUIOData(uio_max_size::Int, partition::Tuple{Vararg{Int}})
 end
 
 function getAllUIODataUpTo(uio_max_size::Int)
-    for uio_size in 1:uio_max_size
+    encodings = []
+    coeffs = Dict{Tuple{Vararg{Int}}, Any}()
+    for uio_size in uio_max_size:uio_max_size
         for partitionsize in 1:uio_size
             for partition in partitionsOfN(partitionsize)
-                printUIOData(getUIOData(uio_size, Tuple(partition)), Tuple(partition))
+                if length(partition) == 2 && sum(partition) == uio_size
+                    println("Getting data for partition $(partition) of size $(uio_size)")
+                    encodings, coeff = getUIOData(uio_size, Tuple(partition))
+                    coeffs[Tuple(partition)] = coeff
+                end
             end
         end
     end
+    return encodings, coeffs
 end
+
+
+# The next function calculates the coefficients for all UIOs of a fixed partition.
+
 
 function printUIOData(data::Tuple{Vector{Vector{Int}}, Vector{Any}}, partition::Tuple{Vararg{Int}})
     encod, coeffs = data
@@ -434,7 +446,8 @@ function printUIOData(data::Tuple{Vector{Vector{Int}}, Vector{Any}}, partition::
     end
 end
 
-# Saving the encod[i],coeffs[i] pairs into a file
+# Saving the data to a CSV file: coefficients for all UIOs of fixed length and all partitions up to that length.
+
 
 using Pkg
 Pkg.add("CSV")
@@ -443,31 +456,38 @@ Pkg.add("DataFrames")
 using CSV
 using DataFrames
 
-using CSV
-using DataFrames
-
-function saveUIODataToCSV(data::Tuple{Vector{Vector{Int}}, Vector{Any}}, filename::String)
-    encod, coeffs = data
-    n = length(encod)
+function saveUIODataToCSV(data::Tuple{Vector{Vector{Int}}, Dict{Tuple{Vararg{Int}}, Any}}, filename::String)
+    encodings, coeffs = data
+    partitions = collect(keys(coeffs))
     
     # Create a DataFrame to store the data
-    df = DataFrame(encod = Vector{String}(undef, n), coeffs = Vector{Any}(undef, n))
+    df = DataFrame(encodings = Vector{String}(undef, length(encodings)))
     
-    for i in 1:n
-        df.encod[i] = string(encod[i])
-        df.coeffs[i] = coeffs[i]
+    # Add columns for each partition
+    for partition in partitions
+        df[!, string(partition)] = Vector{Any}(undef, length(encodings))
+    end
+    
+    # Populate the DataFrame
+    for i in 1:length(encodings)
+        df.encodings[i] = string(encodings[i])
+        for partition in partitions
+            df[i, string(partition)] = coeffs[partition][i]
+        end
+    end
+    
+    # Replace `nothing` with `missing`
+    for col in names(df)
+        df[!, col] = replace(df[!, col], nothing => missing)
     end
     
     # Save the DataFrame to a CSV file
     CSV.write(filename, df)
 end
 
-# Example usage
 @time begin
-data = getUIOData(uio_max_size, uio_partition)
-# the filename should be the format uio_data_uio_partition_n=uio_max_size.csv
-filename = "SPC/Transformers/uio_data_$(join(uio_partition, "_"))_n=$(uio_max_size).csv" 
+data = getAllUIODataUpTo(uio_max_size)
+filename = "SPC/Transformers/uio_data_n=$(uio_max_size).csv"
 saveUIODataToCSV(data, filename)
-printUIOData(data, uio_partition)
 end
 
