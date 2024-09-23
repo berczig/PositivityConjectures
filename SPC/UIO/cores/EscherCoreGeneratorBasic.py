@@ -63,11 +63,13 @@ class EscherCoreGeneratorBasic(EscherCoreGeneratorAbstract):
     
 
     def generateCore(self, escherpair):
+
         def add_half(L):
             return L[:-1]+[L[-1]+0.5]
         u,v = escherpair
-        return [0] + add_half(self.get_shortb_insertion_and_subescher_of_2_eschers(u,v))
-    
+        points_from_tripple = [0] + add_half(self.get_shortb_insertion_and_subescher_of_2_eschers(u,v))
+        return points_from_tripple
+
         n,k = self.partition  # maybe have to switch n and k
         u,v = escherpair
         core = self.getInsertionsSubeshers(u,v)
@@ -91,6 +93,7 @@ class EscherCoreGeneratorBasic(EscherCoreGeneratorAbstract):
             if not has_bigger_than_0_startpoint:
                 points.append(-1)
                 points.append(k-2)
+
             points.append(insertions[0]+0.5) # here 2(n+k)>n+k, but any such number will be fine
 
             #if len(insertions) > 1:
@@ -100,6 +103,8 @@ class EscherCoreGeneratorBasic(EscherCoreGeneratorAbstract):
 
             #points.append(n-1)
             #points.append(n+k-1)
+
+        #print("points:", points_from_tripple, points)
         return points
     
     def get_shortb_insertion_and_subescher_of_2_eschers(self, u,v): 

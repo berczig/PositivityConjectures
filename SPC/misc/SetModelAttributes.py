@@ -32,7 +32,7 @@ def load_all_models(folder_path, file_extension):
 def changeValue(model:ModelLogger):
     pass
     #print(model.uio_size, model.coeffsum)
-    model.coeffsum = coeffsums[model.uio_size]
+    #model.coeffsum = coeffsums[model.uio_size]
     #print(model.uio_size, np.sum(model.coefficients))
     # updated uio_size
     #model.uio_size = sum(model.partition)

@@ -41,4 +41,4 @@ class CheckSpecificAlgorithm(LearningAlgorithm):
         print("residual score: ", res_score)
         print("res: ", residuals)
 
-        self.updateModelLogger(res_score, res_score, residuals, filter, None, 0, some_wrong_uios)
+        self.updateModelLogger(self.FE.evaluate(filter), res_score, residuals, filter, None, 0, some_wrong_uios)
