@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 from SPC.UIO.ModelLogger import ModelLogger
 from SPC.UIO.UIO import UIO
 from SPC.UIO.cores.CoreGenerator import CoreGenerator
+from SPC.misc.extra import PartiallyLoadable
 from SPC.UIO.GlobalUIODataPreparer import GlobalUIODataPreparer
 from SPC.UIO.FilterEvaluator import FilterEvaluator
 from functools import lru_cache
@@ -130,13 +131,13 @@ def plot_directed_graph(V, E, V_groups, colors):
 
 
 # Function to display the details of a selected result
-def display_details(result):
+def display_details(result, container, plotgraphs=True):
     filename, model = result
     model : ModelLogger
-    details_container.clear()  # Clear previous details
+    container.clear()  # Clear previous details
     figs = []
 
-    with details_container:
+    with container:
         #ui.label(f"Name: {result['name']}").style('font-size: 18px; font-weight: bold;')
         # Display other fields if needed
         
@@ -173,7 +174,7 @@ def display_details(result):
 
                 # PLots
                 x = list(range(1, len(model.bestscore_history)+1))
-                if quickswitch_checkbox.value == False:
+                if quickswitch_checkbox.value == False and plotgraphs:
                     with ui.pyplot(figsize=(8, 6)) as nicefig:
                         y = model.bestscore_history
                         fig = nicefig.fig
@@ -224,7 +225,7 @@ def display_details(result):
                         
 
             # networkx Graphs
-            if quickswitch_checkbox.value == False:
+            if quickswitch_checkbox.value == False and plotgraphs:
                 with ui.column():
                     ui.label("Best Graph:").style('font-size: 24px; font-weight: bold;')
                     with ui.column():
@@ -334,7 +335,7 @@ def display_results(results):
         with ui.row():
             for index, result in enumerate(results):
                 filename, model = result
-                with ui.card().on('click', lambda _, r=result: display_details(r)):  # Make each card clickable
+                with ui.card().on('click', lambda _, r=result: display_details(r, details_container)):  # Make each card clickable
                     if Sortoption == "by name":
                         ui.label(f"{filename}").style('text-align: center; font-weight: bold;')
                     elif Sortoption == "by partition":
@@ -403,6 +404,26 @@ def selectModels(distinctAttributes):
             data[attributes] = (modellogger, filename)
     return data
 
+def getModelsByPartitionLength():
+    models = load_json_files_cache(folder_input.value)
+
+    data = {} # {partition-length:(modelnames, bestmodel)}   
+    prevbest = None
+    for filename, modellogger in models:
+        modellogger:ModelLogger
+        if modellogger.current_bestgraph_matrix is None:
+            continue
+        plength = len(modellogger.partition)
+        if plength in data:
+            data[plength][0].append(filename)
+            # better than previous?
+            if prevbest == None or modellogger.residual_score_history[-1] < prevbest:
+                data[plength][1] = filename
+                prevbest = modellogger.residual_score_history[-1]
+        else:
+            data[plength] = [[filename], filename]
+    return data
+
 def getTrainingdatasets():
     trainingdatasets = load_json_files_cache2(folder_input2.value)
     tds_ordered = {} # {partition: {uio_size:trainingdataset}}
@@ -414,29 +435,113 @@ def getTrainingdatasets():
             tds_ordered[tds.partition] = {tds.uio_size:tds}
     return tds_ordered
 
-def EvaluateModelOnTrainingData():
-    models = selectModels(["partition", "condition_rows"])
-    trainingdatasets = getTrainingdatasets()
 
-    for (part, rows) in models:
-        model, modelname = models[(part, rows)]
-        if part in trainingdatasets:
-            tdsp = trainingdatasets[part]
-            for uio_size in tdsp:
-                tds = tdsp[uio_size]
-                tds:GlobalUIODataPreparer
-                FE = FilterEvaluator(coreRepresentationsCategorizer=tds.coreRepresentationsCategorizer,
-                    true_coefficients=tds.coefficients, 
-                    ignore_edge=FilterEvaluator.DEFAULT_IGNORE_VALUE,
-                    model_logger=model, verbose=False)
-                if not model.current_bestgraph_matrix is None:
-                    print("yo")
-                    residuals = FE.evaluate(filter=model.current_bestgraph_matrix, return_residuals=True)
-                    print(part, rows, uio_size, np.sum(np.abs(residuals)))
-                else:
-                    print(f"model {modelname} has no attribute \"current_bestgraph_matrix\"")
+class ResultViewerTable(PartiallyLoadable):
+
+    def __init__(self):
+        super().__init__(["table"])
+        self.path = os.path.join(Path(SPC.__file__).parent, "ResultViewer", "resultviewer_table.pickle")
+        self.table = {} # {(model, partition):{uio_size:(resscore, perfectpredict, coeffsum, numberOfUIOs)} }
+        self.smallest_uio_size = None
+        self.biggest_uio_size = None
+        self.tables = {}
+        self.tableTitles = {"res":"Residual scores", "perfect":"Perfect coef. predictions"}
+
+    def cleanUp(self):
+        for tt in self.tables:
+            table = self.tables[tt]
+            table.remove(table)
+
+    def createTable(self, scoretype):
+        with tableresultscontainer:
+            columns=[{'name': 'partition', 'label': 'Partition', 'field': 'partition'}]
+            for uio_size in range(self.smallest_uio_size, self.biggest_uio_size+1):
+                columns.append({'name': f'{uio_size}uio_size', 'label': f'{uio_size} uio_size', 'field': f'{uio_size}uio_size'})
+
+            tabledata = []
+
+            for model, partition in sorted(self.table, key=lambda x: (len(x[1]), x[1])):
+                model:ModelLogger
+                rows = model.condition_rows
+                scores = self.table[(model, partition)]
+
+                item = {"partition":f"{partition} ({rows} rows)"}
+                for uio_size in scores:
+                    resscore, perfectpredict, coeffsum, numberOfUIOs = scores[uio_size]
+                    if scoretype == "perfect":
+                        item[f"{uio_size}uio_size"] = f"{resscore:.0f}/{coeffsum}"
+                    elif scoretype == "res":
+                        item[f"{uio_size}uio_size"] = f"{perfectpredict:.0f}/{numberOfUIOs}"
+                tabledata.append(item)
+
+            
+            table = ui.table(rows=tabledata, columns=columns, title=self.tableTitles[scoretype])
+            self.tables[scoretype] = table
+
+
+
+
+    def save(self):
+        self.save(self.path)
+
+    def load(self):
+        if os.path.isfile(self.path):
+            self.load(self.path)
+
+    def addEntry(self, model, partition, uio_size, resscore, perfectpredict, coeffsum, numberOfUIOs):
+        #print("addEntry", "uio size:", uio_size, "coeffsum:", coeffsum)
+        key = (model, partition)
+        if key not in self.table:
+            self.table[key] = {}
+        self.table[key][uio_size] = (resscore, perfectpredict, coeffsum, numberOfUIOs)
+
+        if self.smallest_uio_size is None: 
+            self.smallest_uio_size = uio_size
+            self.biggest_uio_size = uio_size
         else:
-            print(f"No dataset found for {part}")
+            self.smallest_uio_size = min(uio_size, self.smallest_uio_size)
+            self.biggest_uio_size = max(uio_size, self.biggest_uio_size)
+
+    def __repr__(self):
+        return repr(self.table)
+
+
+def EvaluateModelOnTrainingData():
+    print("EvaluateModelOnTrainingData:")
+    global rvTable
+    if rvTable is not None:
+        rvTable.cleanUp()
+    rvTable = ResultViewerTable()
+    all_modles = dict(load_json_files_cache(folder_input.value))
+    #models = selectModels(["partition", "condition_rows"])
+    trainingdatasets = getTrainingdatasets()
+    for modelname in [partition_2l_select.value, partition_3l_select.value, partition_4l_select.value]:
+        if modelname is None:
+            continue
+
+        model = all_modles[modelname]
+        model:ModelLogger
+        modelpart = model.partition
+        for part in trainingdatasets:
+            if len(part) == len(modelpart):
+                tdsp = trainingdatasets[part]
+                for uio_size in tdsp:
+
+                    tds = tdsp[uio_size]
+                    tds:GlobalUIODataPreparer
+                    FE = FilterEvaluator(coreRepresentationsCategorizer=tds.coreRepresentationsCategorizer,
+                        true_coefficients=tds.coefficients, 
+                        ignore_edge=FilterEvaluator.DEFAULT_IGNORE_VALUE,
+                        model_logger=model, verbose=False)
+                    
+                    if not model.current_bestgraph_matrix is None:
+                        residuals = FE.evaluate(filter=model.current_bestgraph_matrix, return_residuals=True)
+                        resscore = np.sum(np.abs(residuals))
+                        perfectpredict = np.sum(residuals==0)
+                        rvTable.addEntry(model, part, uio_size, resscore, perfectpredict, np.sum(tds.coefficients), len(tds.coefficients))
+                    else:
+                        print(f"model {modelname} has no attribute \"current_bestgraph_matrix\"")
+    print("rvTable:", rvTable)
 
 
 
@@ -459,106 +564,94 @@ def sort_and_display_results(folder_path, option):
         results = sort_by_date(results)
     display_results(results)
 
-def get_table_data(attribute = "res"):
 
-    def is_better_score(scoretuple1, scoretuple2): # is 1 better than 2?
-        return scoretuple1[attribute] < scoretuple2[attribute]
-    
-    models = load_json_files_cache(folder_input.value)
+def updateTables():
+    global rvTable
+    rvTable.createTable("res")
+    rvTable.createTable("perfect")
 
-    data = {} # {partition:{#rows:scoretuple}}   
-    for _, modellogger in models:
-        modellogger:ModelLogger
-        partition = modellogger.partition 
-        uio_size = modellogger.uio_size
-        rows = modellogger.condition_rows
+def setSelect():
+    data = getModelsByPartitionLength()
 
-        scoretuple = {
-                "res":modellogger.residual_score_history[-1], 
-                "perfect":modellogger.perfect_coef_history[-1],
-                "totaluios":len(modellogger.residuals),
-                "totalcoeff":modellogger.coeffsum
-        }
+    if 2 in data:
+        partition_2l_select.set_options(data[2][0], value=data[2][1])
+    if 3 in data:
+        partition_3l_select.set_options(data[3][0], value=data[3][1])
+    if 4 in data:
+        partition_4l_select.set_options(data[4][0], value=data[4][1])
 
-        if (partition, rows) in data:
-            if uio_size in data[(partition, rows)]:
-                # better than previous?
-                if is_better_score(scoretuple, data[(partition, rows)][uio_size]):
-                    data[(partition, rows)][uio_size] = scoretuple
-            else:
-                data[(partition,rows)][uio_size] = scoretuple
-        else:
-            data[(partition, rows)] = {uio_size:scoretuple}
+def updateModelSelect(model_file_name):
+    EvaluateModelOnTrainingData()
+    updateTables()
 
-
-    tabledata = []
-    smallest_uio_size = 99999
-    biggest_uio_size = 0
-    for partition, rows in sorted(data, key=lambda x: (len(x[0]), x[0], x[1])):
-        scores = data[((partition, rows))]
-        for scorename in [attribute]:
-            item = {"partition":f"{partition} ({rows} rows)"}
-
-            for uio_size in scores:
-                if scorename == "perfect":
-                    totaluios = scores[uio_size]["totaluios"]
-                    item[f"{uio_size}uio_size"] = f"{scores[uio_size][scorename]:.0f}/{totaluios}"
-                elif scorename == "res":
-                    totalcoeff = scores[uio_size]["totalcoeff"]
-                    item[f"{uio_size}uio_size"] = f"{scores[uio_size][scorename]:.0f}/{totalcoeff}"
-                biggest_uio_size = max(biggest_uio_size, uio_size)
-                smallest_uio_size = min(smallest_uio_size, uio_size)
-            tabledata.append(item)
-    
-    return tabledata, smallest_uio_size, biggest_uio_size
-
-def display_table(data, smallest_uio_size, biggest_uio_size, title):
-    print("here", data)
-    columns=[{'name': 'partition', 'label': 'Partition', 'field': 'partition'}]
-    for uio_size in range(smallest_uio_size, biggest_uio_size+1):
-        columns.append({'name': f'{uio_size}uio_size', 'label': f'{uio_size} uio_size', 'field': f'{uio_size}uio_size'})
-    ui.table(rows=data, columns=columns, title=title)
+    all_modles = dict(load_json_files_cache(folder_input.value))
+    display_details((model_file_name, all_modles[model_file_name]), details_container_results, plotgraphs=False)
 
 def refresh_page():
     display_results(load_json_files(folder_input.value))
     display_results2(load_json_files2(folder_input2.value))
+    setSelect()
+
+# Load ResultViewer Data
+global rvTable
+rvTable = None
+#rvTable.load()
 
 # Main UI layout
-with ui.row():
-    folder_input = ui.input(label='Model Input Path', placeholder='Enter or select a folder...',
-                                value=os.path.join(Path(SPC.__file__).parent, "Saves,Tests", "models"))
-    folder_input2 = ui.input(label='Training Data Input Path', placeholder='Enter or select a folder...',
-                                value=os.path.join(Path(SPC.__file__).parent, "Saves,Tests", "Trainingdata"))
-    quickswitch_checkbox = ui.checkbox('quick model switch (no graphs)', value=False)
-ui.label('Models:').style('font-size: 24px; margin-bottom: 10px;')
 
-with ui.column():
-    with ui.column().classes("w-full"):
+with ui.tabs().classes('w-full') as tabs:
+    Mtab = ui.tab('Models')
+    Dtab = ui.tab('Data')
+    Rtab = ui.tab('Results')
 
-        result_container = ui.scroll_area().classes('w-512')  # Scrollable area to display results
+with ui.tab_panels(tabs, value=Mtab).classes('w-full'):
+    with ui.tab_panel(Mtab):
+        quickswitch_checkbox = ui.checkbox('quick model switch (no graphs)', value=False)
+        folder_input = ui.input(label='Model Input Path', placeholder='Enter or select a folder...',
+                                value=os.path.join(Path(SPC.__file__).parent, "Saves,Tests", "models")).classes("w-96")
+        ui.label('Models:').style('font-size: 24px; margin-bottom: 10px;')
+        with ui.column().classes("w-full"):
 
-        # Sorting dropdown and button
-        with ui.row():
-            sorting_option = ui.select(["by name", 'by partition', "by iteration", "by score", "by date"], label='Sort by', value="by name")
-            ui.button('Sort', on_click=lambda: sort_and_display_results(folder_input.value, sorting_option.value))
+            result_container = ui.scroll_area().classes('w-512')  # Scrollable area to display results
 
-        ui.button('Load Results', on_click=lambda: refresh_page())
-        ui.button("Load TrainingData", on_click=lambda: EvaluateModelOnTrainingData())
+            # Sorting dropdown and button
+            with ui.row():
+                sorting_option = ui.select(["by name", 'by partition', "by iteration", "by score", "by date"], label='Sort by', value="by name")
+                ui.button('Sort', on_click=lambda: sort_and_display_results(folder_input.value, sorting_option.value))
 
-    
-        details_container = ui.column().classes('w-128 h-fill border bg-gray-100 p-4')
+            ui.button('Load Results', on_click=lambda: refresh_page())
 
-    
-    # Initial display of results
-    display_table(*get_table_data("res"), "Residual scores")
-    display_table(*get_table_data("perfect"), "Perfect coef. predictions")
-    
-    ui.label("Training data:")
-    result_container2 = ui.scroll_area().classes('w-512')  # Scrollable area to display results
-    details_container2 = ui.column().classes('w-128 h-fill border bg-gray-100 p-4')
-            
+        
+            details_container = ui.column().classes('w-128 h-fill border bg-gray-100 p-4')
+
+
+    with ui.tab_panel(Dtab):
+        folder_input2 = ui.input(label='Training Data Input Path', placeholder='Enter or select a folder...',
+                                value=os.path.join(Path(SPC.__file__).parent, "Saves,Tests", "Trainingdata")).classes("w-96")
+        ui.label("Training data:")
+        result_container2 = ui.scroll_area().classes('w-512')  # Scrollable area to display results
+        details_container2 = ui.column().classes('w-128 h-fill border bg-gray-100 p-4')
+
+
+    with ui.tab_panel(Rtab):
+        #with ui.row().classes("w-full"):
+        partition_2l_select = ui.select(options=[], with_input=True, on_change=lambda: updateModelSelect(partition_2l_select.value), label="2-partition model")
+        partition_3l_select = ui.select(options=[], with_input=True, on_change=lambda: updateModelSelect(partition_3l_select.value), label="3-partition model")
+        partition_4l_select = ui.select(options=[], with_input=True, on_change=lambda: updateModelSelect(partition_4l_select.value), label="4-partition model")
+
+        with ui.row().classes("w-full"):
+            tableresultscontainer = ui.element("div")
+            details_container_results = ui.column().classes('w-128 h-fill border bg-gray-100 p-4')
+
+        #display_table(*get_table_data("res"), "Residual scores")
+        #display_table(*get_table_data("perfect"), "Perfect coef. predictions")
+
+
+setSelect()
+
 display_results(load_json_files_cache(folder_input.value))
 display_results2(load_json_files_cache2(folder_input2.value))
+
 
 
 
