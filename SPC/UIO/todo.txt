@@ -189,3 +189,14 @@ double partition (will not draw at resultviewer)
     for the different uio_sizes on the fly (maybe make save file for the result viewer)
     This way both tables use the same models
     - make a tab for training data and models
+
+
+20.09:
+ Quadruples - 1 row? (a,a,b,b), (a,b,b,b) had perfect score with 2 rows
+ check 1 row solution for tripple for other partitions and higher uio_size
+
+ color index up or down?
+
+
+23.09.2024:
+ polish ResultViewerTable
