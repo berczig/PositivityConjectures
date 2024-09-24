@@ -17,11 +17,11 @@ where $x_1, x_2, \dots$ are commuting variables. Let $\Pi(G)$ denote the set of 
 Stanley introduced the following polynomial:
 
 ### Definition
-The **chromatic symmetric polynomial** $X_G \in \Lambda$ of a graph $G$ is defined as the sum of the monomials $x_c$ over all proper colorings $c \in \Pi(G)$:
+The **chromatic symmetric function** $X_G \in \Lambda$ of a graph $G$ is defined as the sum of the monomials $x_c$ over all proper colorings $c \in \Pi(G)$:
 $X_G = \sum_{c \in \Pi(G)} x_c.$
 
 ### Definition
-The $m$-th **elementary symmetric polynomial** $e_m$ is defined as
+The $m$-th **elementary symmetric function** $e_m$ is defined as
 $e_m = \sum_{i_1 < i_2 < \dots < i_m} x_{i_1} x_{i_2} \dots x_{i_m},
 $
 where $i_1, \dots, i_m \in \mathbb{N}$. Given a partition $\lambda = (\lambda_1 \geq \lambda_2 \geq \dots \geq \lambda_k)$, we define the elementary symmetric function $e_\lambda$ as $e_\lambda = \prod_{i=1}^k e_{\lambda_i}$. These functions form a basis for $\Lambda$, the ring of symmetric functions.
@@ -32,7 +32,7 @@ A **unit interval graph** (UIG) is a graph whose vertices correspond to unit int
 Stanley posed the following conjecture in [Stanley1995], which is simplified here from the original formulation involving incomparability graphs:
 
 ### Conjecture (Stanley-Stembridge, 1993)
-The chromatic symmetric polynomial of a unit interval graph is $e$-positive, that is, if written in the elementary symmetric bases as $X^G = \sum_{\lambda} c_\lambda e_\lambda
+The chromatic symmetric function of a unit interval graph is $e$-positive, that is, if written in the elementary symmetric bases as $X_G = \sum_{\lambda} c_\lambda e_\lambda
 $, then $c_\lambda \ge 0$ for all partition $\lambda$.
 
 ## The ML approach 
