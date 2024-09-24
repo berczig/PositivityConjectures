@@ -69,43 +69,88 @@ decode = lambda l: ''.join([itos[i] for i in l]) # decoder: take a list of integ
 # "(float1,float2,...,float_n)",float 
 # The output is [float_to_scientific_notation_list(float1), float_to_scientific_notation_list(float2), ..., float_to_scientific_notation_list(float_n)], float_to_scientific_notation_list(float)
 
-def read_and_tokenize_training_data_from_csv(file_path):
+
+def read_and_tokenize_training_data_from_csv(file_path, partition):
     X_tokenized_data = []
     Y_tokenized_data = []
     Y_float = []
     
-    with open(file_path, 'r') as file:
-        reader = csv.reader(file)
-        next(reader)  # Skip header row
-        for row in reader:
-            X_row = []
-            
-            if not row:
-                continue
-            # Extract the tuple of floats and the single float
-            tuple_part = row[0].strip('[]')
-            single_float_part = row[1].strip()
-            
-            # Convert the tuple part to a list of floats
-            float_tuple = [float(x) for x in tuple_part.split(',')]
-            
-            # Convert the single float part to a float
-            single_float = float(single_float_part)
-            
-            # Tokenize the floats
-            tokenized_tuple = [float_to_scientific_notation_list(f) for f in float_tuple]
-            tokenized_single_float = float_to_scientific_notation_list(single_float)
-            
-            # Append a '*' and then elements of tokenized_tuple individually to the list, we keep the Y data as a float
-            
-            for f in tokenized_tuple:
-                X_row.extend(f)
-                X_row.append('*')
-            Y_float.append(single_float)
-            X_tokenized_data.append(X_row)
+    # Read the CSV file into a DataFrame
+    df = pd.read_csv(file_path)
+    
+    # Convert the 'encodings' column from string representation of list back to list
+    df['encodings'] = df['encodings'].apply(eval)
+    
+    # Iterate over the rows of the DataFrame
+    for index, row in df.iterrows():
+        X_row = []
+        
+        # Extract the tuple of floats and the single float
+        tuple_part = row['encodings']  # 'encodings' column is already converted to list
+        single_float_part = row[str(partition)]  # Replace 'single_float_column' with the actual column name
+        
+        # Convert the tuple part to a list of floats
+        float_tuple = [float(x) for x in tuple_part]
+        
+        # Convert the single float part to a float
+        single_float = float(single_float_part)
+        
+        # Tokenize the floats
+        tokenized_tuple = [float_to_scientific_notation_list(f) for f in float_tuple]
+        tokenized_single_float = float_to_scientific_notation_list(single_float)
+        
+        # Append a '*' and then elements of tokenized_tuple individually to the list, we keep the Y data as a float
+        for f in tokenized_tuple:
+            X_row.extend(f)
+            X_row.append('*')
+        Y_float.append(single_float)
+        X_tokenized_data.append(X_row)
+        
+        # Append the tokenized data for the partition columns
+        for col in df.columns[partition[0]:partition[1]]:
+            partition_value = row[col]
+            Y_tokenized_data.append(float_to_scientific_notation_list(float(partition_value)))
+
+    return X_tokenized_data, Y_tokenized_data, Y_float
 
 
-        return X_tokenized_data, Y_float
+# def read_and_tokenize_training_data_from_csv(file_path, partition):
+#     X_tokenized_data = []
+#     Y_tokenized_data = []
+#     Y_float = []
+    
+#     with open(file_path, 'r') as file:
+#         reader = csv.reader(file)
+#         next(reader)  # Skip header row
+#         for row in reader:
+#             X_row = []
+            
+#             if not row:
+#                 continue
+#             # Extract the tuple of floats and the single float
+#             tuple_part = row[0].strip('[]')
+#             single_float_part = row[1].strip()
+            
+#             # Convert the tuple part to a list of floats
+#             float_tuple = [float(x) for x in tuple_part.split(',')]
+            
+#             # Convert the single float part to a float
+#             single_float = float(single_float_part)
+            
+#             # Tokenize the floats
+#             tokenized_tuple = [float_to_scientific_notation_list(f) for f in float_tuple]
+#             tokenized_single_float = float_to_scientific_notation_list(single_float)
+            
+#             # Append a '*' and then elements of tokenized_tuple individually to the list, we keep the Y data as a float
+            
+#             for f in tokenized_tuple:
+#                 X_row.extend(f)
+#                 X_row.append('*')
+#             Y_float.append(single_float)
+#             X_tokenized_data.append(X_row)
+
+
+#         return X_tokenized_data, Y_float
 
 # Write a function which takes X_tokenized data and applies stoi to each element of the list and returns a list of integers
 

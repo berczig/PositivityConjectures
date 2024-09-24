@@ -27,7 +27,7 @@ batch_size = 16 # how many independent sequences will we processed in parallel?
 block_size = X.shape[1] # length of the input array, that is the number of invariants from which we want to predict the # of subgroups
 # vocab_size is the number of unique integers in X and Y
 vocab_size = len(set(X.flatten().tolist()))
-max_iters = 1000
+max_iters = 10000
 eval_interval = 100
 learning_rate = 1e-3
 device = 'cuda' if torch.cuda.is_available() else 'cpu'

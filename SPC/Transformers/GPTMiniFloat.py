@@ -20,27 +20,32 @@ from torch.nn import functional as F
 from DataGenerator import read_and_tokenize_training_data_from_csv, encoded_tokenized_data
 import matplotlib.pyplot as plt
 import random
+import pandas as pd
 
 # hyperparameters
-file_path = "SPC/Transformers/uio_data_3_2_n=5.csv" # file with training data
+file_path = "SPC/Transformers/uio_data_n=9.csv" # file with training data
+partition = (3,6) # column name of the output data
 batch_size = 16 # how many independent sequences will we processed in parallel?
 #num_invariants = 5 # number of invariants in the input data
 #num_digits = 11 # number of characters in input numbers in scientific notation, e.g. 1.23456e+02 (we work with positive invariants!)
 #block_size = num_invariants * num_digits + num_invariants-1 # length of the input array, using character tokenization. Input array has the form 345e3,234e4,...,456e7
 #vocab_size = 15 # number of characters in the vocabulary, namely ['0','1','2','3','4','5','6','7','8','9','.','e','-','+','*']. Here ',' is for separating the input numbers. 
-max_iters = 500
+max_iters = 10000
 eval_interval = 100
 learning_rate = 1e-3
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print("device:", device)
-eval_iters = 100
-n_embd = 128
-n_head = 4
-n_layer = 4
+eval_iters = 300
+n_embd = 84
+n_head = 12
+n_layer = 6
 dropout = 0.0
 torch.manual_seed(1337)
 
-X_tokenized_data, Y_float = read_and_tokenize_training_data_from_csv(file_path)
+df = pd.read_csv(file_path)
+print(df.columns)
+
+X_tokenized_data, Y_tokenized_data, Y_float = read_and_tokenize_training_data_from_csv(file_path,partition)
 X , Y = encoded_tokenized_data(X_tokenized_data, Y_float)
 
 
@@ -82,7 +87,7 @@ print('dropout:', dropout)
 
 # Split the data into training and test sets
   
-n = int(0.7*len(X)) # first 90% will be train, rest val
+n = int(0.9*len(X)) # first 90% will be train, rest val
 #Random shuffle
 # Pair the elements of the two lists
 paired = list(zip(X, Y))
@@ -321,12 +326,22 @@ with torch.no_grad():
         for pair in paired:
             x_coords.append(pair[0])
             y_coords.append(pair[1])
-    # Plot the points
-plt.scatter(x_coords, y_coords)
+    
+
+    # Plot the points with smaller dots
+plt.scatter(x_coords, y_coords, s=5)  # 's' parameter controls the size of the dots
 plt.xlabel('Predicted')
 plt.ylabel('Real value')
 plt.title('Predicted vs Real Values')
 plt.show()
 
+# Alternative plotting method: histogram
+plt.hist(x_coords, bins=30, alpha=0.5, label='Predicted')  # Histogram for predicted values
+plt.hist(y_coords, bins=30, alpha=0.5, label='Real value')  # Histogram for real values
+plt.xlabel('Value')
+plt.ylabel('Frequency')
+plt.title('Histogram of Predicted and Real Values')
+plt.legend(loc='upper right')
+plt.show()
 
 
