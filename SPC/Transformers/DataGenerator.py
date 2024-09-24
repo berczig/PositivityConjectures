@@ -10,24 +10,32 @@
 import torch
 import csv
 
-file_path = "uio_data_3_2_n=5.csv"
+file_path = "SPC/Transformers/uio_data_n=9.csv"
 
-    # Read the file and create the training data
-    # The file should 
-def getTrainingDataFromFile(file_path):
-    Xuio = []
-    Yuio = []
-    with open(file_path, 'r') as f:
-        csvreader = csv.reader(f)
-        next(csvreader)  # Skip header row
-        for row in csvreader:
-            Xuio.append(eval(row[0]))  # Convert string representation of list back to list
-            Yuio.append(int(row[1]))
+
+import pandas as pd
+
+def csv_to_dataframe(file_path):
+    # Read the CSV file into a DataFrame
+    df = pd.read_csv(file_path)
+    return df
+
+# Read the file and create the training data
+def getTrainingDataFromFile(file_path, partition):
+    df = csv_to_dataframe(file_path)
+    Xuio = df['encodings'].apply(eval).tolist()  # Convert string representation of list back to list
+    Yuio = df[str(partition)]
+
+    Xuio = [list(map(int, x)) for x in Xuio]
+    
     Xuio = torch.tensor(Xuio)
     Yuio = torch.tensor(Yuio).unsqueeze(1)
+    
     print(Xuio.shape, Yuio.shape)
     print(Xuio, Yuio)
+    
     return Xuio, Yuio
+
 
 # Function whose input is a float number x, the output is the list of characters in the scientific notation of x.
 

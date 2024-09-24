@@ -21,8 +21,8 @@ import matplotlib.pyplot as plt
 import random
 
 # hyperparameters
-filename = "SPC/Transformers/uio_data_3_2_n=5.csv" # file with training data
-X, Y = getTrainingDataFromFile(filename) # read in training data
+filename = "SPC/Transformers/uio_data_n=9.csv" # file with training data
+X, Y = getTrainingDataFromFile(filename, partition=(3,6)) # read in training data
 batch_size = 16 # how many independent sequences will we processed in parallel?
 block_size = X.shape[1] # length of the input array, that is the number of invariants from which we want to predict the # of subgroups
 # vocab_size is the number of unique integers in X and Y
@@ -32,10 +32,10 @@ eval_interval = 100
 learning_rate = 1e-3
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print("device:", device)
-eval_iters = 100
-n_embd = 128
-n_head = 4
-n_layer = 4
+eval_iters = 300
+n_embd = 84
+n_head = 12
+n_layer = 6
 dropout = 0.0
 # ------------
 
@@ -299,9 +299,19 @@ with torch.no_grad():
         for pair in paired:
             x_coords.append(pair[0])
             y_coords.append(pair[1])
-# Plot the points
-plt.scatter(x_coords, y_coords)
+
+# Plot the points with smaller dots
+plt.scatter(x_coords, y_coords, s=5)  # 's' parameter controls the size of the dots
 plt.xlabel('Predicted')
 plt.ylabel('Real value')
 plt.title('Predicted vs Real Values')
+plt.show()
+
+# Alternative plotting method: histogram
+plt.hist(x_coords, bins=30, alpha=0.5, label='Predicted')  # Histogram for predicted values
+plt.hist(y_coords, bins=30, alpha=0.5, label='Real value')  # Histogram for real values
+plt.xlabel('Value')
+plt.ylabel('Frequency')
+plt.title('Histogram of Predicted and Real Values')
+plt.legend(loc='upper right')
 plt.show()
