@@ -30,7 +30,7 @@ batch_size = 16 # how many independent sequences will we processed in parallel?
 #num_digits = 11 # number of characters in input numbers in scientific notation, e.g. 1.23456e+02 (we work with positive invariants!)
 #block_size = num_invariants * num_digits + num_invariants-1 # length of the input array, using character tokenization. Input array has the form 345e3,234e4,...,456e7
 #vocab_size = 15 # number of characters in the vocabulary, namely ['0','1','2','3','4','5','6','7','8','9','.','e','-','+','*']. Here ',' is for separating the input numbers. 
-max_iters = 10000
+max_iters = 1000
 eval_interval = 100
 learning_rate = 1e-3
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -87,7 +87,7 @@ print('dropout:', dropout)
 
 # Split the data into training and test sets
   
-n = int(0.9*len(X)) # first 90% will be train, rest val
+n = int(0.8*len(X)) # first 90% will be train, rest val
 #Random shuffle
 # Pair the elements of the two lists
 paired = list(zip(X, Y))

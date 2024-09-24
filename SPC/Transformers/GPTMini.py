@@ -25,8 +25,7 @@ filename = "SPC/Transformers/uio_data_n=9.csv" # file with training data
 X, Y = getTrainingDataFromFile(filename, partition=(3,6)) # read in training data
 batch_size = 16 # how many independent sequences will we processed in parallel?
 block_size = X.shape[1] # length of the input array, that is the number of invariants from which we want to predict the # of subgroups
-# vocab_size is the number of unique integers in X and Y
-vocab_size = len(set(X.flatten().tolist()))
+vocab_size = len(set(X.flatten().tolist())) # vocab_size is the number of unique integers in X, which is the length of the UIO
 max_iters = 10000
 eval_interval = 100
 learning_rate = 1e-3
@@ -60,7 +59,7 @@ print('dropout:', dropout)
 
 # Split the data into training and test sets
   
-n = int(0.8*len(X)) # first 90% will be train, rest val
+n = int(0.8*len(X)) # first 80% will be train, rest val
 #Random shuffle
 # Pair the elements of the two lists
 paired = list(zip(X, Y))

@@ -87,8 +87,8 @@ def read_and_tokenize_training_data_from_csv(file_path, partition):
         
         # Extract the tuple of floats and the single float
         tuple_part = row['encodings']  # 'encodings' column is already converted to list
-        single_float_part = row[str(partition)]  # Replace 'single_float_column' with the actual column name
-        
+        single_float_part = row[str(partition)]  
+
         # Convert the tuple part to a list of floats
         float_tuple = [float(x) for x in tuple_part]
         
@@ -114,48 +114,9 @@ def read_and_tokenize_training_data_from_csv(file_path, partition):
     return X_tokenized_data, Y_tokenized_data, Y_float
 
 
-# def read_and_tokenize_training_data_from_csv(file_path, partition):
-#     X_tokenized_data = []
-#     Y_tokenized_data = []
-#     Y_float = []
-    
-#     with open(file_path, 'r') as file:
-#         reader = csv.reader(file)
-#         next(reader)  # Skip header row
-#         for row in reader:
-#             X_row = []
-            
-#             if not row:
-#                 continue
-#             # Extract the tuple of floats and the single float
-#             tuple_part = row[0].strip('[]')
-#             single_float_part = row[1].strip()
-            
-#             # Convert the tuple part to a list of floats
-#             float_tuple = [float(x) for x in tuple_part.split(',')]
-            
-#             # Convert the single float part to a float
-#             single_float = float(single_float_part)
-            
-#             # Tokenize the floats
-#             tokenized_tuple = [float_to_scientific_notation_list(f) for f in float_tuple]
-#             tokenized_single_float = float_to_scientific_notation_list(single_float)
-            
-#             # Append a '*' and then elements of tokenized_tuple individually to the list, we keep the Y data as a float
-            
-#             for f in tokenized_tuple:
-#                 X_row.extend(f)
-#                 X_row.append('*')
-#             Y_float.append(single_float)
-#             X_tokenized_data.append(X_row)
-
-
-#         return X_tokenized_data, Y_float
-
-# Write a function which takes X_tokenized data and applies stoi to each element of the list and returns a list of integers
-
+# Encode the tokenized data into integers
 def encoded_tokenized_data(X_tokenized_data, Y_float):
-    # print the length of the tokenized data
+    
     X_encoded_data = []
     for row in X_tokenized_data:
         X_encoded_data.append([stoi[c] for c in row])
