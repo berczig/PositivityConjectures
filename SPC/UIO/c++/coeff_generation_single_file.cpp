@@ -294,8 +294,11 @@ void write_file(string filepath, vector<vector<string>> data){
 string partitionToString(vector<int> p){
     stringstream ss;
     ss << "(";
-    for (int v : p){
-        ss << v << ",";
+    for (auto it = p.begin(); it != p.end(); it++){
+        int v = *it;
+        ss << v;
+        if (it != p.end()-1)
+            ss << ",";
     }
     ss << ")";
     return ss.str();
@@ -339,14 +342,14 @@ void generateAndSaveCoeffs(int uio_size, vector<vector<int>> partitions){
     vector<string> header;
     header.emplace_back("UIO_Encoding");
     for (auto it = data.begin(); it != data.end(); it++){
-        header.emplace_back(it->first);
+        header.emplace_back("\""+it->first+"\"");
     }
     textdata.push_back(header);
 
     // coeffs
     for (int rowID = 0; rowID < encodings.size(); rowID++){
         vector<string> row;
-        row.emplace_back(encodings_str[rowID]);
+        row.emplace_back("\""+encodings_str[rowID]+"\"");
         for (auto it = data.begin(); it != data.end(); it++){
             vector<int> coefs = it->second;
             row.emplace_back(to_string(coefs[rowID]));
@@ -364,6 +367,7 @@ int main() {
     int uio_size = 9;
      // (4, 5)","(3, 6)","(2, 7)","(1, 8)
     vector<vector<int>> partitions = {{8, 1}, {7, 2}, {6,3},{5,4}};
+    //vector<vector<int>> partitions = {{3,1}};
     generateAndSaveCoeffs(uio_size, partitions);
 
 
