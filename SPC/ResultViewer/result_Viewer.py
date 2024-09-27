@@ -18,9 +18,37 @@ from pathlib import Path
 import importlib
 import networkx as nx
 from matplotlib import pyplot as plt
+import pyperclip
 
 last_sort = ""
 last_toggle = False
+
+def list_to_latex_table(data, headers=None):
+    """
+    Converts a 2D list into a LaTeX table.
+
+    Args:
+        data (list of list): 2D list containing the table data.
+        headers (list): Optional list of column headers.
+
+    Returns:
+        str: A string containing the LaTeX code for the table.
+    """
+    print("data:", data)
+    print("headers:", headers)
+    latex_code = "\\begin{table}[h!]\n\\centering\n\\begin{tabular}{|" + "c|" * len(data[0]) + "}\n\\hline\n"
+
+    # Add headers if provided
+    if headers:
+        latex_code += " & ".join(headers) + " \\\\\n\\hline\n"
+
+    # Add data rows
+    for row in data:
+        latex_code += " & ".join(map(str, row)) + " \\\\\n\\hline\n"
+
+    latex_code += "\\end{tabular}\n\\caption{Your caption here}\n\\label{tab:your_label}\n\\end{table}"
+    pyperclip.copy(latex_code)
+    ui.notify("Copied latex code to clipboard")
 
 def load_trainingdata(trainingdata_file_path):
     preparer = GlobalUIODataPreparer(0)
@@ -445,20 +473,28 @@ class ResultViewerTable(PartiallyLoadable):
         self.smallest_uio_size = None
         self.biggest_uio_size = None
         self.tables = {}
+        self.buttons = []
         self.tableTitles = {"res":"Residual scores", "perfect":"Perfect coef. predictions"}
 
     def cleanUp(self):
         for tt in self.tables:
             table = self.tables[tt]
             table.remove(table)
+        for btn in self.buttons:
+            btn.remove(btn)
+        self.tables = {}
+        self.buttons = []
 
     def createTable(self, scoretype):
         with tableresultscontainer:
             columns=[{'name': 'partition', 'label': 'Partition', 'field': 'partition'}]
+            tableheader = ["Partition"]
             for uio_size in range(self.smallest_uio_size, self.biggest_uio_size+1):
                 columns.append({'name': f'{uio_size}uio_size', 'label': f'{uio_size} uio_size', 'field': f'{uio_size}uio_size'})
+                tableheader.append(f'{uio_size} uio size')
 
             tabledata = []
+            table2Ddata = []
 
             for model, partition in sorted(self.table, key=lambda x: (len(x[1]), x[1])):
                 model:ModelLogger
@@ -468,15 +504,30 @@ class ResultViewerTable(PartiallyLoadable):
                 item = {"partition":f"{partition} ({rows} rows)"}
                 for uio_size in scores:
                     resscore, perfectpredict, coeffsum, numberOfUIOs = scores[uio_size]
-                    if scoretype == "perfect":
+                    if scoretype == "res":
                         item[f"{uio_size}uio_size"] = f"{resscore:.0f}/{coeffsum}"
-                    elif scoretype == "res":
+                    elif scoretype == "perfect":
                         item[f"{uio_size}uio_size"] = f"{perfectpredict:.0f}/{numberOfUIOs}"
                 tabledata.append(item)
+
+                puredata = [f"{partition} ({rows} rows)"]
+                for uio_size in range(self.smallest_uio_size, self.biggest_uio_size+1):
+                    if uio_size in scores:
+                        resscore, perfectpredict, coeffsum, numberOfUIOs = scores[uio_size]
+                        if scoretype == "res":
+                            puredata.append(f"{resscore:.0f}/{coeffsum}")
+                        elif scoretype == "perfect":
+                            puredata.append(f"{perfectpredict:.0f}/{numberOfUIOs}")
+                    else:
+                        puredata.append("")
+                table2Ddata.append(puredata)
 
             
             table = ui.table(rows=tabledata, columns=columns, title=self.tableTitles[scoretype])
             self.tables[scoretype] = table
+
+            btn = ui.button("Convert to Latex", on_click=lambda: list_to_latex_table(data=table2Ddata, headers=tableheader))
+            self.buttons.append(btn)
 
 
 
@@ -494,7 +545,7 @@ class ResultViewerTable(PartiallyLoadable):
         if key not in self.table:
             self.table[key] = {}
         self.table[key][uio_size] = (resscore, perfectpredict, coeffsum, numberOfUIOs)
-
+        print(50*"#")
         if self.smallest_uio_size is None: 
             self.smallest_uio_size = uio_size
             self.biggest_uio_size = uio_size
@@ -516,6 +567,7 @@ def EvaluateModelOnTrainingData():
     #models = selectModels(["partition", "condition_rows"])
     trainingdatasets = getTrainingdatasets()
     for modelname in [partition_2l_select.value, partition_3l_select.value, partition_4l_select.value]:
+        print("modelname:", modelname)
         if modelname is None:
             continue
 
