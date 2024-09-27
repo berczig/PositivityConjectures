@@ -545,7 +545,6 @@ class ResultViewerTable(PartiallyLoadable):
         if key not in self.table:
             self.table[key] = {}
         self.table[key][uio_size] = (resscore, perfectpredict, coeffsum, numberOfUIOs)
-        print(50*"#")
         if self.smallest_uio_size is None: 
             self.smallest_uio_size = uio_size
             self.biggest_uio_size = uio_size
@@ -558,7 +557,7 @@ class ResultViewerTable(PartiallyLoadable):
 
 
 def EvaluateModelOnTrainingData():
-    print("EvaluateModelOnTrainingData:")
+    print("EvaluateModelOnTrainingData:\n")
     global rvTable
     if rvTable is not None:
         rvTable.cleanUp()
@@ -567,7 +566,6 @@ def EvaluateModelOnTrainingData():
     #models = selectModels(["partition", "condition_rows"])
     trainingdatasets = getTrainingdatasets()
     for modelname in [partition_2l_select.value, partition_3l_select.value, partition_4l_select.value]:
-        print("modelname:", modelname)
         if modelname is None:
             continue
 
