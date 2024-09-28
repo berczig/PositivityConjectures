@@ -8,6 +8,8 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <math.h> 
+#include <stdexcept>
+#include "misc.h"
  
 using namespace std;
 
@@ -133,6 +135,10 @@ int calculateNumberOfCycleTypes(vector<int> partition){
  * Get all possible K-length permutations of 0, ..., N-1 modulo escher-cyclic
  */
 vector<string> getCyclicKPermutationsOfN(int N, int K, vector<int> partition){
+    if (N < K)
+        throw invalid_argument("N < K");
+    if (sum(partition) != K)
+        throw invalid_argument("sum(partition) != K");
     vector<string> combinations = comb(N, K);
     vector<string> results;
     unordered_set<string> resultsSet;
@@ -154,7 +160,7 @@ vector<string> getCyclicKPermutationsOfN(int N, int K, vector<int> partition){
     for (string s : resultsSet){
         results.push_back(s);
     }
-    cout << "Generated " << results.size() << "escher eq classes" << endl; 
+
     return results;
 }
 
@@ -214,7 +220,7 @@ vector<vector<int>> getPartitionUpToN(int N){
 vector<vector<int>> generate_all_uio_encodings(int n){
     vector<vector<int>> encodings = {};
     generate_all_uio_encodings_(encodings, vector<int>{0}, n, 1);
-    cout << "generated " << encodings.size() << " UIOS!" << endl;
+    cout << "generated " << encodings.size() << " UIOS! Encodings" << endl;
     return encodings;
 }
 
