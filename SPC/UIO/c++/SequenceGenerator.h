@@ -10,5 +10,6 @@
 using namespace std;
 
 vector<string> calculateCyclicKPermutationsOfN(int N, int K, vector<int> partition);
+vector<string> calculateKPermutationsOfN(int N, int K);
 
 #endif  // UIO_H

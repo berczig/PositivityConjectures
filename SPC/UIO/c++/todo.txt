@@ -1,0 +1,25 @@
+10.10.24:
+ - core mit even und odd anstatt integer und 0.5                                                    DONE
+ - fix getCoreGenerator, should only be called and generated once not for every UIODataExtractor    MISSING
+ - noch core generator generel optimieren, bis jetzt nur geported                                   OK
+ - int oder char oder ... ?                                                                         OK
+
+ 12.10.24:
+    check 4-partitio				OK
+    save c++ data					OK
+    generate multiple partitions	OK
+    optimize	                    OK
+13.10.24:
+ - gucken ob man für (a,a,b,b) ein gutes model findet - die allrounder loesung mit 1 row klappt nicht bei (3,3,1,1)
+ - matrix separieren                                                                                                    DONE
+ - resultviewer fixen -> models auswählen und matrix generieren                                                         OK
+ - matrix resulte zu overleaf                                                                                           FAST
+ - coeffs csv generieren
+
+ 14.10.24:
+ - paps quadruple partition -> keine partition mehr
+
+ 15.10.24:
+  - bei [0>subescher vw start] AND [subescher uv end<uv 1. insert] sollte > eigentlich >= sein. Das muss richtig
+  beim graphen und im Text stehen!
+  - github pushen

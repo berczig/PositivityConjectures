@@ -18,10 +18,12 @@ public:
     vector<int> partition;
     vector<UIODataExtractor> extractors;
     vector<int> coeffs;
+    map<coreRepresentation, map<int, int>> counter;
 
     GlobalUIODataPreparer(int uio_size, vector<int> partition);
     GlobalUIODataPreparer(const GlobalUIODataPreparer& other);
-    vector<int> calculateCoefficients();
+    void calculateCoefficients();
+    void countCoreRepresentations();
 };
 
 #endif  // UIO_H

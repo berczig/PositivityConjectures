@@ -3,6 +3,13 @@
 #include <string>
 #include <memory> // For std::unique_pt
 #include <map>
+#include <windows.h>
+#include <chrono>
+#include <algorithm>
+#include <array>
+#include <tuple>
+#include "CoreGenerator.h"
+#include <unordered_map>
 using namespace std;
 
 // class A{
@@ -59,6 +66,7 @@ class C{
 class B{
     public:
     int val;
+        B(){}
         B(int x){
             val = x;
             cout  << "B-create " << val  << endl;
@@ -75,29 +83,55 @@ class B{
 };
 class A{
     public:
-        A(){
+        B b;
+        A() : b(10){}
 
+        A(const A& other){
+            cout << "A-copy from " << &other << endl;
         }
-        unique_ptr<B> b;
 
-        void create(B& in) {
-            b = make_unique<B>(in);
-        };
 
-        void precreate(){
-            B b = B(42);
-            create(b);
-        }
-        void use(){
-            cout << b->val << endl;
-        };
 };
 
 
+vector<A> func(){
+    vector<A> vec;
+    vec.reserve(10);
+    vec.emplace_back();
+    return vec;
+}
+
 // int main(){
-//     shared_ptr<B> b = make_shared<B>(29);
-//     shared_ptr<B> b2 = b;
+//     auto start = std::chrono::system_clock::now();
+
+//     map<coreRepresentation, int> m;
+
+//     vector<unsigned char> a__;
+//     a__.push_back(12);
+//     coreRepresentation a = coreRepresentation(a__);
+
+//     vector<unsigned char> b__;
+//     b__.push_back(12);
+//     coreRepresentation b = coreRepresentation(b__);
+
+//     m[a] = 10;
+
+
+//     boolean boo = (m.find(b) == m.end());
+
+//     cout << (boo ? "1" : "0") << endl;
+
+//     auto end = std::chrono::system_clock::now();
+//     std::chrono::duration<double> elapsed_seconds = end-start;
+//     cout << "Elapsed Time: " << elapsed_seconds.count() << " seconds" << endl;
 // }
+
+// shared_ptr<B> b = make_shared<B>(100);
+    // A a = A(b);
+    // A a2 = a;
+    // a.print();
+    // a2.print();
+    // cout << b.use_count() << endl;
 
 
 
@@ -146,8 +180,13 @@ class A{
 // };
 
 
+int* funca(){
+    int a[10];
+    return a;
+}
+
+
 // int main(){
-//     A a = A();
-//     a.create();
-//     a.use();
+//     int* a = funca();
+//     cout << a << " " << *a << " " << &a << endl;
 // }

@@ -72,6 +72,7 @@ vector<string> getKPermutationsOfN(int N, int K){
  * Permute string acording to partition
  */
 void sortByPartition(string& s, vector<int> partition){
+    //cout << "sortByPartition start\n";
     int startpos = 0;
     vector<string> chunks;
     for (int i = 0; i < partition.size(); i++){
@@ -91,7 +92,7 @@ void sortByPartition(string& s, vector<int> partition){
         startpos += size;
     }
 
-    // sort chunks of same size against each
+    // sort chunks of same size against each ( assumes that partition is ordered as partition)
     int lastindex = 0;
     for (auto it = partition.begin(); it < partition.end();){
         int p = *it;
@@ -109,13 +110,21 @@ void sortByPartition(string& s, vector<int> partition){
     for (string cs : chunks)
         out += cs;
     s = out;
+    //cout << "sortByPartition finish!\n";
 }
 
-long factorial(const int n){
+long long factorial(const int n){
     long f = 1;
     for (int i=1; i<=n; ++i)
         f *= i;
     return f;
+}
+
+int intpow(int a,int b){
+    int res = 1;
+    for (int i = 0; i < b; i++)
+        res *= a;
+    return res;
 }
 
 int calculateNumberOfCycleTypes(vector<int> partition){
@@ -125,7 +134,7 @@ int calculateNumberOfCycleTypes(vector<int> partition){
         if (cycle_length != last_cycle_length){
             last_cycle_length = cycle_length;
             int occurances = count(partition.begin(), partition.end(), cycle_length);
-            product *= pow(cycle_length, occurances) * factorial(occurances);
+            product *= intpow(cycle_length, occurances) * factorial(occurances);
         }
     }
     return product;
@@ -139,6 +148,7 @@ vector<string> getCyclicKPermutationsOfN(int N, int K, vector<int> partition){
         throw invalid_argument("N < K");
     if (sum(partition) != K)
         throw invalid_argument("sum(partition) != K");
+
     vector<string> combinations = comb(N, K);
     vector<string> results;
     unordered_set<string> resultsSet;
@@ -160,7 +170,6 @@ vector<string> getCyclicKPermutationsOfN(int N, int K, vector<int> partition){
     for (string s : resultsSet){
         results.push_back(s);
     }
-
     return results;
 }
 
@@ -209,18 +218,22 @@ vector<vector<int>> getPartitionUpToN_(int N){
 
 /* returns all possible partition of N
 */
-vector<vector<int>> getPartitionUpToN(int N){
+vector<vector<int>> getPartitionUpToN(int N, int minLength, int maxLength){
+    vector<vector<int>> sums_filtered;
     vector<vector<int>> sums = getPartitionUpToN_(N);
     for (vector<int>& sum : sums){
         sort(sum.begin(), sum.end(), greater<int>());
+        if (minLength <= sum.size() && sum.size() <= maxLength && 
+            find(sums_filtered.begin(), sums_filtered.end(), sum) == sums_filtered.end())
+            sums_filtered.push_back(sum);
     }    
-    return sums;
+    return sums_filtered;
 }
 
 vector<vector<int>> generate_all_uio_encodings(int n){
     vector<vector<int>> encodings = {};
     generate_all_uio_encodings_(encodings, vector<int>{0}, n, 1);
-    cout << "generated " << encodings.size() << " UIOS! Encodings" << endl;
+    cout << "generated " << encodings.size() << " UIO Encodings!" << endl;
     return encodings;
 }
 

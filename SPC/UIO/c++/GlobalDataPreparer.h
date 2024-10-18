@@ -12,13 +12,14 @@ using namespace std;
 
 class GlobalDataPreparer {
 public:
-    vector<int> uio_sizes;
+    vector<int> uio_sizes; 
     vector<vector<int>> partitions;
     vector<GlobalUIODataPreparer> uiopreparers;
 
     GlobalDataPreparer(vector<int> uio_sizes, vector<vector<int>> partitions);
     void generateData();
-    void saveData(string filepath);
+    void saveCSVData(string filepath);
+    void saveJSONData(string filepath);
 };
 
 #endif  // GLOBALDATAPREPARER_H

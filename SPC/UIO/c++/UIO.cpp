@@ -6,18 +6,18 @@
 using namespace std;
 
 // Constants representing the comparison relationships
-const int UIO::INCOMPARABLE = 100;
-const int UIO::LESS = 101;
-const int UIO::GREATER = 102;
-const int UIO::EQUAL = 103;
+const char UIO::INCOMPARABLE = 100;
+const char UIO::LESS = 101;
+const char UIO::GREATER = 102;
+const char UIO::EQUAL = 103;
 
 // Constructor
-UIO::UIO(const vector<int>& uio_encoding) : N(uio_encoding.size()){
+UIO::UIO(const vector<int>& uio_encoding, int id) : N(uio_encoding.size()), ID(id){
     encoding = uio_encoding;
     repr = vectorToString(encoding);
 
     // Initialize the comparison matrix
-    comparison_matrix.resize(N, vector<int>(N, UIO::EQUAL));
+    comparison_matrix.resize(N, vector<char>(N, UIO::EQUAL));
 
     // Fill the comparison matrix based on the encoding
     for (int i = 0; i < N; ++i) {
@@ -64,6 +64,11 @@ bool UIO::isarrow(const string& escher, int i, int j, bool verbose) const {
                     << " " << (comparison_matrix[escher[i]][escher[j]] != GREATER) << std::endl;
     }
     return comparison_matrix[escher[i]][escher[j]] != GREATER;  // EQUAL also intersects
+}
+
+// isarrow method - checks if there is an arrow between elements i and j
+bool UIO::isarrow(const string& escher1, const string& escher2, int i, int j) const {
+    return comparison_matrix[escher1[i]][escher2[j]] != GREATER;  // EQUAL also intersects
 }
 
 // Overload the output operator to print the UIO object

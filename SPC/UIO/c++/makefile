@@ -1,6 +1,8 @@
 # Compiler and flags
 CXX = g++
-CXXFLAGS = -Wall -g
+CXXFLAGS = -Wall -g -O3
+
+# -march=native -funroll-loops  -fexpensive-optimizations -flto -ffast-math -fomit-frame-pointer
 
 # Sources and objects
 SOURCES = $(wildcard *.cpp)
