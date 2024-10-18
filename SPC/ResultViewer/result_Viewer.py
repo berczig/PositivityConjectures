@@ -53,14 +53,14 @@ def list_to_latex_table(data, headers=None):
 def load_trainingdata(trainingdata_file_path):
     preparer = GlobalUIODataPreparer(0)
     if trainingdata_file_path != "":
-        print("loading model...")
+        #print("loading model...")
         preparer.loadTrainingData(trainingdata_file_path)
     return preparer
 
 def load_model(model_file_path):
     modelLogger = ModelLogger()
     if model_file_path != "":
-        print("loading model...")
+        #print("loading model...")
         modelLogger.load_model_logger(model_file_path)
     return modelLogger
 
@@ -75,23 +75,23 @@ def load_json_files_cache2(folder_path):
     return load_json_files2(folder_path)
 
 def load_json_files(folder_path):
-    print("load_json_files")
+    #print("load_json_files")
     results = []
     for file_name in os.listdir(folder_path):
         if file_name.endswith(".keras"):
             file_path = os.path.join(folder_path, file_name)
-            print("file_name:", file_name)
+            #print("file_name:", file_name)
             modelLogger = load_model(file_path)
             results.append((file_name, modelLogger))
     return results
 
 def load_json_files2(folder_path):
-    print("load_json_files2")
+    #print("load_json_files2")
     results = []
     for file_name in os.listdir(folder_path):
         if file_name.endswith(".bin"):
             file_path = os.path.join(folder_path, file_name)
-            print("file_name:", file_name)
+            #print("file_name:", file_name)
             trainingdata = load_trainingdata(file_path)
             results.append((file_name, trainingdata))
     return results
@@ -122,7 +122,6 @@ def plot_directed_graph(V, E, V_groups, colors):
     - V_groups classifing nodes into groups to color them
     - colors: color of each group
     """
-    
     # Remove vertices without edges and translate edge from ID to labels
     V, E = prepVE(V, E)
 
@@ -469,7 +468,7 @@ class ResultViewerTable(PartiallyLoadable):
     def __init__(self):
         super().__init__(["table"])
         self.path = os.path.join(Path(SPC.__file__).parent, "ResultViewer", "resultviewer_table.pickle")
-        self.table = {} # {(model, partition):{uio_size:(resscore, perfectpredict, coeffsum, numberOfUIOs)} }
+        self.table = {} # {(model, partition, modelname):{uio_size:(resscore, perfectpredict, coeffsum, numberOfUIOs)} }
         self.smallest_uio_size = None
         self.biggest_uio_size = None
         self.tables = {}
@@ -485,7 +484,7 @@ class ResultViewerTable(PartiallyLoadable):
         self.tables = {}
         self.buttons = []
 
-    def createTable(self, scoretype):
+    def createTable(self, scoretype, model_name):
         with tableresultscontainer:
             columns=[{'name': 'partition', 'label': 'Partition', 'field': 'partition'}]
             tableheader = ["Partition"]
@@ -496,24 +495,27 @@ class ResultViewerTable(PartiallyLoadable):
             tabledata = []
             table2Ddata = []
 
-            for model, partition in sorted(self.table, key=lambda x: (len(x[1]), x[1])):
+            for model, partition, modelname in sorted(self.table, key=lambda x: (sum(x[1]), len(x[1]), x[1])):
+                if modelname != model_name:
+                    continue
+
                 model:ModelLogger
                 rows = model.condition_rows
-                scores = self.table[(model, partition)]
+                scores = self.table[(model, partition, modelname)]
 
-                item = {"partition":f"{partition} ({rows} rows)"}
+                item = {"partition":f"{partition}"}
                 for uio_size in scores:
-                    resscore, perfectpredict, coeffsum, numberOfUIOs = scores[uio_size]
+                    resscore, perfectpredict, coeffsum, numberOfUIOs, residualSign = scores[uio_size]
                     if scoretype == "res":
-                        item[f"{uio_size}uio_size"] = f"{resscore:.0f}/{coeffsum}"
+                        item[f"{uio_size}uio_size"] = f"{residualSign} {resscore:.0f}/{coeffsum}"
                     elif scoretype == "perfect":
-                        item[f"{uio_size}uio_size"] = f"{perfectpredict:.0f}/{numberOfUIOs}"
+                        item[f"{uio_size}uio_size"] = f"{residualSign} {perfectpredict:.0f}/{numberOfUIOs}"
                 tabledata.append(item)
 
-                puredata = [f"{partition} ({rows} rows)"]
+                puredata = [f"{partition}"]
                 for uio_size in range(self.smallest_uio_size, self.biggest_uio_size+1):
                     if uio_size in scores:
-                        resscore, perfectpredict, coeffsum, numberOfUIOs = scores[uio_size]
+                        resscore, perfectpredict, coeffsum, numberOfUIOs, residualSign = scores[uio_size]
                         if scoretype == "res":
                             puredata.append(f"{resscore:.0f}/{coeffsum}")
                         elif scoretype == "perfect":
@@ -523,8 +525,8 @@ class ResultViewerTable(PartiallyLoadable):
                 table2Ddata.append(puredata)
 
             
-            table = ui.table(rows=tabledata, columns=columns, title=self.tableTitles[scoretype])
-            self.tables[scoretype] = table
+            table = ui.table(rows=tabledata, columns=columns, title=self.tableTitles[scoretype] + " for "+model_name)
+            self.tables[(scoretype,model_name)] = table
 
             btn = ui.button("Convert to Latex", on_click=lambda: list_to_latex_table(data=table2Ddata, headers=tableheader))
             self.buttons.append(btn)
@@ -539,12 +541,12 @@ class ResultViewerTable(PartiallyLoadable):
         if os.path.isfile(self.path):
             self.load(self.path)
 
-    def addEntry(self, model, partition, uio_size, resscore, perfectpredict, coeffsum, numberOfUIOs):
+    def addEntry(self, model, partition, modelname, uio_size, resscore, perfectpredict, coeffsum, numberOfUIOs, residualSign):
         #print("addEntry", "uio size:", uio_size, "coeffsum:", coeffsum)
-        key = (model, partition)
+        key = (model, partition, modelname)
         if key not in self.table:
             self.table[key] = {}
-        self.table[key][uio_size] = (resscore, perfectpredict, coeffsum, numberOfUIOs)
+        self.table[key][uio_size] = (resscore, perfectpredict, coeffsum, numberOfUIOs, residualSign)
         if self.smallest_uio_size is None: 
             self.smallest_uio_size = uio_size
             self.biggest_uio_size = uio_size
@@ -566,7 +568,7 @@ def EvaluateModelOnTrainingData():
     #models = selectModels(["partition", "condition_rows"])
     trainingdatasets = getTrainingdatasets()
     for modelname in [partition_2l_select.value, partition_3l_select.value, partition_4l_select.value]:
-        if modelname is None:
+        if modelname is None or modelname not in all_modles:
             continue
 
         model = all_modles[modelname]
@@ -582,13 +584,25 @@ def EvaluateModelOnTrainingData():
                     FE = FilterEvaluator(coreRepresentationsCategorizer=tds.coreRepresentationsCategorizer,
                         true_coefficients=tds.coefficients, 
                         ignore_edge=FilterEvaluator.DEFAULT_IGNORE_VALUE,
-                        model_logger=model, verbose=False)
+                        model_logger=model, verbose=False) 
                     
                     if not model.current_bestgraph_matrix is None:
                         residuals = FE.evaluate(filter=model.current_bestgraph_matrix, return_residuals=True)
-                        resscore = np.sum(np.abs(residuals))
-                        perfectpredict = np.sum(residuals==0)
-                        rvTable.addEntry(model, part, uio_size, resscore, perfectpredict, np.sum(tds.coefficients), len(tds.coefficients))
+                        #if (len(part) == 4 and part[0] == part[1] == part[2]):
+                            #for res in residuals:
+                                #if res != 0:
+                                    #print(f"modelname: {modelname}, part: {part} res:", res)
+                        if np.all(residuals == 0):
+                            residualSign = "Z"
+                        elif np.all(residuals >= 0):
+                            residualSign = "P"
+                        elif np.all(residuals <= 0):
+                            residualSign = "N"
+                        else:
+                            residualSign = "M"
+                        resscore = np.sum(np.abs(residuals)) 
+                        perfectpredict = np.sum(residuals==0) 
+                        rvTable.addEntry(model, part,modelname, uio_size, resscore, perfectpredict, np.sum(tds.coefficients), len(tds.coefficients), residualSign)
                     else:
                         print(f"model {modelname} has no attribute \"current_bestgraph_matrix\"")
     print("rvTable:", rvTable)
@@ -617,8 +631,18 @@ def sort_and_display_results(folder_path, option):
 
 def updateTables():
     global rvTable
-    rvTable.createTable("res")
-    rvTable.createTable("perfect")
+
+    if partition_2l_select.value != None:
+        rvTable.createTable("res", partition_2l_select.value)
+        rvTable.createTable("perfect", partition_2l_select.value)
+
+    if partition_3l_select.value != None:
+        rvTable.createTable("res", partition_3l_select.value)
+        rvTable.createTable("perfect", partition_3l_select.value)
+
+    if partition_4l_select.value != None:
+        rvTable.createTable("res", partition_4l_select.value)
+        rvTable.createTable("perfect", partition_4l_select.value)
 
 def setSelect():
     data = getModelsByPartitionLength()
@@ -635,7 +659,8 @@ def updateModelSelect(model_file_name):
     updateTables()
 
     all_modles = dict(load_json_files_cache(folder_input.value))
-    display_details((model_file_name, all_modles[model_file_name]), details_container_results, plotgraphs=False)
+    if model_file_name in all_modles:
+        display_details((model_file_name, all_modles[model_file_name]), details_container_results, plotgraphs=False)
 
 def refresh_page():
     display_results(load_json_files(folder_input.value))
@@ -658,7 +683,7 @@ with ui.tab_panels(tabs, value=Mtab).classes('w-full'):
     with ui.tab_panel(Mtab):
         quickswitch_checkbox = ui.checkbox('quick model switch (no graphs)', value=False)
         folder_input = ui.input(label='Model Input Path', placeholder='Enter or select a folder...',
-                                value=os.path.join(Path(SPC.__file__).parent, "Saves,Tests", "models")).classes("w-96")
+                                value=os.path.join(Path(SPC.__file__).parent, "Saves,Tests", "models_final")).classes("w-96")
         ui.label('Models:').style('font-size: 24px; margin-bottom: 10px;')
         with ui.column().classes("w-full"):
 
@@ -677,7 +702,7 @@ with ui.tab_panels(tabs, value=Mtab).classes('w-full'):
 
     with ui.tab_panel(Dtab):
         folder_input2 = ui.input(label='Training Data Input Path', placeholder='Enter or select a folder...',
-                                value=os.path.join(Path(SPC.__file__).parent, "Saves,Tests", "Trainingdata")).classes("w-96")
+                                value=os.path.join(Path(SPC.__file__).parent, "Saves,Tests", "C_Trainingdata")).classes("w-96")
         ui.label("Training data:")
         result_container2 = ui.scroll_area().classes('w-512')  # Scrollable area to display results
         details_container2 = ui.column().classes('w-128 h-fill border bg-gray-100 p-4')
