@@ -46,8 +46,13 @@ class UIODataExtractor:
 
     def getCoreRepresentations(self, partition):
         GEN = self.core_generator_class(self.uio, partition)
+        id = 0
         for core in self.getCores(partition):
-            yield GEN.getCoreRepresentation(core)
+            corerep = GEN.getCoreRepresentation(core)
+            if self.uio.encoding == [0, 0, 1, 2, 3, 3]:
+                print(id, core, corerep)
+            id += 1
+            yield corerep
 
 
     def getEschers(self, partition):
@@ -77,6 +82,7 @@ class UIODataExtractor:
             return count(self.getEschers(partition))
 
         elif len(partition) == 2:
+            print(self.uio, self.countEschers(partition), self.countEschers((sum(partition),)) )
             return self.countEschers(partition) - self.countEschers((sum(partition),))
         
         elif len(partition) == 3:
@@ -117,6 +123,7 @@ class UIODataExtractor:
 
     @lru_cache(maxsize=None) # while calculating the coefficient the same partition can appear multiple times
     def countEschers(self, partition):
+        #print("partition:", partition)
         return count(self.getEschers(partition))
         
     def __repr__(self) -> str:

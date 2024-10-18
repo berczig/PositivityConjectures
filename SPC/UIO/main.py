@@ -91,26 +91,65 @@ def main(partition, training_data_load_path, training_data_save_path, model_load
         modelLogger.make_plots()
 
 
+def multiple_main(partition, training_data_load_path, training_data_save_path, model_load_path, model_save_path, model_save_time, ml_training_algorithm_type, ml_model_type, 
+         core_generator_type, iteration_steps, plot_after_training, RL_n_graphs, condition_rows, edgePenalty, uio_size):
+    model_choose = {
+                    2:{"ml_model_type":"RLNNModel_Escher",
+                     "core_generator_type":"EscherCoreGeneratorBasic"},
+                    3:{"ml_model_type":"RLNNModel_Escher_TrippleNoEqual",
+                     "core_generator_type":"EscherCoreGeneratorTrippleSymmetricNoEqual"},
+                    4:{"ml_model_type":"RLNNModel_Escher_TrippleNoEqual",
+                     "core_generator_type":"EscherCoreGeneratorQuadruple"}
+                    }
+    training_data_choose = {
+        (4,2):"partition_4_2.bin",
+        (3,2,1):"partition_3_2_1.bin",
+        (3,3,2):"partition_3_3_2.bin",
+        (4,2,2):"4_2_2.bin",
+        (4,3,1):"partition_4_3_1.bin",
+        (4,3,2):"4_3_2__real.bin",
+        (3,3,2,1):"3_3_2_1__real.bin",
+        (3,2,1,1):"partition_3_2_1_1.bin",
+        (4,2,1,1):"partition_4_2_1_1.bin"
+        }
+    outfolder = "SPC/Saves,Tests/automodels"
+    infolder = "SPC/Saves,Tests/Trainingdata"
+    iteration_steps = 180
 
+    for condition_rows in [1,2,3]: 
+        for partition in [(4,3,1), (3,3,2), (4,3,2), (3,3,2,1), (3,2,1,1), (4,2,1,1)]:
+
+            uio_size = sum(partition)
+            model_save_path = f"{outfolder}/auto{partition}_{condition_rows}.keras"
+            training_data_load_path = f"{infolder}/{training_data_choose[partition]}"
+            ml_model_type = model_choose[len(partition)]["ml_model_type"]
+            core_generator_type = model_choose[len(partition)]["core_generator_type"]
+
+            main(partition, training_data_load_path, training_data_save_path, model_load_path, model_save_path, model_save_time, ml_training_algorithm_type, ml_model_type, 
+         core_generator_type, iteration_steps, plot_after_training, RL_n_graphs, condition_rows, edgePenalty, uio_size)
      
 if __name__ == "__main__":
 
-     # parameters
-    uio_size = 7
-    partition = (4,3) 
-    training_data_load_path = "" #"SPC/Saves,Tests/Trainingdata/partition_2_1_1_n5.bin" # "SPC/Saves,Tests/Trainingdata/5_2_2.bin" # "SPC/Saves,Tests/5_2_2.bin" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core_9_7_2024.bin"
-    training_data_save_path = "" # "SPC/Saves,Tests/Trainingdata/partition_2_1_1_n8.bin" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core.bin"
+     # parameters 
+    uio_size = 9
+    partition = (4,3,1,1) 
+    training_data_load_path = "SPC/Saves,Tests/C_Trainingdata/partition_(4, 3, 1, 1)_n9.bin" # "SPC/Saves,Tests/Trainingdata/4_3_2__real.bin" # "SPC/Saves,Tests/Trainingdata/5_2_2.bin" # "SPC/Saves,Tests/5_2_2.bin" # "SPC/Saves,Tests/Trainingdata/partition_5_4__5_core_9_7_2024.bin"
+    training_data_save_path = "" # "SPC/Saves,Tests/Trainingdata/partition_5_3.bin"
     model_load_path =  "" # "SPC/Saves,Tests/models/Quadruple6.keras" # "SPC/Saves,Tests/models/for_result_viewer_test.keras" #"SPC/Saves,Tests/models/for_result_viewer_test.keras" # "SPC/Saves,Tests/models/tripple_escher.keras"#"" #"SPC/Saves,Tests/models/my_newmodel.keras"
-    model_save_path = "" # "SPC/Saves,Tests/models/new_2_1_1.keras"
-    model_save_time = 1800 # how many seconds have to have elapsed before saving
+    model_save_path = "SPC/Saves,Tests/models/model_quadruple_only_negative_search.keras"
+    model_save_time = 300 # how many seconds have to have elapsed before saving
     ml_training_algorithm_type = "CheckSpecificAlgorithm" # CheckSpecificAlgorithm/BruteForceAlgorithm/RLAlgorithm - exact name of the algorithm python class
-    ml_model_type =  "RLNNModel_Escher" # EscherCoreGeneratorBasic RLNNModel_Escher_TrippleNoEqual RLNNModel_CorrectSequence or RLNNModel_Escher or RLNNModel_Escher_Tripple - exact name of the model python class. The model is the component that contains the weights and perform computations, but the algorithm decides how the model is used
-    core_generator_type =  "EscherCoreGeneratorBasic" # "EscherCoreGeneratorQuadruple "EscherCoreGeneratorBasic"   "EscherCoreGeneratorTripple" "EscherCoreGeneratorTrippleSymmetricNoEqual"
-    iteration_steps = 100
-    RL_n_graphs = 400
-    condition_rows = 1
-    edgePenalty = 1
+    ml_model_type =  "RLNNModel_Escher_TrippleNoEqual" # RLNNModel_Escher_TrippleNoEqual RLNNModel_CorrectSequence or RLNNModel_Escher or RLNNModel_Escher_Tripple - exact name of the model python class. The model is the component that contains the weights and perform computations, but the algorithm decides how the model is used
+    core_generator_type =  "EscherCoreGeneratorQuadruple" # "EscherCoreGeneratorQuadruple "EscherCoreGeneratorBasic"  "EscherCoreGeneratorTrippleSymmetricNoEqual"
+    iteration_steps = 120 
+    RL_n_graphs = 750 
+    condition_rows = 1 
+    edgePenalty = 0.1  
     plot_after_training = False
 
-    main(partition, training_data_load_path, training_data_save_path, model_load_path, model_save_path, model_save_time, ml_training_algorithm_type, 
-         ml_model_type, core_generator_type, iteration_steps, plot_after_training, RL_n_graphs, condition_rows, edgePenalty, uio_size)
+    for i in range(1):
+        main(partition, training_data_load_path, training_data_save_path, model_load_path, model_save_path.format(i), model_save_time, ml_training_algorithm_type, 
+            ml_model_type, core_generator_type, iteration_steps, plot_after_training, RL_n_graphs, condition_rows, edgePenalty, uio_size)
+
+    # multiple_main(partition, training_data_load_path, training_data_save_path, model_load_path, model_save_path, model_save_time, ml_training_algorithm_type, 
+    #      ml_model_type, core_generator_type, iteration_steps, plot_after_training, RL_n_graphs, condition_rows, edgePenalty, uio_size)

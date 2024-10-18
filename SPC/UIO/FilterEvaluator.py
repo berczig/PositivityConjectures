@@ -39,8 +39,9 @@ class FilterEvaluator:
         self.model_logger:ModelLogger
         self.model_logger = model_logger
 
-    def getTestMatrix(self):
+    def getTestMatrix(self, new_item):
         desc = self.model_logger.core_generator_class_.getTestMatrixDescription(self.model_logger.partition)
+        desc[0][new_item[0]] = new_item[1]
         rows = len(desc)
         columns = self.model_logger.core_generator_class_.getCoreRepresentationLength(self.model_logger.partition)
         print(f"getTestMatrix create a {rows}x{columns} matrix")
@@ -106,15 +107,16 @@ class FilterEvaluator:
         if return_residuals:
             return residuals
         
-        #if (residuals < 0).any():
-            #return -self.INF
-        """if -sum(abs(residuals)) > -10:
-            for id, x in enumerate(residuals):
+        if (residuals > 0).any():
+            return -5000
+            
+        """if -sum(abs(residuals)) > -10:  
+            for id, x in enumerate(residuals):  
                 if x > 0:
                     print("UIOID:", id, counted[id], self.true_coefficients[id])"""
         
         from SPC.UIO.ml_algorithms.RLAlgorithm import RLAlgorithm
-        num_edges = np.sum(filter != self.DEFAULT_IGNORE_VALUE)
+        num_edges = np.sum(filter != self.DEFAULT_IGNORE_VALUE) 
     
         has_trivial_row = np.any([np.all(row==self.DEFAULT_IGNORE_VALUE) for row in filter])
 
@@ -122,8 +124,8 @@ class FilterEvaluator:
     
     def getCorrectUIOs(self, filter, verbose=False):
         residuals = self.evaluate(filter, verbose, return_residuals=True)
-        return np.sum(residuals != 0)
-    
+        return np.sum(residuals != 0) 
+      
     def evaluate_old(self, filter, verbose=False):
         # for each uio of length l+k, check how many of its cores comply  with 
         # the Condition_matrix and compare that amount with the true coefficient c_{l,k}

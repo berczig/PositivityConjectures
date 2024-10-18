@@ -130,7 +130,7 @@ class RLAlgorithm(LearningAlgorithm):
 			
 			residuals = self.FE.evaluate(bestmatrix, return_residuals=True)
 			res_score = np.sum(np.abs(residuals))
-			print("residual score:", f"{res_score}/{len(residuals)}")
+			print("residual score:", f"{res_score}/{np.sum(self.trainingdata_output)}")
 
 			encodings = self.UIO_preparer.getAllUIOEncodings()
 			some_wrong_uios = []
@@ -138,7 +138,7 @@ class RLAlgorithm(LearningAlgorithm):
 			for j, res in enumerate(residuals):
 				if res != 0: 
 					some_wrong_uios.append((encodings[j], res))
-					print(f"{encodings[j]} has residual = {res}")
+					print(f"{encodings[j]} has residual = {res}", f" true coeff is {self.trainingdata_output[j]}")
 					# Collect max 5 UIOs with incorrect coef predictio
 					if len(some_wrong_uios) == 5:
 						break

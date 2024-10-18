@@ -251,6 +251,13 @@ class EscherCoreGeneratorQuadruple(EscherCoreGeneratorAbstract):
             }
         }
     
+    @staticmethod
+    def getTestMatrixDescription(partition):
+        return [
+            {("subescher uv end", "uv 1. insert") : UIO.LESS, ("subescher vw end", "vw 1. insert") : UIO.LESS, ("subescher uw end", "uw 1. insert") : UIO.LESS,
+             ("subescher uz end", "uz 1. insert") : UIO.LESS, ("subescher vz end", "vz 1. insert") : UIO.LESS, ("subescher wz end", "wz 1. insert") : UIO.LESS}
+        ]
+    
     def getCoreLabelGroupColors(partition):
         return {
             "0":"skyblue",
@@ -294,6 +301,7 @@ class EscherCoreGeneratorQuadruple(EscherCoreGeneratorAbstract):
             else:
                 core_uv_wz = self.get_shortb_insertion_and_subescher_of_2_eschers(uv,self.concat(w,z, insertionpoint=core_w_z[-1]))
 
+
         if core_u_w[-1] == -1:
             core_uw_v = [-1,-1, -1]
             core_uw_z = [-1,-1, -1]
@@ -306,6 +314,7 @@ class EscherCoreGeneratorQuadruple(EscherCoreGeneratorAbstract):
                 core_uw_vz = [-1, -1, -1]   
             else:
                 core_uw_vz = self.get_shortb_insertion_and_subescher_of_2_eschers(uw,self.concat(v,z, insertionpoint=core_v_z[-1]))
+
 
         if core_v_w[-1] == -1:
             core_vw_u = [-1, -1, -1]
@@ -321,6 +330,9 @@ class EscherCoreGeneratorQuadruple(EscherCoreGeneratorAbstract):
             else:
                 core_vw_uz = self.get_shortb_insertion_and_subescher_of_2_eschers(vw,self.concat(u,z, insertionpoint=core_u_z[-1]))
         
+
+
+
         if core_u_z[-1] == -1:
             core_uz_w = [-1, -1, -1]
             core_uz_v = [-1, -1, -1]
@@ -330,6 +342,7 @@ class EscherCoreGeneratorQuadruple(EscherCoreGeneratorAbstract):
             core_uz_w = self.get_shortb_insertion_and_subescher_of_2_eschers(uz,w)
             core_uz_v = self.get_shortb_insertion_and_subescher_of_2_eschers(uz,v)
 
+
         if core_v_z[-1] == -1:
             core_vz_w = [-1, -1, -1]
             core_vz_u = [-1, -1, -1]
@@ -338,6 +351,7 @@ class EscherCoreGeneratorQuadruple(EscherCoreGeneratorAbstract):
             core_vz_w = self.get_shortb_insertion_and_subescher_of_2_eschers(vz,w)
             core_vz_u = self.get_shortb_insertion_and_subescher_of_2_eschers(vz,u)
 
+
         if core_w_z[-1] == -1:
             core_wz_u = [-1, -1, -1]
             core_wz_v = [-1, -1, -1]
@@ -345,6 +359,8 @@ class EscherCoreGeneratorQuadruple(EscherCoreGeneratorAbstract):
             wz = self.concat(w, z, insertionpoint=core_w_z[-1])
             core_wz_u = self.get_shortb_insertion_and_subescher_of_2_eschers(wz,u)
             core_wz_v = self.get_shortb_insertion_and_subescher_of_2_eschers(wz,v)
+
+
 
         #Calculate the core of a quadruple pair of type abc_d
 
@@ -361,6 +377,7 @@ class EscherCoreGeneratorQuadruple(EscherCoreGeneratorAbstract):
                 vwu = self.concat(vw, u, insertionpoint=core_vw_u[-1])
                 core_uvw_z = self.get_shortb_insertion_and_subescher_of_2_eschers(vwu,z)  
 
+
         if core_uv_z[-1] == -1 and core_uz_v[-1] == -1 and core_vz_u[-1] == -1:
             core_uvz_w = [-1, -1, -1]
         else:
@@ -373,6 +390,7 @@ class EscherCoreGeneratorQuadruple(EscherCoreGeneratorAbstract):
             elif core_vz_u[-1] != -1:
                 vzu = self.concat(vz, u, insertionpoint=core_vz_u[-1])
                 core_uvz_w = self.get_shortb_insertion_and_subescher_of_2_eschers(vzu,w)
+
 
         if core_uw_z[-1] == -1 and core_uz_w[-1] == -1 and core_wz_u[-1] == -1:
             core_uwz_v = [-1, -1, -1]   
@@ -387,9 +405,9 @@ class EscherCoreGeneratorQuadruple(EscherCoreGeneratorAbstract):
                 wzu = self.concat(wz, u, insertionpoint=core_wz_u[-1])
                 core_uwz_v = self.get_shortb_insertion_and_subescher_of_2_eschers(wzu,v)
 
+
         if core_vw_z[-1] == -1 and core_vz_w[-1] == -1 and core_wz_v[-1] == -1:
             core_vwz_u = [-1, -1, -1]
-
         else:
             if core_vw_z[-1] != -1:
                 vwz = self.concat(vw, z, insertionpoint=core_vw_z[-1])

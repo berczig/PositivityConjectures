@@ -5,15 +5,15 @@ import numpy as np
 class EscherCoreGeneratorBasic(EscherCoreGeneratorAbstract):
 
     def compareTwoCoreElements(self, a, b):
-        if a < b:
-            return UIO.LESS
-        return UIO.GREATER
-    
         # if a < b:
         #     return UIO.LESS
-        # elif a > b:
-        #     return UIO.GREATER
-        # return UIO.EQUAL
+        # return UIO.GREATER
+    
+        if a < b:
+            return UIO.LESS
+        elif a > b:
+            return UIO.GREATER
+        return UIO.EQUAL
     
     @staticmethod
     def getCoreLabels(partition):
@@ -21,6 +21,7 @@ class EscherCoreGeneratorBasic(EscherCoreGeneratorAbstract):
     
     @staticmethod
     def getCoreComparisions(partition):
+        #return EscherCoreGeneratorBasic.getAllCoreComparisions(partition)
         #return {"0":["subescher start interval", "subescher end interval", "1.insert"],
         #        "subescher start interval":["1.insert", "n-1"], 
         #        "subescher end interval":["1.insert", "n-1"],
@@ -38,10 +39,10 @@ class EscherCoreGeneratorBasic(EscherCoreGeneratorAbstract):
                 "subescher start interval":"uv",
             },
             "subescher end":{
-                "subescher end end":"uv",
+                "subescher end interval":"uv",
             },
             "1. insertion":{
-                "1. insert":"uv",
+                "1.insert":"uv",
             }
         }
     
@@ -66,6 +67,7 @@ class EscherCoreGeneratorBasic(EscherCoreGeneratorAbstract):
 
         def add_half(L):
             return L[:-1]+[L[-1]+0.5]
+        
         u,v = escherpair
         points_from_tripple = [0] + add_half(self.get_shortb_insertion_and_subescher_of_2_eschers(u,v))
         return points_from_tripple

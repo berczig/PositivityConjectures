@@ -200,3 +200,18 @@ double partition (will not draw at resultviewer)
 
 23.09.2024:
  polish ResultViewerTable
+
+ 24.09.24:
+  - fix double partition
+
+25.09:
+ - wrong coef sum                                                           DONE
+ - check c++ for sum(partition) < n                                         DONE
+ - do count++ and then return 18*count, what happens for |partition|=1 =    DONE
+
+ 26.09
+  - different best graphs with different number of rows
+  - check for "  UIODataExtractor& extractor = extractors[UIOID]; " and in constructors "A a;  B(A in) : a(in)" double copy
+  - vielleicht UIO comparison_matrix zu vector<string>
+
+  look at "extrav" in "getInsertionsSubeshers"
